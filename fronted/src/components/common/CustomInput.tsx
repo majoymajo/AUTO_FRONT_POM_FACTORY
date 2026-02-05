@@ -46,20 +46,28 @@ export const CustomInput: React.FC<CustomInputProps> = ({
         disabled={disabled}
         className={`
           w-full 
-          px-4 
-          py-3 
-          bg-transparent 
+          px-6
+          py-4
+          bg-white/10
+          backdrop-blur-md
           border-2 
-          border-white 
-          rounded-lg 
+          border-orange-300/30
+          rounded-xl
           text-white 
-          placeholder-gray-400
+          placeholder-orange-200/50
+          font-medium
+          shadow-lg
+          shadow-orange-500/10
           focus:outline-none 
-          focus:ring-2 
-          focus:ring-white 
-          focus:border-transparent
+          focus:ring-4
+          focus:ring-orange-400/50
+          focus:border-orange-400
+          focus:bg-white/15
+          focus:shadow-orange-500/30
+          hover:border-orange-300/50
           transition-all
-          ${error ? 'border-red-500' : ''}
+          duration-300
+          ${error ? 'border-red-500 focus:ring-red-400/50' : ''}
           ${className}
         `}
       />

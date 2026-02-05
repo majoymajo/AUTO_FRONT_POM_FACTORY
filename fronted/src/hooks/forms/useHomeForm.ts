@@ -1,35 +1,84 @@
-import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import type { FormEvent, ChangeEvent } from 'react';
+import { kudosSchema, type KudosFormData } from '../../schemas/kudosSchema';
+import { kudosService } from '../../services';
+import { useState } from 'react';
 
 interface UseHomeFormReturn {
   inputValue: string;
   handleInputChange: (e: ChangeEvent<HTMLInputElement>) => void;
   handleSubmit: (e: FormEvent) => void;
   resetForm: () => void;
+  isSubmitting: boolean;
+  error: string | null;
+  successMessage: string | null;
 }
 
 export const useHomeForm = (): UseHomeFormReturn => {
-  const [inputValue, setInputValue] = useState('');
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setInputValue(e.target.value);
+  const {
+    register,
+    handleSubmit: handleFormSubmit,
+    formState: { errors, isSubmitting },
+    reset,
+    watch,
+  } = useForm<KudosFormData>({
+    resolver: zodResolver(kudosSchema),
+    defaultValues: {
+      message: '',
+    },
+  });
+
+  const inputValue = watch('message');
+
+  const onSubmit = async (data: KudosFormData) => {
+    try {
+      setError(null);
+      setSuccessMessage(null);
+
+      const response = await kudosService.sendKudos(data);
+      
+      setSuccessMessage(response.message || '¡Mensaje enviado exitosamente!');
+      reset();
+      
+      // Clear success message after 5 seconds
+      setTimeout(() => setSuccessMessage(null), 5000);
+    } catch (err: any) {
+      setError(err.message || 'Error al enviar el mensaje');
+      
+      // Clear error after 5 seconds
+      setTimeout(() => setError(null), 5000);
+    }
   };
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    console.log('Form submitted with value:', inputValue);
-    // Add your form submission logic here
-    // e.g., API call, validation, etc.
+    handleFormSubmit(onSubmit)(e);
+  };
+
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
+    // This is handled by react-hook-form's register
+    // But we keep this for compatibility with the component
+    const { onChange } = register('message');
+    onChange(e);
   };
 
   const resetForm = () => {
-    setInputValue('');
+    reset();
+    setError(null);
+    setSuccessMessage(null);
   };
 
   return {
     inputValue,
     handleInputChange,
     handleSubmit,
-    resetForm
+    resetForm,
+    isSubmitting,
+    error: errors.message?.message || error,
+    successMessage,
   };
 };

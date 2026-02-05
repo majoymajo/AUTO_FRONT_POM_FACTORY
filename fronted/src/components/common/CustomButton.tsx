@@ -27,9 +27,9 @@ export const CustomButton: React.FC<CustomButtonProps> = ({
   children
 }) => {
   const variantClasses = {
-    primary: 'bg-white text-black hover:bg-gray-200',
-    secondary: 'bg-gray-700 text-white hover:bg-gray-600',
-    outline: 'bg-transparent border-2 border-white text-white hover:bg-white hover:text-black'
+    primary: 'bg-gradient-to-r from-orange-500 to-orange-600 text-white hover:from-orange-600 hover:to-orange-700 shadow-lg shadow-orange-500/50 hover:shadow-xl hover:shadow-orange-600/60',
+    secondary: 'bg-gradient-to-r from-sky-400 to-sky-500 text-white hover:from-sky-500 hover:to-sky-600 shadow-lg shadow-sky-400/50',
+    outline: 'bg-transparent border-2 border-orange-400 text-orange-400 hover:bg-orange-400 hover:text-white shadow-lg shadow-orange-400/30 hover:shadow-orange-400/60'
   };
 
   const sizeClasses = {
@@ -41,7 +41,7 @@ export const CustomButton: React.FC<CustomButtonProps> = ({
   return (
     <Button
       type={type}
-      label={children || label}
+      label={String(children || label)}
       icon={icon}
       onClick={onClick}
       disabled={disabled}
@@ -49,17 +49,19 @@ export const CustomButton: React.FC<CustomButtonProps> = ({
       className={`
         ${variantClasses[variant]}
         ${sizeClasses[size]}
-        rounded-lg
-        font-medium
+        rounded-xl
+        font-bold
+        transform
         transition-all
-        duration-200
+        duration-300
+        hover:scale-105
+        active:scale-95
         focus:outline-none
-        focus:ring-2
-        focus:ring-white
-        focus:ring-offset-2
-        focus:ring-offset-black
+        focus:ring-4
+        focus:ring-orange-400/50
         disabled:opacity-50
         disabled:cursor-not-allowed
+        disabled:hover:scale-100
         ${className}
       `}
     />
