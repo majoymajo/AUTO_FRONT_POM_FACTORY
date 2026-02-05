@@ -7,7 +7,7 @@ import { useState } from 'react';
 
 interface UseHomeFormReturn {
   inputValue: string;
-  handleInputChange: (e: ChangeEvent<HTMLInputElement>) => void;
+  handleInputChange: (e: ChangeEvent<HTMLTextAreaElement>) => void;
   handleSubmit: (e: FormEvent) => void;
   resetForm: () => void;
   isSubmitting: boolean;
@@ -20,11 +20,11 @@ export const useHomeForm = (): UseHomeFormReturn => {
   const [error, setError] = useState<string | null>(null);
 
   const {
-    register,
     handleSubmit: handleFormSubmit,
     formState: { errors, isSubmitting },
     reset,
     watch,
+    setValue,
   } = useForm<KudosFormData>({
     resolver: zodResolver(kudosSchema),
     defaultValues: {
@@ -59,11 +59,8 @@ export const useHomeForm = (): UseHomeFormReturn => {
     handleFormSubmit(onSubmit)(e);
   };
 
-  const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
-    // This is handled by react-hook-form's register
-    // But we keep this for compatibility with the component
-    const { onChange } = register('message');
-    onChange(e);
+  const handleInputChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
+    setValue('message', e.target.value, { shouldValidate: true });
   };
 
   const resetForm = () => {

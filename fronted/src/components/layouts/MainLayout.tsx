@@ -3,6 +3,7 @@ import { Hero } from './Hero';
 import { CustomInput } from '../common/CustomInput';
 import { CustomButton } from '../common/CustomButton';
 import { Footer } from './Footer';
+import { KudosList } from './KudosList';
 
 interface MainLayoutProps {
   heroTitle?: string;
@@ -11,7 +12,7 @@ interface MainLayoutProps {
   inputPlaceholder?: string;
   buttonLabel?: string;
   footerText?: string;
-  onInputChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onInputChange?: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   onSubmit?: (e: React.FormEvent) => void;
   className?: string;
   error?: string | null;
@@ -117,6 +118,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
             </div>
           </form>
         </section>
+
+        <KudosList />
 
         <Footer text={footerText} />
       </main>
