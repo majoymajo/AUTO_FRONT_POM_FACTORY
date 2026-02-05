@@ -163,7 +163,6 @@ With a higher prefetch (or default), RabbitMQ pushes many messages to a single c
 - **Step 3 — RabbitMQ steady drain:**  
   ![RabbitMQ drainage: Unacked 3–5, count decreasing](./assets/rabbitmq-steady-drain.png)
 
-Replace these placeholders with real screenshots from your run for a complete evidence pack.
 
 ### Stress Testing (HTTP and queue load)
 
