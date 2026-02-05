@@ -1,13 +1,15 @@
 package com.sofkianos.producer.config;
 
-import org.springframework.amqp.core.Binding;
-import org.springframework.amqp.core.BindingBuilder;
-import org.springframework.amqp.core.DirectExchange;
-import org.springframework.amqp.core.Queue;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-
+/**
+ * RabbitMQ topology configuration for the Producer API.
+ *
+ * <p>Architecture principles:
+ * <ul>
+ *     <li>API Gateway Pattern: supports the inbound API by defining the outbound messaging contracts.</li>
+ *     <li>Asynchronous Messaging: declares exchange, queue, and binding for non-blocking delivery.</li>
+ *     <li>Separation of Concerns: isolates messaging infrastructure from web controllers.</li>
+ * </ul>
+ */
 @Configuration
 public class RabbitConfig {
 
