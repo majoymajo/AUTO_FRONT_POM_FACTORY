@@ -1,73 +1,173 @@
-# React + TypeScript + Vite
+# React Project Architecture
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This project follows a modular architecture designed for scalability and maintainability.
 
-Currently, two official plugins are available:
+## 📁 Directory Structure
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-## React Compiler
-
-The React Compiler is currently not compatible with SWC. See [this issue](https://github.com/vitejs/vite-plugin-react/issues/428) for tracking the progress.
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```
+src/
+├── assets/              # Static assets
+│   ├── images/         # Images and media files
+│   ├── icons/          # Icon files
+│   └── styles/         # Global styles, Tailwind config
+│
+├── components/          # Reusable UI components
+│   ├── common/         # Shared components (Button, Input, Modal, etc.)
+│   ├── forms/          # Form-specific components using react-hook-form
+│   ├── layouts/        # Layout components (Header, Footer, Sidebar)
+│   └── ui/             # PrimeReact wrapper components
+│
+├── hooks/              # Custom React hooks
+│   ├── forms/          # Form-related hooks (useFormValidation, useFieldArray)
+│   ├── state/          # Zustand store hooks (useAuthStore, useUserStore)
+│   └── data/           # Data fetching hooks (useQuery, useMutation)
+│
+├── pages/              # Page components (route views)
+│   ├── auth/           # Authentication pages (Login, Register, ForgotPassword)
+│   ├── dashboard/      # Dashboard page
+│   ├── users/          # User management pages
+│   └── public/         # Public pages (Home, About, Contact)
+│
+├── routes/             # Routing configuration
+│   └── index.tsx       # Main router setup (React Router)
+│
+├── services/           # Business logic & API integration
+│   ├── api/            # API client configuration & endpoints
+│   ├── auth/           # Authentication service
+│   └── validation/     # Validation helpers
+│
+├── schemas/            # Zod validation schemas
+│   ├── userSchema.ts   # Example: User validation schema
+│   └── authSchema.ts   # Example: Auth validation schema
+│
+├── store/              # Zustand state management
+│   ├── slices/         # Store slices (authSlice, userSlice)
+│   └── index.ts        # Store configuration
+│
+├── types/              # TypeScript type definitions
+│   ├── models/         # Data models (User, Product, etc.)
+│   └── api/            # API response types
+│
+└── utils/              # Utility functions
+    ├── formatters/     # Data formatters (dates, currency, etc.)
+    ├── validators/     # Custom validators
+    └── helpers/        # General helper functions
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## 🛠️ Technology Stack
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+### UI & Styling
+- **PrimeReact**: Component library for rich UI components
+- **Tailwind CSS**: Utility-first CSS framework
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### State Management
+- **Zustand**: Lightweight state management
+
+### Forms & Validation
+- **React Hook Form**: Performant forms with easy validation
+- **Zod**: TypeScript-first schema validation
+
+## 📋 Directory Usage Guidelines
+
+### `/components`
+Place all reusable UI components here:
+- **common/**: Generic components like Button, Card, Badge
+- **forms/**: Form fields integrated with react-hook-form
+- **layouts/**: Page layouts and structural components
+- **ui/**: PrimeReact component wrappers with custom styling
+
+### `/hooks`
+Custom React hooks organized by purpose:
+- **forms/**: `useFormWithSchema`, `useFieldValidation`
+- **state/**: Zustand store hooks like `useAuthStore`, `useCartStore`
+- **data/**: API hooks like `useUsers`, `useProducts`
+
+### `/pages`
+Each page component represents a route:
+- Group related pages in subdirectories
+- Keep pages thin - delegate logic to hooks and services
+
+### `/routes`
+Routing configuration:
+- Main router setup
+- Route guards and protected routes
+- Route constants
+
+### `/services`
+Business logic and external integrations:
+- **api/**: HTTP client setup, interceptors, endpoints
+- **auth/**: Authentication logic (login, logout, token management)
+- **validation/**: Custom validation utilities
+
+### `/schemas`
+Zod schemas for data validation:
+- Define schemas for forms, API requests/responses
+- Reusable validation logic
+- Type inference from schemas
+
+### `/store`
+Zustand state management:
+- **slices/**: Individual store slices for different domains
+- Each slice handles its own state and actions
+- Combine slices in main store
+
+### `/types`
+TypeScript type definitions:
+- **models/**: Domain models (User, Product, Order)
+- **api/**: API request/response types
+- Shared interfaces and enums
+
+### `/utils`
+Pure utility functions:
+- **formatters/**: Date, currency, string formatters
+- **validators/**: Custom validation functions
+- **helpers/**: General-purpose utilities
+
+## 🎯 Example Usage Patterns
+
+### Form with Validation (react-hook-form + zod)
+```typescript
+// schemas/loginSchema.ts
+// services/api/authService.ts
+// hooks/forms/useLoginForm.ts
+// pages/auth/Login.tsx
 ```
+
+### State Management (Zustand)
+```typescript
+// store/slices/authSlice.ts
+// hooks/state/useAuthStore.ts
+// pages/dashboard/Dashboard.tsx
+```
+
+### API Integration
+```typescript
+// services/api/client.ts
+// services/api/userService.ts
+// hooks/data/useUsers.ts
+// pages/users/UserList.tsx
+```
+
+### Component with PrimeReact + Tailwind
+```typescript
+// components/ui/CustomButton.tsx (PrimeReact Button + Tailwind)
+// components/common/UserCard.tsx (uses CustomButton)
+```
+
+## 🚀 Best Practices
+
+1. **Single Responsibility**: Each file should have one clear purpose
+2. **Co-location**: Keep related files close together
+3. **Barrel Exports**: Use index.ts files for clean imports
+4. **Type Safety**: Leverage TypeScript and Zod for runtime validation
+5. **Separation of Concerns**: Keep UI, logic, and state separate
+6. **Reusability**: Build components and hooks to be reusable
+7. **Consistent Naming**: Use clear, descriptive names
+
+## 📦 Dependencies Structure
+
+- **PrimeReact** → `components/ui/` wrapper components
+- **Tailwind CSS** → `assets/styles/` + inline classes
+- **React Hook Form** → `hooks/forms/` + `pages/`
+- **Zod** → `schemas/` validation schemas
+- **Zustand** → `store/slices/` + `hooks/state/`
