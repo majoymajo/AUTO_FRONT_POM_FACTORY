@@ -6,6 +6,7 @@ import { Footer } from './Footer';
 
 interface MainLayoutProps {
   heroTitle?: string;
+  heroSubtitle?: string;
   inputValue?: string;
   inputPlaceholder?: string;
   buttonLabel?: string;
@@ -20,6 +21,7 @@ interface MainLayoutProps {
 
 export const MainLayout: React.FC<MainLayoutProps> = ({ 
   heroTitle = 'HERO',
+  heroSubtitle,
   inputValue = '',
   inputPlaceholder = 'Input Text',
   buttonLabel = 'Btn',
@@ -38,11 +40,12 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
       from-slate-900 
       via-slate-800 
       to-slate-900
+      bg-pattern
       p-8
       ${className}
     `}>
-      <main className="max-w-3xl mx-auto" role="main">
-        <Hero title={heroTitle} />
+      <main className="max-w-5xl mx-auto" role="main">
+        <Hero title={heroTitle} subtitle={heroSubtitle} />
 
         {/* Success Message */}
         {successMessage && (
@@ -83,6 +86,13 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
             <p className="font-semibold text-center">{error}</p>
           </div>
         )}
+
+        {/* Decorative divider */}
+        <div className="flex items-center gap-4 my-8">
+          <div className="flex-1 h-px bg-gradient-to-r from-transparent via-orange-400/50 to-transparent"></div>
+          <div className="text-orange-400 text-2xl">✨</div>
+          <div className="flex-1 h-px bg-gradient-to-r from-transparent via-orange-400/50 to-transparent"></div>
+        </div>
 
         {/* Form Section */}
         <section className="my-8" aria-label="Main Form">

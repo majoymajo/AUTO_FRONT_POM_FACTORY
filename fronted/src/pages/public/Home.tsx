@@ -15,11 +15,12 @@ export const Home: React.FC = () => {
   return (
     <>
       <MainLayout
-        heroTitle="Kudos"
+        heroTitle="Envía tus Kudos ✨"
+        heroSubtitle="Reconoce y celebra el gran trabajo de tu equipo"
         inputValue={inputValue}
-        inputPlaceholder="Escribe tu mensaje de reconocimiento"
-        buttonLabel={isSubmitting ? "Enviando..." : "Enviar"}
-        footerText="Kudos"
+        inputPlaceholder="Escribe tu mensaje de reconocimiento aquí..."
+        buttonLabel={isSubmitting ? "Enviando..." : "Enviar Kudo"}
+        footerText="Kudos Sofkianos"
         onInputChange={handleInputChange}
         onSubmit={handleSubmit}
         error={error}
