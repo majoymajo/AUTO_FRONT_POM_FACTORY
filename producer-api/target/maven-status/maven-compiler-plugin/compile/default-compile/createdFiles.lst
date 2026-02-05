@@ -1,0 +1,4 @@
+com/sofkianos/producer/controller/HealthController.class
+com/sofkianos/producer/controller/KudosController.class
+com/sofkianos/producer/ProducerApiApplication.class
+com/sofkianos/producer/config/RabbitConfig.class

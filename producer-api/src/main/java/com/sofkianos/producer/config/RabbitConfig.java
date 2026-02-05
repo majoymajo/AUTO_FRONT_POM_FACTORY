@@ -1,5 +1,13 @@
 package com.sofkianos.producer.config;
 
+import org.springframework.amqp.core.Binding;
+import org.springframework.amqp.core.BindingBuilder;
+import org.springframework.amqp.core.TopicExchange;
+import org.springframework.amqp.core.Queue;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
 /**
  * RabbitMQ topology configuration for the Producer API.
  *
@@ -28,12 +36,12 @@ public class RabbitConfig {
     }
 
     @Bean
-    public DirectExchange kudosExchange() {
-        return new DirectExchange(exchangeName, true, false);
+    public TopicExchange kudosExchange() {
+        return new TopicExchange(exchangeName, true, false);
     }
 
     @Bean
-    public Binding kudosBinding(Queue kudosQueue, DirectExchange kudosExchange) {
+    public Binding kudosBinding(Queue kudosQueue, TopicExchange kudosExchange) {
         return BindingBuilder.bind(kudosQueue).to(kudosExchange).with(routingKey);
     }
 }
