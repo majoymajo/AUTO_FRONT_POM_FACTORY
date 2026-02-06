@@ -132,3 +132,42 @@ Producer API is up and running!
 ### Verify Message Publishing
 
 To verify that messages are being published to RabbitMQ, check the RabbitMQ management console or monitor the consumer-worker logs (if the consumer service is running) to see the consumed messages.
+
+## Testing
+
+The project includes unit tests using **JUnit 5** and **Mockito** to ensure the reliability of the controllers.
+
+### Running Tests
+
+To execute the unit tests, use the Maven Wrapper:
+
+```bash
+./mvnw test
+```
+
+### Stress / Load Testing
+
+The project includes a specialized `KudosLoadTest` designed to evaluate the API's performance and stability under pressure. This test uses **MockMvc** combined with a thread pool to simulate real-world concurrent traffic.
+
+#### Key Features:
+- **Concurrency**: Simulates multiple simultaneous users.
+- **Asynchronous Execution**: Uses `CompletableFuture` to trigger requests in parallel.
+- **Metric Collection**: Measures the total execution time for a batch of requests.
+
+#### How to run:
+To execute specifically the stress tests:
+```bash
+./mvnw test -Dtest=KudosLoadTest
+```
+
+This will run 100 requests across 10 concurrent threads by default. You can adjust these values in the [KudosLoadTest.java](file:///c:/workspace/sofkianos-mvp/producer-api/src/test/java/com/sofkianos/producer/controller/KudosLoadTest.java) file for more intensive testing.
+
+### Test Results
+
+The tests cover:
+- **KudosController**: Validates payload requirements (non-empty, non-null) and verifies interaction with `RabbitTemplate`.
+- **HealthController**: Ensures the health endpoint returns the correct API status.
+
+![Test Results](./assets/test-results.png)
+
+*All 5 tests passed successfully with BUILD SUCCESS.*
