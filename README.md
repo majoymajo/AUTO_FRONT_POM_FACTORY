@@ -216,6 +216,40 @@ We use a simple branching model:
 
 ---
 
+## 🚀 Live Demo & Observability
+
+The system is deployed on **AWS EC2** (backend and containers) and **Vercel** (frontend). Because the architecture is **event-driven (asynchronous)**, observing container logs via Dozzle is essential to understand the end-to-end data flow.
+
+### Frontend (UI) 🟢
+
+| | |
+|---|---|
+| **Link** | https://sofkianos-mvp.vercel.app/ |
+| **Description** | User interface where Kudos are submitted. Send a Kudo and then verify its flow in Dozzle (see below). |
+
+### Observability (Crucial) 📊
+
+| | |
+|---|---|
+| **Tool** | Dozzle (real-time log viewer) |
+| **Link** | http://34.235.165.217:8888/ |
+
+Since the system uses **RabbitMQ**, transaction processing is **asynchronous**. The API returns **202 Accepted** immediately; actual processing happens in the Consumer Worker. To see the full flow:
+
+1. **Producer API** — In Dozzle, open the **producer-api** container logs. After sending a Kudo from the UI, you will see the HTTP request and the message being **published** to RabbitMQ.
+2. **Consumer Worker** — In Dozzle, open the **consumer-worker** container logs. Shortly after, you will see the same message being **consumed** and processed in real time.
+
+Inspecting both containers in Dozzle is the recommended way to confirm that a Kudo was produced and consumed end-to-end.
+
+### Backend Services & Health 🟢
+
+| Service | Swagger Documentation | Health Check |
+|---------|-----------------------|--------------|
+| **Producer API** | [Swagger UI](http://34.235.165.217:8081/swagger-ui/index.html) | [Health](http://34.235.165.217:8081/api/v1/health) |
+| **Consumer Worker** | [Swagger UI](http://34.235.165.217:8082/swagger-ui/index.html) | [Health](http://34.235.165.217:8082/health) |
+
+---
+
 ## Execution
 
 ### Prerequisites
