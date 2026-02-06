@@ -1,6 +1,6 @@
 # SofkianOS - Distributed System (Microservices Architecture)
 
-<div align="right">
+<div align="center">
   <img src="./assets/sofka-logo.png" alt="Sofka Logo" height="150px" />
 </div>
 
@@ -11,8 +11,6 @@
 - **Christopher Pallo**
 - **Elian Condor**
 - **Leonel**
-
-**Workshop:** Distributed Systems
 
 ---
 
@@ -111,7 +109,9 @@ Detailed container-level architecture showing internal components of each servic
 ### Component Detail (C3)
 
 ![Component Detail](./assets/architecture-c3.png)
+![Component Detail](./assets/architecture-c33.png)
 
+}
 Detailed view of internal components of each service (Controllers, Services, Configurations, Consumers).
 
 ---
