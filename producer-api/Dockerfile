@@ -1,13 +1,43 @@
-# syntax=docker/dockerfile:1
+# ---------------------------------------------------------------------------
+# Stage 1: Build
+# ---------------------------------------------------------------------------
+    FROM eclipse-temurin:17-jdk-alpine AS builder
 
-FROM maven:3.9.8-eclipse-temurin-17 AS build
-WORKDIR /app
-COPY pom.xml .
-COPY src ./src
-RUN mvn -q -DskipTests package
-
-FROM eclipse-temurin:17-jre-jammy
-WORKDIR /app
-COPY --from=build /app/target/*.jar app.jar
-EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "app.jar"]
+    WORKDIR /build
+    
+    COPY mvnw .
+    COPY .mvn .mvn
+    COPY pom.xml .
+    RUN chmod +x mvnw
+    
+    # Descargar dependencias
+    RUN ./mvnw dependency:go-offline -B
+    
+    # Compilar
+    COPY src src
+    RUN ./mvnw package -DskipTests -B
+    
+    # ---------------------------------------------------------------------------
+    # Stage 2: Runtime
+    # ---------------------------------------------------------------------------
+    FROM eclipse-temurin:17-jre-alpine
+    
+    WORKDIR /app
+    
+    # Instalar wget para el healthcheck
+    RUN apk add --no-cache wget
+    RUN addgroup -g 1000 appgroup && adduser -u 1000 -G appgroup -D appuser
+    
+    # Copiar el JAR compilado
+    COPY --from=builder /build/target/*.jar app.jar
+    
+    # Healthcheck apuntando al puerto 8082
+    HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
+      CMD wget -q -O /dev/null http://127.0.0.1:8082/ || exit 1
+    
+    USER appuser
+    
+    # Exponer el puerto correcto
+    EXPOSE 8082
+    
+    ENTRYPOINT ["java", "-jar", "app.jar"]
