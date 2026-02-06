@@ -1,23 +1,6 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+import React from 'react';
 import { Send, User, ChevronRight, CheckCircle2 } from 'lucide-react';
-import {
-  kudoFormSchema,
-  KUDO_CATEGORIES,
-  type KudoFormData,
-} from '../schemas/kudoFormSchema';
-import { sendKudo } from '../api/kudosApi';
-import { toast } from 'sonner';
-
-
-const USERS = [
-  { id: '1', name: 'Christopher Pallo', email: 'christopher@sofkianos.com', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Christopher&backgroundColor=b6e3f4' },
-  { id: '2', name: 'Santiago', email: 'santiago@sofkianos.com', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Santiago&backgroundColor=c0aede' },
-  { id: '3', name: 'Backend Team', email: 'backend@sofkianos.com', avatar: 'https://api.dicebear.com/7.x/shapes/svg?seed=Backend&backgroundColor=d1d4f9' },
-  { id: '4', name: 'Frontend Team', email: 'frontend@sofkianos.com', avatar: 'https://api.dicebear.com/7.x/shapes/svg?seed=Frontend&backgroundColor=ffd5dc' },
-];
-
+import { useKudoForm } from '../hooks/forms/useKudoForm';
 
 const inputBase =
   'w-full px-4 py-3 rounded-xl bg-white/5 border border-white/5 text-zinc-100 ' +
@@ -27,87 +10,27 @@ const inputBase =
 const labelBase =
   'block text-[10px] uppercase tracking-[0.2em] text-zinc-500 font-bold mb-1.5 ml-1';
 
-const INITIAL_SLIDER = 0;
-
 export const KudoFormSystem: React.FC = () => {
-  const [sliderValue, setSliderValue] = useState(INITIAL_SLIDER);
-  const [isDragging, setIsDragging] = useState(false);
-  const [loadingAvatar, setLoadingAvatar] = useState(false);
-  const sliderRef = useRef<HTMLDivElement>(null);
-
-  const { register, watch, reset } = useForm<KudoFormData>({
-    resolver: zodResolver(kudoFormSchema),
-  });
-
-  const toEmail = watch('to');
-  const toUser = USERS.find(u => u.email === toEmail);
-
-
-  useEffect(() => {
-    if (!toUser) return;
-    setLoadingAvatar(true);
-
-    const t = setTimeout(() => setLoadingAvatar(false), 1000); 
-    return () => clearTimeout(t);
-  }, [toUser?.email]);
-
-
-  const handleStart = () => setIsDragging(true);
-  const handleMove = (clientX: number) => {
-    if (!isDragging || !sliderRef.current) return;
-    const rect = sliderRef.current.getBoundingClientRect();
-    const x = Math.max(0, Math.min(clientX - rect.left - 24, rect.width - 48));
-    const percentage = (x / (rect.width - 48)) * 100;
-    setSliderValue(percentage);
-  };
-  const handleEnd = async () => {
-    setIsDragging(false);
-    if (sliderValue > 90) {
-      setSliderValue(100);
-      try {
-        await sendKudo(watch());
-        toast.success('¡Kudo enviado! ');
-        reset();
-      } catch {
-        toast.error('Error enviando');
-      } finally {
-        setTimeout(() => setSliderValue(0), 1000);
-      }
-    } else {
-      setSliderValue(0);
-    }
-  };
-
-  useEffect(() => {
-    const move = (e: MouseEvent) => handleMove(e.clientX);
-    const up = () => handleEnd();
-    const touchMove = (e: TouchEvent) => handleMove(e.touches[0].clientX);
-
-    if (isDragging) {
-      window.addEventListener('mousemove', move);
-      window.addEventListener('mouseup', up);
-      window.addEventListener('touchmove', touchMove);
-      window.addEventListener('touchend', up);
-    }
-    return () => {
-      window.removeEventListener('mousemove', move);
-      window.removeEventListener('mouseup', up);
-      window.removeEventListener('touchmove', touchMove);
-      window.removeEventListener('touchend', up);
-    };
-  }, [isDragging, sliderValue]);
+  const {
+    sliderValue,
+    isDragging,
+    loadingAvatar,
+    sliderRef,
+    register,
+    toUser,
+    USERS,
+    KUDO_CATEGORIES,
+    handleStart,
+  } = useKudoForm();
 
   return (
-
     <section className="min-h-[90vh] flex items-start justify-center pt-2 px-4 relative overflow-hidden">
-
-      {}
+      {/* Background Decor */}
       <div className="absolute inset-0 bg-zinc-950 -z-20" />
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-[#FF5F00]/5 blur-[120px] -z-10 rounded-full opacity-40 pointer-events-none" />
 
-      {}
+      {/* Glass Container */}
       <div className="w-full max-w-md animate-in fade-in slide-in-from-bottom-4 duration-500">
-
         <div className="
             relative
             backdrop-blur-sm 
@@ -118,8 +41,7 @@ export const KudoFormSystem: React.FC = () => {
             p-5
             space-y-4
         ">
-
-            {}
+            {/* Field: From */}
             <div className="group">
               <label className={labelBase}>De (Remitente)</label>
               <div className="relative">
@@ -133,12 +55,11 @@ export const KudoFormSystem: React.FC = () => {
               </div>
             </div>
 
-            {}
+            {/* Field: To + Identity Preview */}
             <div>
               <label className={labelBase}>Para (Destino)</label>
               <div className="flex gap-4 items-center">
-
-                {}
+                {/* Select Field */}
                 <div className="relative flex-1">
                   <select {...register('to')} className={`${inputBase} h-[5.5rem]`}> 
                     <option value="">Selecciona compañero...</option>
@@ -149,7 +70,7 @@ export const KudoFormSystem: React.FC = () => {
                   </div>
                 </div>
 
-                {}
+                {/* Identity Frame */}
                 <div className="relative flex-shrink-0">
                   <div className={`
                     w-[5.5rem] h-[5.5rem] rounded-xl overflow-visible border 
@@ -158,10 +79,9 @@ export const KudoFormSystem: React.FC = () => {
                     ${loadingAvatar ? 'border-[#FF5F00] bg-zinc-900/80' : 
                       toUser ? 'border-green-500/50 bg-zinc-900/50' : 'border-white/5 bg-zinc-900/50'}
                   `}>
-                    {}
+                    {/* Avatar Wrapper */}
                     <div className="w-full h-full rounded-xl overflow-hidden relative z-10">
                         {loadingAvatar ? (
-
                         <div className="absolute inset-0 bg-gradient-to-r from-zinc-800 via-zinc-700 to-zinc-800 animate-pulse flex items-center justify-center">
                           <User className="w-8 h-8 text-zinc-600 animate-bounce opacity-50" />
                         </div>
@@ -174,20 +94,18 @@ export const KudoFormSystem: React.FC = () => {
                         )}
                     </div>
 
-                    {}
+                    {/* Status Badge */}
                     {toUser && !loadingAvatar && (
                         <div className="absolute -bottom-3 -right-3 z-20 animate-in zoom-in duration-300 drop-shadow-[0_0_10px_rgba(34,197,94,0.8)]">
-                            {}
                             <CheckCircle2 className="w-9 h-9 text-green-500 fill-green-500 stroke-[3]" />
                         </div>
                     )}
                   </div>
                 </div>
-
               </div>
             </div>
 
-            {}
+            {/* Field: Category */}
             <div className="group">
               <label className={labelBase}>Categoría</label>
               <div className="relative">
@@ -201,7 +119,7 @@ export const KudoFormSystem: React.FC = () => {
               </div>
             </div>
 
-            {}
+            {/* Field: Message */}
             <div>
               <label className={labelBase}>Mensaje</label>
               <textarea
@@ -212,7 +130,7 @@ export const KudoFormSystem: React.FC = () => {
               />
             </div>
 
-            {}
+            {/* Action Group: Slider Submit */}
             <div className="pt-2">
               <div
                 ref={sliderRef}
@@ -243,7 +161,6 @@ export const KudoFormSystem: React.FC = () => {
                 </div>
               </div>
             </div>
-
         </div>
       </div>
     </section>

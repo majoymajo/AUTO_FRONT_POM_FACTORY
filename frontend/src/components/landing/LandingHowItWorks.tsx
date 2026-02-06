@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { User, Globe, Server, Database, Layers } from 'lucide-react';
+import { useArchitectureAnimation } from '../../hooks/landing/useArchitectureAnimation';
 
 const getBezierXY = (t: number, sx: number, sy: number, cp1x: number, cp1y: number, cp2x: number, cp2y: number, ex: number, ey: number) => {
   return {
@@ -24,42 +25,11 @@ const getLinearAngle = (sx: number, sy: number, ex: number, ey: number) => {
 };
 
 export const LandingHowItWorks: React.FC = () => {
-  const [pathIndex, setPathIndex] = useState(0);
-  const [status, setStatus] = useState<'TRAVELING' | 'ARRIVED'>('TRAVELING');
-  const [progress, setProgress] = useState(0);
-
-  const TRAVEL_DURATION = 2000;
-  const IDLE_DURATION = 1500;
-
-  useEffect(() => {
-    let startTime = Date.now();
-    let animationFrame: number;
-
-    const loop = () => {
-      const now = Date.now();
-      const elapsed = now - startTime;
-
-      if (status === 'TRAVELING') {
-        const p = Math.min(elapsed / TRAVEL_DURATION, 1);
-        setProgress(p);
-        if (p >= 1) {
-          setStatus('ARRIVED');
-          startTime = Date.now();
-        }
-      } else {
-        if (elapsed >= IDLE_DURATION) {
-          setStatus('TRAVELING');
-          setPathIndex((prev) => (prev + 1) % 5);
-          setProgress(0);
-          startTime = Date.now();
-        }
-      }
-      animationFrame = requestAnimationFrame(loop);
-    };
-
-    animationFrame = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(animationFrame);
-  }, [pathIndex, status]);
+  const { pathIndex, status, progress, isNodeActive } = useArchitectureAnimation({
+    travelDuration: 2000,
+    idleDuration: 1500,
+    pathCount: 5
+  });
 
   const renderDataPacket = () => {
     if (status !== 'TRAVELING') return null;
@@ -104,11 +74,6 @@ export const LandingHowItWorks: React.FC = () => {
     );
   };
 
-  const isNodeActive = (nodeId: number) => {
-    if (nodeId === 0) return true;
-    return (pathIndex + 1 === nodeId) && (status === 'ARRIVED');
-  };
-
   return (
     <section id="como-funciona" className="relative border-t border-zinc-800 bg-zinc-950 py-24 overflow-hidden">
 
@@ -141,7 +106,7 @@ export const LandingHowItWorks: React.FC = () => {
             {renderDataPacket()}
           </svg>
 
-          {}
+          {/* Source Node: Employee */}
           <div className="absolute top-1/2 left-[50px] -translate-y-1/2 flex flex-col items-center gap-3">
             <div className={`w-24 h-24 rounded-2xl bg-zinc-800 border-2 flex items-center justify-center shadow-[0_0_20px_rgba(255,255,255,0.05)] z-10 transition-all duration-300 ${
               isNodeActive(0) ? 'border-[#FF5F00] shadow-[0_0_30px_rgba(255,95,0,0.5)] scale-110' : 'border-zinc-600'
@@ -152,7 +117,7 @@ export const LandingHowItWorks: React.FC = () => {
             <span className="text-sm font-bold text-zinc-300 bg-zinc-900/80 px-3 py-1 rounded-full border border-zinc-700">Empleado Sofka</span>
           </div>
 
-          {}
+          {/* UI Node: React Web */}
           <div className="absolute top-1/2 left-[320px] -translate-y-1/2 flex flex-col items-center gap-3">
             <div className={`w-40 h-28 rounded-xl bg-zinc-900 border flex flex-col items-center justify-center gap-2 z-10 transition-all duration-300 ${
               isNodeActive(1) ? 'border-[#FF5F00] shadow-[0_0_30px_rgba(255,95,0,0.3)] scale-110' : 'border-blue-500/30 shadow-[0_0_30px_rgba(59,130,246,0.1)]'
@@ -164,7 +129,7 @@ export const LandingHowItWorks: React.FC = () => {
             <span className="text-xs text-zinc-500 max-w-[120px] text-center bg-zinc-950/50 px-2 py-1 rounded border border-zinc-800">Envía petición JSON</span>
           </div>
 
-          {}
+          {/* Backend Node: Producer */}
           <div className="absolute top-[80px] left-[550px] flex flex-col items-center gap-3">
             <div className={`w-40 h-28 rounded-xl bg-zinc-900 border flex flex-col items-center justify-center gap-2 z-10 transition-all duration-300 ${
               isNodeActive(2) ? 'border-[#FF5F00] shadow-[0_0_30px_rgba(255,95,0,0.3)] scale-110' : 'border-green-500/30 shadow-[0_0_30px_rgba(34,197,94,0.1)]'
@@ -176,7 +141,7 @@ export const LandingHowItWorks: React.FC = () => {
             <span className="text-xs text-zinc-500 text-center bg-zinc-950/50 px-2 py-1 rounded border border-zinc-800">Valida y Publica Evento</span>
           </div>
 
-          {}
+          {/* Broker Node: RabbitMQ */}
           <div className="absolute bottom-[80px] left-[550px] flex flex-col items-center gap-3">
             <div className={`relative w-40 h-28 rounded-xl bg-[#FF5F00]/10 border border-[#FF5F00] flex flex-col items-center justify-center gap-2 z-10 transition-all duration-300 ${
               isNodeActive(3) ? 'shadow-[0_0_50px_rgba(255,95,0,0.6)] scale-110 bg-[#FF5F00]/30' : 'shadow-[0_0_40px_rgba(255,95,0,0.2)]'
@@ -190,7 +155,7 @@ export const LandingHowItWorks: React.FC = () => {
             <span className="text-xs text-[#FF5F00] font-bold text-center animate-pulse bg-zinc-950/50 px-2 py-1 rounded border border-[#FF5F00]/30">Desacople Asíncrono</span>
           </div>
 
-          {}
+          {/* Backend Node: Consumer */}
           <div className="absolute top-[80px] right-[150px] flex flex-col items-center gap-3">
             <div className={`w-40 h-28 rounded-xl bg-zinc-900 border flex flex-col items-center justify-center gap-2 z-10 transition-all duration-300 ${
               isNodeActive(4) ? 'border-[#FF5F00] shadow-[0_0_30px_rgba(255,95,0,0.3)] scale-110' : 'border-purple-500/30 shadow-[0_0_30px_rgba(168,85,247,0.1)]'
@@ -202,7 +167,7 @@ export const LandingHowItWorks: React.FC = () => {
             <span className="text-xs text-zinc-500 text-center bg-zinc-950/50 px-2 py-1 rounded border border-zinc-800">Procesa Lógica Pesada</span>
           </div>
 
-          {}
+          {/* DB Node: Persistence */}
           <div className="absolute bottom-[80px] right-[150px] flex flex-col items-center gap-3">
              <div className={`w-40 h-28 rounded-xl bg-zinc-900 border shadow-xl flex flex-col items-center justify-center gap-2 z-10 transition-all duration-300 ${
               isNodeActive(5) ? 'border-[#FF5F00] shadow-[0_0_30px_rgba(255,95,0,0.3)] scale-110 opacity-100' : 'border-zinc-700 opacity-70'

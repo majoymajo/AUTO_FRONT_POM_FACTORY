@@ -1,5 +1,6 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React from 'react';
 import { ArrowRight, ChevronRight, Gift, Heart, ChevronsDown } from 'lucide-react';
+import { useLaunchSlider } from '../../hooks/landing/useLaunchSlider';
 
 export interface LandingHeroProps {
   onLaunchApp?: () => void;
@@ -8,56 +9,17 @@ export interface LandingHeroProps {
 const INITIAL_SLIDER = 11;
 
 export const LandingHero: React.FC<LandingHeroProps> = ({ onLaunchApp }) => {
-  const [sliderValue, setSliderValue] = useState(INITIAL_SLIDER);
-  const [isDragging, setIsDragging] = useState(false);
-  const [completed, setCompleted] = useState(false);
-  const sliderRef = useRef<HTMLDivElement>(null);
-
-  const handleStart = () => {
-    if (!completed) setIsDragging(true);
-  };
-
-  const handleEnd = () => {
-    setIsDragging(false);
-
-    if (sliderValue > 90) {
-      setCompleted(true);
-      setSliderValue(100);
-
-      setTimeout(() => {
-        onLaunchApp?.();
-        setSliderValue(INITIAL_SLIDER);
-        setCompleted(false);
-      }, 400);
-    } else {
-      setSliderValue(INITIAL_SLIDER);
-    }
-  };
-
-  const handleMove = (clientX: number) => {
-    if (!isDragging || !sliderRef.current) return;
-
-    const rect = sliderRef.current.getBoundingClientRect();
-    const x = Math.max(0, Math.min(clientX - rect.left, rect.width));
-    const percent = (x / rect.width) * 100;
-
-    setSliderValue(percent);
-  };
-
-  useEffect(() => {
-    const onMove = (e: MouseEvent) => handleMove(e.clientX);
-    const onUp = () => handleEnd();
-
-    if (isDragging) {
-      window.addEventListener('mousemove', onMove);
-      window.addEventListener('mouseup', onUp);
-    }
-
-    return () => {
-      window.removeEventListener('mousemove', onMove);
-      window.removeEventListener('mouseup', onUp);
-    };
-  }, [isDragging, sliderValue]);
+  const {
+    sliderValue,
+    isDragging,
+    sliderRef,
+    handleStart,
+    handleMove,
+    handleEnd,
+  } = useLaunchSlider({
+    initialSliderValue: INITIAL_SLIDER,
+    onLaunch: onLaunchApp,
+  });
 
   return (
     <section className="relative flex min-h-[95vh] flex-col items-center justify-center overflow-hidden pt-20 pb-20 px-4">

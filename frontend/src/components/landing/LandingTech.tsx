@@ -1,5 +1,5 @@
-import { useEffect, useRef } from 'react';
 import {SiReact,SiVite,SiTypescript,SiTailwindcss,SiSpringboot,SiPostgresql,SiDocker,SiRabbitmq,} from 'react-icons/si';
+import { useInfiniteScroll } from '../../hooks/landing/useInfiniteScroll';
 
 const techStack = [
   { name: 'React', icon: SiReact },
@@ -13,32 +13,7 @@ const techStack = [
 ];
 
 export const LandingTech = () => {
-  const trackRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!trackRef.current) return;
-
-    let position = 0;
-    const speed = 0.5;
-
-    const animate = () => {
-      position -= speed;
-
-      if (trackRef.current) {
-        const resetPoint = trackRef.current.scrollWidth / 2;
-
-        if (Math.abs(position) >= resetPoint) {
-          position = 0;
-        }
-
-        trackRef.current.style.transform = `translateX(${position}px)`;
-      }
-
-      requestAnimationFrame(animate);
-    };
-
-    animate();
-  }, []);
+  const { trackRef } = useInfiniteScroll(0.5);
 
   return (
     <section className="relative py-32 overflow-hidden bg-zinc-950">

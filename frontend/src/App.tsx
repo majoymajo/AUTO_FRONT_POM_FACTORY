@@ -1,42 +1,20 @@
-import { useState, useRef, useCallback } from 'react';
 import { Navbar } from './components/Navbar';
 import KudoForm from './components/KudoForm';
 import { LandingHero } from './components/landing/LandingHero';
 import { LandingHowItWorks } from './components/landing/LandingHowItWorks';
 import { LandingTech } from './components/landing/LandingTech';
 import { LandingFooter } from './components/landing/LandingFooter';
+import { useApp } from './hooks/useApp';
 import './index.css';
 
 function App() {
-  const [isAppView, setIsAppView] = useState(false);
-  const [isTransitioning, setIsTransitioning] = useState(false);
-  const landingRef = useRef<HTMLDivElement>(null);
-
-  const handleLaunchApp = useCallback(() => {
-    setIsTransitioning(true);
-
-    setTimeout(() => {
-      setIsAppView((prev) => !prev);
-      setIsTransitioning(false);
-
-      if (isAppView) {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      }
-    }, 500);
-  }, [isAppView]);
-
-  const handleNavigate = useCallback((id: string) => {
-    setIsAppView(false);
-
-    setTimeout(() => {
-      const element = document.getElementById(id);
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth' });
-      } else {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      }
-    }, 300);
-  }, []);
+  const {
+    isAppView,
+    isTransitioning,
+    landingRef,
+    handleLaunchApp,
+    handleNavigate,
+  } = useApp();
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 selection:bg-[#FF5F00] selection:text-zinc-950">
@@ -75,7 +53,6 @@ function App() {
               </div>
             </div>
           ) : (
-
             <div ref={landingRef}>
               <LandingHero onLaunchApp={handleLaunchApp} />
               <div id="como-funciona">
