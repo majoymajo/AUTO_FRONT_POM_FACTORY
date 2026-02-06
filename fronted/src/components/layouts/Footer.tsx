@@ -34,7 +34,7 @@ export const Footer: React.FC<FooterProps> = ({
       `}
       role="contentinfo"
     >
-      {/* Decorative background elements */}
+      {}
       <div className="absolute inset-0 opacity-10">
         <div className="absolute top-0 left-0 w-64 h-64 bg-white rounded-full blur-3xl"></div>
         <div className="absolute bottom-0 right-0 w-48 h-48 bg-sky-300 rounded-full blur-3xl"></div>
@@ -42,9 +42,9 @@ export const Footer: React.FC<FooterProps> = ({
 
       {children || (
         <div className="relative max-w-6xl mx-auto">
-          {/* Main footer content */}
+          {}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
-            {/* Branding Column */}
+            {}
             <div className="text-center md:text-left">
               <h3 className="text-2xl font-bold text-white mb-3 drop-shadow-lg">
                 {text}
@@ -54,7 +54,7 @@ export const Footer: React.FC<FooterProps> = ({
               </p>
             </div>
 
-            {/* Quick Links Column */}
+            {}
             <div className="text-center">
               <h4 className="text-lg font-semibold text-white mb-3 drop-shadow-md">
                 Enlaces Rápidos
@@ -78,7 +78,7 @@ export const Footer: React.FC<FooterProps> = ({
               </ul>
             </div>
 
-            {/* Social Media Column */}
+            {}
             <div className="text-center md:text-right">
               <h4 className="text-lg font-semibold text-white mb-3 drop-shadow-md">
                 Síguenos
@@ -89,33 +89,33 @@ export const Footer: React.FC<FooterProps> = ({
                   className="w-10 h-10 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-all duration-300 transform hover:scale-110 backdrop-blur-sm"
                   aria-label="LinkedIn"
                 >
-                  <span className="text-white text-lg">💼</span>
+                  <span className="text-white text-lg"></span>
                 </a>
                 <a 
                   href="#" 
                   className="w-10 h-10 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-all duration-300 transform hover:scale-110 backdrop-blur-sm"
                   aria-label="Twitter"
                 >
-                  <span className="text-white text-lg">🐦</span>
+                  <span className="text-white text-lg"></span>
                 </a>
                 <a 
                   href="#" 
                   className="w-10 h-10 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-all duration-300 transform hover:scale-110 backdrop-blur-sm"
                   aria-label="GitHub"
                 >
-                  <span className="text-white text-lg">💻</span>
+                  <span className="text-white text-lg"></span>
                 </a>
               </div>
             </div>
           </div>
 
-          {/* Divider */}
+          {}
           <div className="h-px bg-white/20 mb-6"></div>
 
-          {/* Copyright */}
+          {}
           <div className="text-center">
             <p className="text-white/80 text-sm drop-shadow">
-              © {new Date().getFullYear()} Sofkianos MVP. Hecho con ❤️ por el equipo
+              © {new Date().getFullYear()} Sofkianos MVP. Hecho con  por el equipo
             </p>
           </div>
         </div>

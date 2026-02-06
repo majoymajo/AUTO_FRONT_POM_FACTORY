@@ -29,9 +29,9 @@ export const useKudos = () => {
 
   useEffect(() => {
     fetchKudos();
-    
-    // Refresh list when a kudo is sent (simple event bus or just polling)
-    const interval = setInterval(fetchKudos, 10000); // Poll every 10s for mock updates
+
+
+    const interval = setInterval(fetchKudos, 10000); 
     return () => clearInterval(interval);
   }, []);
 

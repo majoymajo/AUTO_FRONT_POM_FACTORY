@@ -40,16 +40,16 @@ export const useHomeForm = (): UseHomeFormReturn => {
       setSuccessMessage(null);
 
       const response = await kudosService.sendKudos(data);
-      
+
       setSuccessMessage(response.message || '¡Mensaje enviado exitosamente!');
       reset();
-      
-      // Clear success message after 5 seconds
+
+
       setTimeout(() => setSuccessMessage(null), 5000);
     } catch (err: any) {
       setError(err.message || 'Error al enviar el mensaje');
-      
-      // Clear error after 5 seconds
+
+
       setTimeout(() => setError(null), 5000);
     }
   };

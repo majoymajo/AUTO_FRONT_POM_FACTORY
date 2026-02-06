@@ -12,7 +12,7 @@ export interface KudosResponse {
 }
 
 export const kudosService = {
-  // Send kudos message
+
   sendKudos: async (data: KudosFormData): Promise<KudosResponse> => {
     try {
       const response = await apiClient.post<KudosResponse>('/kudos', data);
@@ -24,7 +24,7 @@ export const kudosService = {
     }
   },
 
-  // Get all kudos
+
   getAllKudos: async (): Promise<any> => {
     try {
       const response = await apiClient.get('/kudos');

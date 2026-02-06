@@ -77,10 +77,10 @@ export const CustomInput: React.FC<CustomInputProps> = ({
             ${className}
           `}
         />
-        {/* Decorative corner accent */}
+        {}
         <div className="absolute top-0 right-0 w-20 h-20 bg-orange-500/5 rounded-tr-[2rem] rounded-bl-[4rem] pointer-events-none transition-opacity duration-500 group-focus-within:bg-orange-500/10"></div>
       </div>
-      
+
       {error && (
         <div className="flex items-center gap-3 mt-4 ml-4 animate-fade-in">
           <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>

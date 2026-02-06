@@ -17,7 +17,7 @@ describe('kudosSchema', () => {
     const result = kudosSchema.safeParse(invalidData);
     expect(result.success).toBe(false);
     if (!result.success) {
-      // Use result.error.issues to get the array of errors in Zod
+
       expect(result.error.issues[0].message).toBe('El mensaje debe tener al menos 10 caracteres');
     }
   });

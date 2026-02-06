@@ -1,10 +1,10 @@
 import type { KudosFormData } from '../../schemas/kudosSchema';
 import type { KudosResponse } from './kudosService';
 
-// Mock delay to simulate network latency
+
 const delay = (ms: number = 500) => new Promise(resolve => setTimeout(resolve, ms));
 
-// Mock data storage (simulates a database)
+
 const mockKudosDatabase: Array<{
   id: string;
   message: string;
@@ -35,31 +35,31 @@ const mockKudosDatabase: Array<{
   },
 ];
 
-// Mock kudos service with simulated responses
-export const kudosServiceMock = {
-  // Send kudos message
-  sendKudos: async (data: KudosFormData): Promise<KudosResponse> => {
-    await delay(800); // Simulate network delay
 
-    // Simulate validation
+export const kudosServiceMock = {
+
+  sendKudos: async (data: KudosFormData): Promise<KudosResponse> => {
+    await delay(800); 
+
+
     if (!data.message || data.message.trim().length === 0) {
       throw new Error('El mensaje no puede estar vacío');
     }
 
-    // Create new kudo - extend with optional fields for mock purposes
+
     const newKudo = {
       id: String(mockKudosDatabase.length + 1),
       message: data.message,
       createdAt: new Date().toISOString(),
-      // These fields are for mock display purposes only
+
       from: 'Usuario Actual',
       to: 'Equipo Sofkianos',
     };
 
-    // Add to mock database
+
     mockKudosDatabase.unshift(newKudo);
 
-    // Return success response
+
     return {
       success: true,
       message: 'Kudo enviado exitosamente',
@@ -71,11 +71,11 @@ export const kudosServiceMock = {
     };
   },
 
-  // Get all kudos
-  getAllKudos: async (): Promise<any> => {
-    await delay(600); // Simulate network delay
 
-    // Return mock kudos list
+  getAllKudos: async (): Promise<any> => {
+    await delay(600); 
+
+
     return {
       success: true,
       data: mockKudosDatabase,
@@ -83,7 +83,7 @@ export const kudosServiceMock = {
     };
   },
 
-  // Get kudos by ID (bonus method)
+
   getKudoById: async (id: string): Promise<any> => {
     await delay(400);
 
@@ -99,7 +99,7 @@ export const kudosServiceMock = {
     };
   },
 
-  // Delete kudos (bonus method for testing)
+
   deleteKudo: async (id: string): Promise<any> => {
     await delay(500);
 

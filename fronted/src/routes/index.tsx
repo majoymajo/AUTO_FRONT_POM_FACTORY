@@ -6,11 +6,11 @@ export const AppRouter: React.FC = () => {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Public Routes */}
+        {}
         <Route path="/home" element={<Home />} />
         <Route path="/" element={<Navigate to="/home" replace />} />
-        
-        {/* 404 Not Found */}
+
+        {}
         <Route path="*" element={<Navigate to="/home" replace />} />
       </Routes>
     </BrowserRouter>

@@ -10,10 +10,10 @@ export const apiClient = axios.create({
   timeout: 10000,
 });
 
-// Request interceptor
+
 apiClient.interceptors.request.use(
   (config) => {
-    // Add authorization token if available
+
     const token = localStorage.getItem('authToken');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -25,15 +25,15 @@ apiClient.interceptors.request.use(
   }
 );
 
-// Response interceptor
+
 apiClient.interceptors.response.use(
   (response) => {
     return response;
   },
   (error) => {
-    // Handle errors globally
+
     if (error.response?.status === 401) {
-      // Unauthorized - redirect to login
+
       localStorage.removeItem('authToken');
       window.location.href = '/login';
     }

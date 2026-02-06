@@ -48,7 +48,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
       <main className="max-w-5xl mx-auto" role="main">
         <Hero title={heroTitle} subtitle={heroSubtitle} />
 
-        {/* Success Message */}
+        {}
         {successMessage && (
           <div className="
             bg-gradient-to-r 
@@ -68,7 +68,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
           </div>
         )}
 
-        {/* Error Message */}
+        {}
         {error && (
           <div className="
             bg-gradient-to-r 
@@ -88,14 +88,14 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
           </div>
         )}
 
-        {/* Decorative divider */}
+        {}
         <div className="flex items-center gap-4 my-8">
           <div className="flex-1 h-px bg-gradient-to-r from-transparent via-orange-400/50 to-transparent"></div>
-          <div className="text-orange-400 text-2xl">✨</div>
+          <div className="text-orange-400 text-2xl"></div>
           <div className="flex-1 h-px bg-gradient-to-r from-transparent via-orange-400/50 to-transparent"></div>
         </div>
 
-        {/* Form Section */}
+        {}
         <section className="my-8" aria-label="Main Form">
           <form onSubmit={onSubmit} className="space-y-4">
             <CustomInput

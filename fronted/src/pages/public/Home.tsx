@@ -15,7 +15,7 @@ export const Home: React.FC = () => {
   return (
     <>
       <MainLayout
-        heroTitle="Envía tus Kudos ✨"
+        heroTitle="Envía tus Kudos "
         heroSubtitle="Reconoce y celebra el gran trabajo de tu equipo"
         inputValue={inputValue}
         inputPlaceholder="Escribe tu mensaje de reconocimiento aquí..."
