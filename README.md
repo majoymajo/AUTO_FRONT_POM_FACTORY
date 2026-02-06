@@ -1,37 +1,330 @@
-# SofkianOS
+# SofkianOS - Distributed System (Microservices Architecture)
 
-## How to Run
+<div align="right">
+  <img src="./assets/sofka-logo.png" alt="Sofka Logo" height="150px" />
+</div>
 
-1. **Configure environment**
+---
 
-   Copy the example env file and adjust if needed:
+## Team
+
+- **Christopher Pallo**
+- **Elian Condor**
+- **Leonel**
+
+**Workshop:** Distributed Systems
+
+---
+
+## Reason for Being
+
+SofkianOS transforms the Sofkian identity into tangible **Kudos**. The term **Kudos** comes from the Greek *kŷdos*, meaning honor, recognition, and prestige for an achievement. This system represents how we celebrate the real contributions of each person, creating a **Rewards Culture** that strengthens bonds between geographically distributed teams.
+
+**Sofkian** (our essence) + **OS** (Operating System of Kudos) = **Rewards Culture**
+
+### Value Proposition
+
+- **Instant Recognition**: Kudos are sent immediately, with no visible waits or queues for the user
+- **No Blocking**: Asynchronous architecture with messaging. The API responds with 202 and work continues in the background
+- **Fair Gamification**: Categories with points, traceability, and a system designed to scale with your team
+- **Massive Processing**: SofkianOS processes thousands of recognitions without blocking thanks to the asynchronous pipeline
+
+---
+
+## System Architecture
+
+### Data Flow (C2 - Containers)
+
+SofkianOS operates as a distributed system where Kudos flow through multiple bounded contexts:
+
+1. **Sofka Employee** → User sends a Kudo from the web interface
+2. **SofkianOS Web (React + Vite)** → Sends JSON request to Producer API
+3. **Producer API (Spring Boot)** → Validates and publishes event to RabbitMQ
+4. **RabbitMQ (Broker/Store)** → Asynchronous decoupling, temporary storage
+5. **Consumer Worker (Spring Boot Listener)** → Processes heavy gamification logic
+6. **Database (PostgreSQL)** → Final persistence (future)
+
+**Key Benefits**:
+- **Non-Blocking API**: Producer responds instantly (202), processing occurs asynchronously
+- **Scalability**: Multiple Consumer instances can process messages in parallel
+- **Resilience**: Messages persist in RabbitMQ if Consumers are temporarily unavailable
+- **Decoupling**: Frontend and Producer don't need to know the Consumer implementation
+
+---
+
+## Technology Stack
+
+<div align="center">
+
+### Frontend & Backend
+
+[![TypeScript](https://skillicons.dev/icons?i=ts)](https://www.typescriptlang.org/)
+[![React](https://skillicons.dev/icons?i=react)](https://react.dev/)
+[![Vite](https://skillicons.dev/icons?i=vite)](https://vitejs.dev/)
+[![Tailwind](https://skillicons.dev/icons?i=tailwind)](https://tailwindcss.com/)
+[![Spring](https://skillicons.dev/icons?i=spring)](https://spring.io/)
+[![Java](https://skillicons.dev/icons?i=java)](https://www.java.com/)
+[![Maven](https://skillicons.dev/icons?i=maven)](https://maven.apache.org/)
+
+### Infrastructure
+
+[![RabbitMQ](https://skillicons.dev/icons?i=rabbitmq)](https://www.rabbitmq.com/)
+[![Docker](https://skillicons.dev/icons?i=docker)](https://www.docker.com/)
+[![Terraform](https://skillicons.dev/icons?i=terraform)](https://www.terraform.io/)
+[![AWS](https://skillicons.dev/icons?i=aws)](https://aws.amazon.com/)
+
+</div>
+
+### Specific Versions
+
+| Category        | Technology              | Version        |
+|-----------------|-------------------------|----------------|
+| **Frontend**    | React                   | 19.2.0         |
+|                 | TypeScript              | 5.9.3          |
+|                 | Vite                    | 7.2.4          |
+|                 | Tailwind CSS            | 3.4.19         |
+| **Backend**     | Spring Boot             | 3.3.5          |
+|                 | Java                    | 17             |
+|                 | Maven                   | (Spring Parent)|
+| **Messaging**   | RabbitMQ                | 3-management  |
+| **Infrastructure** | Docker              | Multi-stage    |
+|                 | Terraform               | (AWS)          |
+
+---
+
+## Visual Architecture (C4 Model)
+
+Architecture diagrams are stored in `./assets/`:
+
+### System Context (C1)
+
+![System Context](./assets/architecture-c1.png)
+
+High-level view of SofkianOS showing external actors (Sofka Employees) and the system boundary with Frontend, Producer API, RabbitMQ, and Consumer Worker.
+
+### Container Architecture (C2)
+
+![Container Architecture](./assets/architecture-c2.png)
+
+Detailed container-level architecture showing internal components of each service, communication protocols (HTTP, AMQP), and data flow.
+
+### Component Detail (C3)
+
+![Component Detail](./assets/architecture-c3.png)
+
+Detailed view of internal components of each service (Controllers, Services, Configurations, Consumers).
+
+---
+
+## Project Navigation
+
+This repository contains three main services, each with its own README:
+
+| Service              | Path                  | Description                                    | README                                    |
+|----------------------|-----------------------|------------------------------------------------|-------------------------------------------|
+| **Frontend**         | `/frontend`           | React SPA with landing page and Kudo form      | [Frontend README](./frontend/README.md)   |
+| **Producer API**     | `/producer-api`       | REST API gateway that publishes to RabbitMQ    | [Producer README](./producer-api/README.md) |
+| **Consumer Worker**  | `/consumer-worker`    | Asynchronous worker that processes Kudos       | [Consumer README](./consumer-worker/README.md) |
+| **Infrastructure**   | `/aws`                | Terraform configurations for AWS               | (See `.tf` files)                         |
+
+---
+
+## AI Workflow — SofkianOS
+
+**Document:** AI Interaction Strategy  
+**Team:** SofkianOS  
+**Version:** 1.0
+
+### 1. Methodology: AI-First
+
+SofkianOS adopts an **AI-First** approach to development:
+
+- **Humans = Architects.** We define vision, requirements, architecture, and quality criteria. We decide *what* to build and *why*.
+- **AI = Junior Developer.** AI executes implementation under human direction: code, tests, and documentation. We review and refine its output.
+
+We do not treat AI as a replacement for judgment; we use it as a disciplined executor that we orchestrate and validate.
+
+### 2. Golden Rule
+
+**Strictly NO manual boilerplate code.**
+
+- All scaffolding, boilerplate, and repetitive structure must be **orchestrated via AI** (prompts, code generation, templates).
+- Humans **do not** write repetitive configuration by hand; we **prompt and review** so that AI produces it.
+- Exceptions (e.g., unique config or security-critical snippets) must be justified and documented.
+
+### 3. Roles
+
+| Responsibility        | Owner   | Description |
+|-----------------------|---------|-------------|
+| Strategy              | Humans  | Product/technology direction, priorities, architecture decisions. |
+| Prompt Engineering    | Humans  | Designing and improving prompts; defining [ROLE], [CONTEXT], [CONSTRAINT], [OUTPUT]. |
+| Security Review       | Humans  | Review of dependencies, auth, data handling, and security-sensitive changes. |
+| PR Merging            | Humans  | Final approval and merge to `develop` / `main`; no automated merge without human gate. |
+| Coding                | AI      | Implementation of features, refactors, and fixes from approved specifications. |
+| Unit Tests            | AI      | Writing and maintaining unit tests aligned with acceptance criteria. |
+| Documentation        | AI      | Inline docs, README updates, and technical documentation from human outlines. |
+
+### 4. Prompt Protocol
+
+Every request to AI must follow this structure:
+
+```
+[ROLE]      — Who the AI is acting as (e.g., "Backend developer", "QA engineer").
+[CONTEXT]   — Relevant background: ticket, architecture, files, or decisions.
+[CONSTRAINT] — Hard limits: stack, patterns, style, security, performance.
+[OUTPUT]    — Exact deliverable: files, format, behavior, acceptance criteria.
+```
+
+**Example:**
+
+```text
+[ROLE] Act as backend developer for our REST API.
+[CONTEXT] We are adding a new "projects" resource; see ADR-002 and OpenAPI specification in /docs.
+[CONSTRAINT] Use our existing service/repository pattern; no new dependencies without approval; follow project ESLint config.
+[OUTPUT] Implement GET /api/v1/projects and POST /api/v1/projects with validation; add unit tests and update OpenAPI.
+```
+
+Prompts that omit any of the four parts must be completed by the author before sending.
+
+### 5. Git Flow
+
+We use a simple branching model:
+
+| Branch       | Purpose |
+|--------------|---------|
+| `main`       | Production-ready code. Protected; only updated via merges from `develop` (or release process). |
+| `develop`    | Integration branch. All feature work is merged here after review. |
+| `feature/*`  | One branch per feature/task (e.g., `feature/auth-login`, `feature/api-projects`). Branched from `develop`, merged back into `develop` via PR. |
+
+**Rules:**
+
+- Create `feature/<short-name>` from `develop`.
+- Work (human + AI) happens on the feature branch.
+- Open a Pull Request toward `develop`; humans perform Security Review and approval.
+- Only humans merge PRs. After merge, delete the feature branch.
+- Releases to `main` follow the team's release process (e.g., from `develop` or via release branches).
+
+### Summary
+
+| Principle        | Rule |
+|------------------|------|
+| Methodology      | AI-First: Humans architect, AI implements. |
+| Golden Rule      | No manual boilerplate; AI generates scaffolding. |
+| Roles            | Humans: Strategy, Prompts, Security, Merge. AI: Code, Tests, Docs. |
+| Prompts          | Always use [ROLE] + [CONTEXT] + [CONSTRAINT] + [OUTPUT]. |
+| Git              | `main`, `develop`, `feature/*`; humans gate merges. |
+
+---
+
+## Execution
+
+### Prerequisites
+
+- **Docker** and **Docker Compose** installed
+- **Available ports**: 5173 (Frontend), 8082 (Producer), 8081 (Consumer), 5672 (RabbitMQ AMQP), 15672 (RabbitMQ Management), 8888 (Dozzle)
+
+### Quick Start
+
+1. **Configure environment** (optional):
 
    ```bash
    cp .env.example .env
    ```
 
-   Default credentials in `.env.example` are `guest` / `guest` (suitable for local only).
+   Default RabbitMQ credentials: `guest` / `guest` (local only).
 
-2. **Start the stack**
-
-   From the project root:
+2. **Start the entire stack**:
 
    ```bash
-   docker compose up -d
+   docker compose up -d --build
    ```
 
-   This starts RabbitMQ with:
-   - **AMQP** on port `5672` (application)
-   - **Management UI** on port `15672` (browser: http://localhost:15672)
+   This command:
+   - Builds all service images (Frontend, Producer API, Consumer Worker)
+   - Starts RabbitMQ with health checks
+   - Starts Producer API (waits for RabbitMQ to be healthy)
+   - Starts Consumer Worker (waits for RabbitMQ to be healthy)
+   - Starts Frontend (waits for Producer API to be available)
+   - Starts Dozzle log viewer
 
-3. **Stop the stack**
+3. **Verify services**:
+
+   - **Frontend**: http://localhost:5173
+   - **Producer API**: http://localhost:8082/api/v1/kudos (POST)
+   - **Consumer Worker**: http://localhost:8081/api/v1/health
+   - **RabbitMQ Management**: http://localhost:15672 (guest/guest)
+   - **Dozzle Logs**: http://localhost:8888
+
+4. **Stop the stack**:
 
    ```bash
    docker compose down
    ```
 
-   Data is kept in the `rabbitmq_data` volume. To remove it as well:
+   To remove volumes (including RabbitMQ data):
 
    ```bash
    docker compose down -v
    ```
+
+### Service Dependencies
+
+The orchestration ensures the correct startup order:
+
+- **RabbitMQ** starts first with health checks
+- **Producer API** and **Consumer Worker** wait for RabbitMQ to be healthy
+- **Frontend** waits for Producer API to be available
+- All services communicate via the `sofkian-net` bridge network
+
+### Testing the Flow
+
+1. Open http://localhost:5173
+2. Navigate to the Kudo form
+3. Send a Kudo (From, To, Category, Message)
+4. Verify Producer API logs: should show HTTP 202 response
+5. Verify RabbitMQ Management UI: check message in `kudos.queue`
+6. Verify Consumer Worker logs: should show message processing
+7. Verify that Consumer processed the Kudo (check database/logs)
+
+---
+
+## Network Architecture
+
+All services run on the Docker bridge network `sofkian-net`:
+
+- **Frontend** → **Producer API**: HTTP (port 8082)
+- **Producer API** → **RabbitMQ**: AMQP (port 5672)
+- **Consumer Worker** → **RabbitMQ**: AMQP (port 5672)
+- **External Access**: Ports exposed via Docker port mappings
+
+---
+
+## Monitoring & Observability
+
+- **Dozzle**: Real-time container logs at http://localhost:8888
+- **RabbitMQ Management UI**: Queue monitoring, message inspection at http://localhost:15672
+- **Health Endpoints**:
+  - Producer API: `GET http://localhost:8082/health`
+  - Consumer Worker: `GET http://localhost:8081/api/v1/health`
+
+---
+
+## Assets
+
+Architecture diagrams and evidence files are stored in `./assets/` at the project root. Create the folder if it doesn't exist:
+
+```bash
+mkdir -p assets
+```
+
+Expected files:
+- `sofka-logo.png` — Sofka logo
+- `architecture-c1.png` — System context diagram
+- `architecture-c2.png` — Container diagram
+- `architecture-c3.png` — Component diagram
+
+---
+
+## License
+
+Proprietary — Sofka Internal Use
