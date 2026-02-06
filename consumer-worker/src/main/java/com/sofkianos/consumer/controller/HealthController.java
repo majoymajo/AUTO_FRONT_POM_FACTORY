@@ -1,4 +1,4 @@
-package com.sofkianos.consumer;
+package com.sofkianos.consumer.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.http.ResponseEntity;

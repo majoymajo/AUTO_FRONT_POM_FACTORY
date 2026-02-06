@@ -1,4 +1,4 @@
-package com.sofkianos.consumer;
+package com.sofkianos.consumer.config;
 
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
