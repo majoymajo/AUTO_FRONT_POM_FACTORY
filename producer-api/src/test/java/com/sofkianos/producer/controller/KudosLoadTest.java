@@ -1,12 +1,14 @@
 package com.sofkianos.producer.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sofkianos.producer.dto.KudoRequest;
+import com.sofkianos.producer.service.KudoService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.ArrayList;
@@ -25,8 +27,11 @@ class KudosLoadTest {
     @Autowired
     private MockMvc mockMvc;
 
+    @Autowired
+    private ObjectMapper objectMapper;
+
     @MockBean
-    private RabbitTemplate rabbitTemplate;
+    private KudoService kudoService;
 
     @Test
     void stressTest_ConcurrentRequests() throws Exception {
@@ -42,9 +47,16 @@ class KudosLoadTest {
             final int requestId = i;
             futures.add(CompletableFuture.runAsync(() -> {
                 try {
+                    KudoRequest request = KudoRequest.builder()
+                            .from("user" + requestId + "@example.com")
+                            .to("peer" + requestId + "@example.com")
+                            .category("Innovation")
+                            .message("Stress test message " + requestId)
+                            .build();
+
                     mockMvc.perform(post("/api/v1/kudos")
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content("\"Stress test message " + requestId + "\""))
+                            .content(objectMapper.writeValueAsString(request)))
                             .andExpect(status().isAccepted());
                 } catch (Exception e) {
                     throw new RuntimeException("Request failed during stress test", e);
