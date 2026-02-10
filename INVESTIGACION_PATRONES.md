@@ -1,193 +1,193 @@
-# Investigación de Patrones de Diseño (Fase 2)
+# Design Patterns Investigation (Phase 2)
 
-**Fecha:** 10 de Febrero de 2026  
-**Proyecto:** Sofkianos MVP  
-**Arquitecto:** Antigravity (Senior Software Architect)
-
----
-
-## 1. Introducción y Alcance
-
-Esta investigación tiene como objetivo analizar el catálogo de patrones de diseño **Gang of Four (GoF)** para seleccionar las soluciones más adecuadas a los problemas arquitectónicos detectados en la auditoría técnica (**Fase 1**).
-
-El alcance de este análisis se centra en resolver:
-
-- Violaciones de **SRP** y **DIP** en los servicios de dominio  
-- Acoplamiento fuerte a la infraestructura (RabbitMQ, Jackson)  
-- Modelo de dominio anémico  
+**Date:** February 10, 2026
+**Project:** Sofkianos MVP
+**Architect:** Antigravity (Senior Software Architect)
 
 ---
 
-## 2. Análisis Categorizado de Patrones GoF
+## 1. Introduction and Scope
 
-### 2.1 Patrones Creacionales
+This investigation aims to analyze the **Gang of Four (GoF)** design patterns catalog to select the most suitable solutions for the architectural problems detected in the technical audit (**Phase 1**).
 
-Estos patrones abstraen el proceso de instanciación y ayudan a que el sistema sea independiente de cómo se crean sus objetos.
+The scope of this analysis focuses on solving:
+
+- **SRP** and **DIP** violations in domain services
+- Strong coupling to infrastructure (RabbitMQ, Jackson)
+- Anemic domain model
+
+---
+
+## 2. Categorized Analysis of GoF Patterns
+
+### 2.1 Creational Patterns
+
+These patterns abstract the instantiation process and help make the system independent of how its objects are created.
 
 #### Singleton
-- **Intención:** Garantizar una única instancia de una clase.
-- **Relevancia:** Spring Boot gestiona sus beans como *Singletons* por defecto. Implementarlo manualmente podría introducir estado global no deseado.
-- **Decisión:** ❌ Descartado.
+- **Intent:** Ensure a class has only one instance.
+- **Relevance:** Spring Boot manages its beans as *Singletons* by default. Implementing it manually could introduce unwanted global state.
+- **Decision:** ❌ Discarded.
 
 #### Factory Method
-- **Intención:** Definir una interfaz para crear un objeto, delegando la decisión de instanciación.
-- **Relevancia:** Útil si existieran múltiples tipos de eventos (`KudoEvent`, `AlertEvent`). Actualmente solo existe `Kudo`.
-- **Decisión:** ⚠️ Baja prioridad.
+- **Intent:** Define an interface for creating an object, but let subclasses decide which class to instantiate.
+- **Relevance:** Useful if there were multiple types of events (`KudoEvent`, `AlertEvent`). Currently, only `Kudo` exists.
+- **Decision:** ⚠️ Low priority.
 
 #### Abstract Factory
-- **Intención:** Crear familias de objetos relacionados.
-- **Relevancia:** Excesivo para el dominio actual. No existen familias de productos que varíen juntas.
-- **Decisión:** ❌ Descartado.
+- **Intent:** Create families of related objects.
+- **Relevance:** Excessive for the current domain. There are no product families that vary together.
+- **Decision:** ❌ Discarded.
 
 #### Builder
-- **Intención:** Separar la construcción de un objeto complejo de su representación.
-- **Relevancia:** ✅ Alta. Permite crear objetos de dominio (`Kudo`) válidos paso a paso, evitando constructores telescópicos y asegurando consistencia mediante validaciones en `build()`.
-- **Decisión:** ✅ Recomendado.
+- **Intent:** Separate the construction of a complex object from its representation.
+- **Relevance:** ✅ High. Allows creating valid domain objects (`Kudo`) step-by-step, avoiding telescoping constructors and ensuring consistency through validations in `build()`.
+- **Decision:** ✅ Recommended.
 
 #### Prototype
-- **Intención:** Crear nuevos objetos clonando uno existente.
-- **Relevancia:** No existe necesidad de clonar objetos costosos en este flujo.
-- **Decisión:** ❌ Descartado.
+- **Intent:** Create new objects by cloning an existing one.
+- **Relevance:** There is no need to clone expensive objects in this flow.
+- **Decision:** ❌ Discarded.
 
 ---
 
-### 2.2 Patrones Estructurales
+### 2.2 Structural Patterns
 
-Estos patrones se ocupan de cómo se componen clases y objetos para formar estructuras más grandes.
+These patterns deal with how classes and objects are composed to form larger structures.
 
 #### Adapter
-- **Intención:** Convertir la interfaz de una clase en otra que el cliente espera.
-- **Relevancia:** 🔥 Crítica. Permite desacoplar `KudoService` de `RabbitTemplate`.
-- **Decisión:** ✅ Recomendado.
+- **Intent:** Convert the interface of a class into another interface clients expect.
+- **Relevance:** 🔥 Critical. Allows decoupling `KudoService` from `RabbitTemplate`.
+- **Decision:** ✅ Recommended.
 
 #### Bridge
-- **Intención:** Desacoplar una abstracción de su implementación.
-- **Relevancia:** Similar a Adapter, pero Adapter encaja mejor para integrar librerías externas existentes.
-- **Decisión:** ⚠️ Baja prioridad.
+- **Intent:** Decouple an abstraction from its implementation.
+- **Relevance:** Similar to Adapter, but Adapter fits better for integrating existing external libraries.
+- **Decision:** ⚠️ Low priority.
 
 #### Composite
-- **Intención:** Componer objetos en estructuras de árbol.
-- **Relevancia:** No existen jerarquías complejas de parte-todo.
-- **Decisión:** ❌ Descartado.
+- **Intent:** Compose objects into tree structures.
+- **Relevance:** No complex part-whole hierarchies exist.
+- **Decision:** ❌ Discarded.
 
 #### Decorator
-- **Intención:** Añadir responsabilidades dinámicamente.
-- **Relevancia:** Spring AOP ya cubre logging y transacciones de forma más limpia.
-- **Decisión:** ❌ Descartado.
+- **Intent:** Attach additional responsibilities dynamically.
+- **Relevance:** Spring AOP already covers logging and transactions more cleanly.
+- **Decision:** ❌ Discarded.
 
 #### Facade
-- **Intención:** Proveer una interfaz simplificada a un subsistema complejo.
-- **Relevancia:** Útil si RabbitMQ se vuelve más complejo, pero Adapter resuelve mejor el DIP.
-- **Decisión:** ⚠️ Media.
+- **Intent:** Provide a simplified interface to a complex subsystem.
+- **Relevance:** Useful if RabbitMQ becomes more complex, but Adapter solves DIP better.
+- **Decision:** ⚠️ Medium.
 
 #### Flyweight
-- **Intención:** Compartir estado para soportar gran cantidad de objetos.
-- **Relevancia:** No hay problemas de memoria por objetos repetidos.
-- **Decisión:** ❌ Descartado.
+- **Intent:** Share state to support large numbers of objects.
+- **Relevance:** No memory issues due to repeated objects.
+- **Decision:** ❌ Discarded.
 
 #### Proxy
-- **Intención:** Proveer un sustituto o marcador de posición.
-- **Relevancia:** Spring ya lo utiliza internamente (CGLIB).
-- **Decisión:** ❌ Descartado.
+- **Intent:** Provide a surrogate or placeholder.
+- **Relevance:** Spring already uses this internally (CGLIB).
+- **Decision:** ❌ Discarded.
 
 ---
 
-### 2.3 Patrones de Comportamiento
+### 2.3 Behavioral Patterns
 
-Estos patrones se enfocan en la comunicación entre objetos y asignación de responsabilidades.
+These patterns focus on communication between objects and assignment of responsibilities.
 
 #### Chain of Responsibility
-- **Intención:** Pasar una solicitud por una cadena de manejadores.
-- **Relevancia:** ✅ Alta. Ideal para dividir el flujo del consumer en pasos independientes.
-- **Decisión:** ⚠️ Alternativa viable.
+- **Intent:** Pass a request along a chain of handlers.
+- **Relevance:** ✅ High. Ideal for splitting the consumer flow into independent steps.
+- **Decision:** ⚠️ Viable alternative.
 
 #### Command
-- **Intención:** Encapsular una solicitud como un objeto.
-- **Relevancia:** RabbitMQ ya gestiona la cola y ejecución diferida.
-- **Decisión:** ⚠️ Media.
+- **Intent:** Encapsulate a request as an object.
+- **Relevance:** RabbitMQ already manages the queue and deferred execution.
+- **Decision:** ⚠️ Medium.
 
 #### Iterator
-- **Intención:** Acceder secuencialmente a una colección.
-- **Relevancia:** No aplica al dominio actual.
-- **Decisión:** ❌ Descartado.
+- **Intent:** Access elements of a collection sequentially.
+- **Relevance:** Not applicable to the current domain.
+- **Decision:** ❌ Discarded.
 
 #### Mediator
-- **Intención:** Centralizar la interacción entre objetos.
-- **Relevancia:** `KudoService` ya actúa como mediador implícito.
-- **Decisión:** ⚠️ Baja.
+- **Intent:** Centralize interaction between objects.
+- **Relevance:** `KudoService` already acts as an implicit mediator.
+- **Decision:** ⚠️ Low.
 
 #### Memento
-- **Intención:** Capturar y restaurar estado.
-- **Relevancia:** No se requiere funcionalidad de undo.
-- **Decisión:** ❌ Descartado.
+- **Intent:** Capture and restore state.
+- **Relevance:** Undo functionality is not required.
+- **Decision:** ❌ Discarded.
 
 #### Observer
-- **Intención:** Dependencia uno-a-muchos para notificar cambios.
-- **Relevancia:** Spring `ApplicationEventPublisher` puede usarse para desacoplar efectos secundarios.
-- **Decisión:** ⚠️ Media/Alta.
+- **Intent:** One-to-many dependency to notify changes.
+- **Relevance:** Spring `ApplicationEventPublisher` can be used to decouple side effects.
+- **Decision:** ⚠️ Medium/High.
 
 #### State
-- **Intención:** Cambiar comportamiento según estado interno.
-- **Relevancia:** `Kudo` es inmutable.
-- **Decisión:** ❌ Descartado.
+- **Intent:** Alter behavior when internal state changes.
+- **Relevance:** `Kudo` is immutable.
+- **Decision:** ❌ Discarded.
 
 #### Strategy
-- **Intención:** Definir una familia de algoritmos intercambiables.
-- **Relevancia:** 🔥 Muy alta. Ideal para reglas de validación por categoría.
-- **Decisión:** ✅ Recomendado.
+- **Intent:** Define a family of interchangeable algorithms.
+- **Relevance:** 🔥 Very High. Ideal for validation rules per category.
+- **Decision:** ✅ Recommended.
 
 #### Template Method
-- **Intención:** Definir el esqueleto de un algoritmo.
-- **Relevancia:** Útil, pero menos flexible que Chain of Responsibility.
-- **Decisión:** ⚠️ Media.
+- **Intent:** Define the skeleton of an algorithm.
+- **Relevance:** Useful, but less flexible than Chain of Responsibility.
+- **Decision:** ⚠️ Medium.
 
 #### Visitor
-- **Intención:** Separar algoritmos de estructuras de objetos.
-- **Relevancia:** No existe estructura estable que lo justifique.
-- **Decisión:** ❌ Descartado.
+- **Intent:** Separate algorithms from object structures.
+- **Relevance:** No stable structure exists to justify it.
+- **Decision:** ❌ Discarded.
 
 ---
 
-## 3. Selección y Justificación de Patrones
+## 3. Selection and Justification of Patterns
 
-### 3.1 Creacional: **Builder**
-**Problema:** Modelo de dominio anémico y *Primitive Obsession*.  
-**Solución:** Implementar un Builder real en `Kudo` con validaciones en `build()`.  
-**Justificación:** Garantiza consistencia del dominio. Superior a Factory Method en este contexto.
-
----
-
-### 3.2 Estructural: **Adapter (Hexagonal Port & Adapter)**
-**Problema:** Violación de DIP por dependencias directas a RabbitMQ y Jackson.  
-**Solución:** Introducir puertos (`KudoEventPublisher`) y adaptadores concretos.  
-**Justificación:** Aisla el dominio de la infraestructura. Base de Clean Architecture.
+### 3.1 Creational: **Builder**
+**Problem:** Anemic domain model and *Primitive Obsession*.
+**Solution:** Implement a real Builder in `Kudo` with validations in `build()`.
+**Justification:** Guarantees domain consistency. Superior to Factory Method in this context.
 
 ---
 
-### 3.3 Comportamiento: **Strategy**
-**Problema:** Reglas de validación rígidas y propensas a `if/else`.  
-**Solución:** Estrategias de validación por categoría.  
-**Justificación:** Cumple OCP y permite escalar reglas sin modificar servicios existentes.
+### 3.2 Structural: **Adapter (Hexagonal Port & Adapter)**
+**Problem:** DIP violation due to direct dependencies on RabbitMQ and Jackson.
+**Solution:** Introduce ports (`KudoEventPublisher`) and concrete adapters.
+**Justification:** Isolates the domain from infrastructure. Foundation of Clean Architecture.
 
 ---
 
-## 4. Resumen Comparativo
+### 3.3 Behavioral: **Strategy**
+**Problem:** Rigid validation rules prone to `if/else`.
+**Solution:** Validation strategies per category.
+**Justification:** Complies with OCP and allows scaling rules without modifying existing services.
 
-| Criterio | Arquitectura Actual (MVP) | Arquitectura Propuesta | Impacto |
+---
+
+## 4. Comparative Summary
+
+| Criterion | Current Architecture (MVP) | Proposed Architecture | Impact |
 |--------|---------------------------|------------------------|---------|
-| Coupling | Alto | Bajo | Facilita migración y testing |
-| SRP | Violado | Cumplido | Mayor mantenibilidad |
-| Validación | Dispersa | Centralizada | Dominio más robusto |
-| Escalabilidad | Limitada | Alta | Extensión sin regresiones |
+| Coupling | High | Low | Facilitates migration and testing |
+| SRP | Violated | Complied | Better maintainability |
+| Validation | Scattered | Centralized | More robust domain |
+| Scalability | Limited | High | Extension without regressions |
 
 ---
 
-## 5. Conclusión
+## 5. Conclusion
 
-La adopción de **Builder**, **Adapter** y **Strategy** transforma el sistema de un MVP acoplado a una arquitectura profesional, testable y evolutiva.
+The adoption of **Builder**, **Adapter**, and **Strategy** transforms the system from a coupled MVP to a professional, testable, and evolvable architecture.
 
-- **Adapter** otorga libertad de infraestructura  
-- **Builder** garantiza integridad del dominio  
-- **Strategy** permite escalar reglas de negocio  
+- **Adapter** provides infrastructure freedom
+- **Builder** guarantees domain integrity
+- **Strategy** allows scaling business rules
 
-Estos patrones introducen la **estructura mínima necesaria**, evitando sobre-ingeniería y preparando el sistema para crecimiento real.
+These patterns introduce the **minimum necessary structure**, avoiding over-engineering and preparing the system for real growth.

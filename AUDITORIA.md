@@ -1,80 +1,80 @@
-# Auditoría Técnica: Clean Architecture y Deuda Técnica
+# Technical Audit: Clean Architecture and Technical Debt
 
-**Fecha:** 10 de Febrero de 2026
-**Proyecto:** Sofkianos MVP
+**Date:** February 10, 2026
+**Project:** Sofkianos MVP
 **Auditor:** Antigravity (Senior Software Architect)
 
 ---
 
-## 1. Resumen Ejecutivo del Estado Arquitectónico
+## 1. Executive Summary of Architectural State
 
-El sistema sigue una arquitectura de microservicios orientada a eventos, dividida en tres componentes principales:
-1.  **producer-api:** API REST (Spring Boot) que recibe solicitudes y las publica en RabbitMQ.
-2.  **consumer-worker:** Worker (Spring Boot) que consume mensajes de RabbitMQ y persiste datos en PostgreSQL.
-3.  **frontend:** Aplicación SPA (React/Vite) que interactúa con la producer-api.
+The system follows an event-driven microservices architecture, divided into three main components:
+1.  **producer-api:** REST API (Spring Boot) that receives requests and publishes them to RabbitMQ.
+2.  **consumer-worker:** Worker (Spring Boot) that consumes messages from RabbitMQ and persists data in PostgreSQL.
+3.  **frontend:** SPA Application (React/Vite) that interacts with the producer-api.
 
-**Estado General:**
-La arquitectura base es funcional para un MVP, desacoplando la recepción de solicitudes del procesamiento pesado. Sin embargo, existen violaciones significativas de principios SOLID y una falta de abstracciones que dificultarán la escalabilidad y el mantenimiento. El código tiende a ser "imperativo" en lugar de declarativo u orientado a objetos en el dominio.
-
----
-
-## 2. Violaciones de Principios SOLID Identificadas
-
-### SRP (Single Responsibility Principle) - Principio de Responsabilidad Única
-*   **Violación Crítica en `consumer-worker`:** La clase `KudoServiceImpl` en el worker viola SRP flagrantemente. Su responsabilidad debería ser orquestar el negocio de "guardar un Kudo", pero actualmente también es responsable de **parsear JSON manualmente** y mapear campos.
-    *   *Ubicación:* `com.sofkianos.consumer.service.impl.KudoServiceImpl.java`
-    *   *Evidencia:* `JsonNode root = objectMapper.readTree(kudoJson);` y el mapeo manual subsiguiente.
-
-*   **Violación en `producer-api`:** `KudoServiceImpl` mezcla la lógica de negocio (validar/preparar el kudo) con la lógica infraestructural de serialización JSON y publicación directa en RabbitMQ.
-
-### DIP (Dependency Inversion Principle) - Principio de Inversión de Dependencias
-*   **Acoplamiento a Infraestructura en `producer-api`:** `KudoServiceImpl` depende directamente de `RabbitTemplate` (una implementación concreta de Spring AMQP).
-    *   *Impacto:* Si se quisiera cambiar el broker de mensajería (ej. a Kafka o SQS), se tendría que reescribir el servicio de dominio.
-    *   *Solución:* Debería depender de una interfaz `MessagePublisher` o `EventBus` que abstraiga la implementación de mensajería.
-
-*   **Acoplamiento a Librerías de Terceros:** Ambos servicios dependen directamente de `ObjectMapper` (Jackson) dentro de la lógica de negocio, acoplándolos a una librería específica de serialización.
+**General State:**
+The base architecture is functional for an MVP, decoupling request reception from heavy processing. However, there are significant violations of SOLID principles and a lack of abstractions that will hinder scalability and maintenance. The code tends to be "imperative" rather than declarative or domain-object oriented.
 
 ---
 
-## 3. Code Smells y Deuda Técnica Detectada
+## 2. Identified SOLID Principle Violations
 
-### 1. Duplicación Lógica y "Shotgun Surgery"
-*   **Esquema de Datos Implícito:** La estructura del mensaje JSON (`from`, `to`, `category`, `message`) está definida en `KudoRequest` (producer) y *hardcodeada* como strings en `KudoServiceImpl` (consumer).
-*   **Riesgo:** Un cambio en el nombre de un campo en el producer romperá silenciosamente el consumer en tiempo de ejecución. No hay seguridad de tipos compartida.
+### SRP (Single Responsibility Principle)
+*   **Critical Violation in `consumer-worker`:** The `KudoServiceImpl` class in the worker flagrantly violates SRP. Its responsibility should be to orchestrate the business logic of "saving a Kudo", but currently it is also responsible for **manually parsing JSON** and mapping fields.
+    *   *Location:* `com.sofkianos.consumer.service.impl.KudoServiceImpl.java`
+    *   *Evidence:* `JsonNode root = objectMapper.readTree(kudoJson);` and subsequent manual mapping.
 
-### 2. Anemic Domain Model (Modelo de Dominio Anémico)
-*   Las entidades (`Kudo`, `KudoRequest`) son meros contenedores de datos (Getters/Setters) sin lógica de negocio. Toda la lógica reside en los servicios, lo que lleva a un diseño procedural disfrazado de OOP.
+*   **Violation in `producer-api`:** `KudoServiceImpl` mixes business logic (validating/preparing the kudo) with infrastructural logic of JSON serialization and direct publication to RabbitMQ.
 
-### 3. Obsesión por Tipos Primitivos (Primitive Obsession)
-*   El `consumer-worker` recibe y procesa mensajes como `String` crudos en lugar de deserializarlos a objetos tipados automáticamente o usar un DTO compartido.
-*   *Evidencia:* `public void handleKudo(@Payload String message)` en `KudosConsumer`.
+### DIP (Dependency Inversion Principle)
+*   **Infrastructure Coupling in `producer-api`:** `KudoServiceImpl` directly depends on `RabbitTemplate` (a concrete Spring AMQP implementation).
+    *   *Impact:* If the messaging broker needed to be changed (e.g., to Kafka or SQS), the domain service would have to be rewritten.
+    *   *Solution:* It should depend on a `MessagePublisher` or `EventBus` interface that abstracts the messaging implementation.
 
-### 4. Manejo de Errores Genérico
-*   En `producer-api`, las excepciones de serialización se capturan y se relanzan como `RuntimeException` genéricas con el mensaje "Error processing message". Esto oculta la causa raíz y dificulta el monitoreo específico.
+*   **Coupling to Third-Party Libraries:** Both services directly depend on `ObjectMapper` (Jackson) within the business logic, coupling them to a specific serialization library.
 
 ---
 
-## 4. Matriz de Hallazgos
+## 3. Detected Code Smells and Technical Debt
 
-| Componente | Archivo / Clase | Tipo de Hallazgo | Impacto (Alto/Medio/Bajo) | Descripción |
+### 1. Logic Duplication and "Shotgun Surgery"
+*   **Implicit Data Schema:** The JSON message structure (`from`, `to`, `category`, `message`) is defined in `KudoRequest` (producer) and *hardcoded* as strings in `KudoServiceImpl` (consumer).
+*   **Risk:** A change in a field name in the producer will silently break the consumer at runtime. There is no shared type safety.
+
+### 2. Anemic Domain Model
+*   The entities (`Kudo`, `KudoRequest`) are mere data containers (Getters/Setters) without business logic. All logic resides in the services, leading to a procedural design disguised as OOP.
+
+### 3. Primitive Obsession
+*   The `consumer-worker` receives and processes messages as raw `String`s instead of automatically deserializing them into typed objects or using a shared DTO.
+*   *Evidence:* `public void handleKudo(@Payload String message)` in `KudosConsumer`.
+
+### 4. Generic Error Handling
+*   In `producer-api`, serialization exceptions are caught and re-thrown as generic `RuntimeException`s with the message "Error processing message". This hides the root cause and hinders specific monitoring.
+
+---
+
+## 4. Findings Matrix
+
+| Component | File / Class | Finding Type | Impact (High/Medium/Low) | Description |
 | :--- | :--- | :--- | :--- | :--- |
-| **Consumer** | `consumer-worker/src/main/java/com/sofkianos/consumer/service/impl/KudoServiceImpl.java` | **SRP Violation** | **Alto** | Parsea JSON manualmente. Dificulta tests y mantenimiento. |
-| **Consumer** | `consumer-worker/src/main/java/com/sofkianos/consumer/service/impl/KudoServiceImpl.java` | **Hardcoded Strings** | **Alto** | Strings mágicos ("from", "to") duplican el contrato del DTO. Propenso a errores. |
-| **Producer** | `producer-api/src/main/java/com/sofkianos/producer/service/impl/KudoServiceImpl.java` | **DIP Violation** | Medio | Dependencia directa de `RabbitTemplate`. Dificulta el cambio de infraestructura. |
-| **General** | N/A | **Missing Abstraction** | **Alto** | Falta de librería compartida para DTOs o esquemas (Shared Kernel). |
-| **Consumer** | `consumer-worker/src/main/java/com/sofkianos/consumer/component/KudosConsumer.java` | **Primitive Obsession** | Medio | Recibe `String` en lugar de objeto. Pierde validación automática de Spring. |
-| **Frontend** | `frontend/src/services/api/kudosService.ts` | **Generic Error Handling** | Bajo | Captura genérica de errores sin tipado fuerte de la respuesta de error. |
+| **Consumer** | `consumer-worker/src/main/java/com/sofkianos/consumer/service/impl/KudoServiceImpl.java` | **SRP Violation** | **High** | Manually parses JSON. Hinders testing and maintenance. |
+| **Consumer** | `consumer-worker/src/main/java/com/sofkianos/consumer/service/impl/KudoServiceImpl.java` | **Hardcoded Strings** | **High** | Magic strings ("from", "to") duplicate the DTO contract. Error-prone. |
+| **Producer** | `producer-api/src/main/java/com/sofkianos/producer/service/impl/KudoServiceImpl.java` | **DIP Violation** | Medium | Direct dependency on `RabbitTemplate`. Hinders infrastructure changes. |
+| **General** | N/A | **Missing Abstraction** | **High** | Lack of shared library for DTOs or schemas (Shared Kernel). |
+| **Consumer** | `consumer-worker/src/main/java/com/sofkianos/consumer/component/KudosConsumer.java` | **Primitive Obsession** | Medium | Receives `String` instead of object. Loses Spring's automatic validation. |
+| **Frontend** | `frontend/src/services/api/kudosService.ts` | **Generic Error Handling** | Low | Generic error catching without strong typing of the error response. |
 
 ---
 
-## 5. Recomendaciones de Refactorización (Roadmap)
+## 5. Refactoring Recommendations (Roadmap)
 
-1.  **Extraer Shared Kernel:** Crear un módulo maven compartido que contenga los DTOs (`KudoEvent`) para que producer y consumer compartan el contrato y se elimine la duplicación.
-2.  **Refactorizar Consumer Service:**
-    *   Eliminar `ObjectMapper` del servicio.
-    *   Configurar el `RabbitListener` para que use el `MessageConverter` de Spring y deserialice automáticamente el JSON al DTO compartido.
-    *   El servicio solo debe recibir el DTO y llamar al repositorio o aplicar lógica de negocio.
-3.  **Aplicar Port & Adapters (Hexagonal) en Producer (Opcional pero Recomendado):**
-    *   Crear interfaz `KudoPublisherPort` en el dominio.
-    *   Implementar `RabbitMqKudoPublisher` en infraestructura que use `RabbitTemplate`.
-4.  **Enriquecer el Modelo de Dominio:** Implementar validaciones de negocio en la entidad `Kudo` si aplica, en lugar de dejarlas dispersas.
+1.  **Extract Shared Kernel:** Create a shared maven module containing the DTOs (`KudoEvent`) so that producer and consumer share the contract and duplication is eliminated.
+2.  **Refactor Consumer Service:**
+    *   Remove `ObjectMapper` from the service.
+    *   Configure the `RabbitListener` to use Spring's `MessageConverter` and automatically deserialize the JSON to the shared DTO.
+    *   The service should only receive the DTO and call the repository or apply business logic.
+3.  **Apply Ports & Adapters (Hexagonal) in Producer (Optional but Recommended):**
+    *   Create `KudoPublisherPort` interface in the domain.
+    *   Implement `RabbitMqKudoPublisher` in infrastructure using `RabbitTemplate`.
+4.  **Enrich the Domain Model:** Implement business validations in the `Kudo` entity if applicable, instead of leaving them scattered.
