@@ -11,6 +11,8 @@
 - **Christopher Pallo**
 - **Elian Condor**
 - **Leonel**
+- **Jean Pierre Villacis**
+- **Hans Ortiz**
 
 ---
 
