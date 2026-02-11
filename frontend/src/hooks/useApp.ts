@@ -1,17 +1,11 @@
-import { useState, useCallback } from 'react';
+import { useAppStore } from '../store/appStore';
 
-// This hook is now simplified as most logic moved to React Router or specialized hooks.
-// Keeping it for future shared transitions if needed.
+/**
+ * Hook to consume global app state.
+ */
 export const useApp = () => {
-  const [isTransitioning, setIsTransitioning] = useState(false);
-
-  const triggerTransition = useCallback((callback: () => void) => {
-    setIsTransitioning(true);
-    setTimeout(() => {
-      callback();
-      setIsTransitioning(false);
-    }, 500);
-  }, []);
+  const isTransitioning = useAppStore((state) => state.isTransitioning);
+  const triggerTransition = useAppStore((state) => state.triggerTransition);
 
   return {
     isTransitioning,
