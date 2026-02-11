@@ -1,42 +1,48 @@
 package com.sofkianos.producer.service.impl;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sofkianos.producer.domain.events.KudoEvent;
+import com.sofkianos.producer.domain.ports.out.KudoEventPublisher;
 import com.sofkianos.producer.dto.KudoRequest;
 import com.sofkianos.producer.service.KudoService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+
 /**
- * Implementation of KudoService.
+ * Domain Service — orchestrates the Kudo publishing workflow.
+ * <p>
+ * This class is <strong>free of infrastructure concerns</strong>:
+ * <ul>
+ *   <li>No {@code RabbitTemplate} — messaging is delegated to
+ *       the {@link KudoEventPublisher} port.</li>
+ *   <li>No {@code ObjectMapper} — serialization lives in the adapter.</li>
+ * </ul>
+ * The service only knows about DTOs, domain events, and port interfaces.
+ * </p>
  */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class KudoServiceImpl implements KudoService {
 
-  private final RabbitTemplate rabbitTemplate;
-  private final ObjectMapper objectMapper;
+    private final KudoEventPublisher kudoEventPublisher;
 
-  @Value("${app.rabbitmq.exchange}")
-  private String exchangeName;
+    @Override
+    public void sendKudo(KudoRequest kudoRequest) {
+        log.info("Processing Kudo: from={}, to={}", kudoRequest.getFrom(), kudoRequest.getTo());
 
-  @Value("${app.rabbitmq.routing-key}")
-  private String routingKey;
+        KudoEvent event = KudoEvent.builder()
+                .from(kudoRequest.getFrom())
+                .to(kudoRequest.getTo())
+                .category(kudoRequest.getCategory())
+                .message(kudoRequest.getMessage())
+                .timestamp(LocalDateTime.now())
+                .build();
 
-  @Override
-  public void sendKudo(KudoRequest kudoRequest) {
-    try {
-      String jsonPayload = objectMapper.writeValueAsString(kudoRequest);
-      log.info("Transitioning Kudo to messaging system: from={}, to={}", kudoRequest.getFrom(),
-          kudoRequest.getTo());
-      rabbitTemplate.convertAndSend(exchangeName, routingKey, jsonPayload);
-    } catch (JsonProcessingException e) {
-      log.error("Failed to serialize KudoRequest", e);
-      throw new RuntimeException("Error processing message", e);
+        kudoEventPublisher.publish(event);
+
+        log.info("Kudo published successfully: from={}, to={}", event.getFrom(), event.getTo());
     }
-  }
 }
