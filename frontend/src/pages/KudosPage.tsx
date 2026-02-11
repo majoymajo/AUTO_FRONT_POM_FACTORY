@@ -1,5 +1,6 @@
 import React from 'react';
 import KudoForm from '../components/KudoForm';
+import { FormErrorBoundary } from '../components/common/FormErrorBoundary';
 
 const KudosPage: React.FC = () => {
   return (
@@ -20,10 +21,13 @@ const KudosPage: React.FC = () => {
           </p>
         </div>
 
-        <KudoForm />
+        <FormErrorBoundary>
+          <KudoForm />
+        </FormErrorBoundary>
       </div>
     </div>
   );
 };
+
 
 export default KudosPage;
