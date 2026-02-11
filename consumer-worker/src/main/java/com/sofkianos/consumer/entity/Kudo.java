@@ -1,7 +1,10 @@
 package com.sofkianos.consumer.entity;
 
+import com.sofkianos.consumer.domain.model.KudoCategory;
 import com.sofkianos.consumer.exception.InvalidKudoException;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -17,8 +20,9 @@ import java.time.LocalDateTime;
  * Instances are created exclusively through the {@link Builder},
  * which enforces all domain invariants at construction time:
  * <ul>
- *   <li>{@code fromUser}, {@code toUser}, {@code category}, and
- *       {@code message} must be non-null and non-blank.</li>
+ *   <li>{@code fromUser}, {@code toUser}, and {@code message}
+ *       must be non-null and non-blank.</li>
+ *   <li>{@code category} must be a valid {@link KudoCategory} enum value.</li>
  *   <li>{@code fromUser} must differ from {@code toUser}
  *       (case-insensitive — self-kudo rule).</li>
  *   <li>{@code createdAt} defaults to {@code LocalDateTime.now()}
@@ -38,13 +42,16 @@ public class Kudo {
 
     private String fromUser;
     private String toUser;
-    private String category;
+
+    @Enumerated(EnumType.STRING)
+    private KudoCategory category;
+
     private String message;
     private LocalDateTime createdAt;
 
     // ── Private constructor — only the Builder can instantiate ──────────
     private Kudo(Long id, String fromUser, String toUser,
-                 String category, String message, LocalDateTime createdAt) {
+                 KudoCategory category, String message, LocalDateTime createdAt) {
         this.id = id;
         this.fromUser = fromUser;
         this.toUser = toUser;
@@ -66,7 +73,7 @@ public class Kudo {
         private Long id;
         private String fromUser;
         private String toUser;
-        private String category;
+        private KudoCategory category;
         private String message;
         private LocalDateTime createdAt;
 
@@ -89,8 +96,22 @@ public class Kudo {
             return this;
         }
 
-        public Builder category(String category) {
+        /**
+         * Accepts a {@link KudoCategory} enum directly.
+         */
+        public Builder category(KudoCategory category) {
             this.category = category;
+            return this;
+        }
+
+        /**
+         * Convenience overload — accepts a raw String and converts it
+         * via {@link KudoCategory#fromString(String)}.
+         *
+         * @throws IllegalArgumentException if the string is not a valid category
+         */
+        public Builder category(String category) {
+            this.category = KudoCategory.fromString(category);
             return this;
         }
 
@@ -108,8 +129,11 @@ public class Kudo {
         public Kudo build() {
             requireNonBlank(fromUser, "fromUser");
             requireNonBlank(toUser, "toUser");
-            requireNonBlank(category, "category");
             requireNonBlank(message, "message");
+
+            if (category == null) {
+                throw new InvalidKudoException("'category' must not be null");
+            }
 
             if (fromUser.equalsIgnoreCase(toUser)) {
                 throw new InvalidKudoException("Cannot send kudo to yourself");
