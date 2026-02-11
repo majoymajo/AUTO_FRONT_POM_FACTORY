@@ -1,5 +1,5 @@
 import React from 'react';
-import { InputTextarea } from 'primereact/inputtextarea';
+
 
 interface CustomInputProps {
   id?: string;
@@ -38,7 +38,7 @@ export const CustomInput: React.FC<CustomInputProps> = ({
         </label>
       )}
       <div className="relative">
-        <InputTextarea
+        <textarea
           id={id}
           name={name}
           value={value}
@@ -46,7 +46,6 @@ export const CustomInput: React.FC<CustomInputProps> = ({
           placeholder={placeholder}
           disabled={disabled}
           rows={rows}
-          autoResize
           className={`
             w-full 
             px-8
@@ -77,6 +76,7 @@ export const CustomInput: React.FC<CustomInputProps> = ({
             ${className}
           `}
         />
+
         {}
         <div className="absolute top-0 right-0 w-20 h-20 bg-orange-500/5 rounded-tr-[2rem] rounded-bl-[4rem] pointer-events-none transition-opacity duration-500 group-focus-within:bg-orange-500/10"></div>
       </div>
