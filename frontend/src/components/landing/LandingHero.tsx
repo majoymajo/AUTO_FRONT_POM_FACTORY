@@ -24,7 +24,8 @@ export const LandingHero: React.FC<LandingHeroProps> = ({ onLaunchApp }) => {
   return (
     <section className="relative flex min-h-[95vh] flex-col items-center justify-center overflow-hidden pt-20 pb-20 px-4">
       <div className="absolute inset-0 -z-20 bg-zinc-950" />
-      <div className="absolute top-0 inset-x-0 h-96 bg-gradient-to-b from-[#FF5F00]/10 via-[#FF5F00]/5 to-transparent -z-10 blur-3xl" />
+      <div className="absolute top-0 inset-x-0 h-96 bg-gradient-to-b from-brand/10 via-brand/5 to-transparent -z-10 blur-3xl" />
+
 
       <div
         className="absolute inset-0 -z-10 opacity-[0.03]"
@@ -57,10 +58,10 @@ export const LandingHero: React.FC<LandingHeroProps> = ({ onLaunchApp }) => {
           }}
         >
           Sofkian
-          <span className="text-[#FF5F00] drop-shadow-[0_0_35px_rgba(255,95,0,0.8)]">
+          <span className="text-brand drop-shadow-[0_0_35px_rgba(255,95,0,0.8)]">
             OS
           </span>
-          <span className="text-[#FF5F00] animate-pulse">_</span>
+          <span className="text-brand animate-pulse">_</span>
         </h1>
 
         <div className="mx-auto max-w-3xl rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm shadow-2xl overflow-hidden">
@@ -68,7 +69,8 @@ export const LandingHero: React.FC<LandingHeroProps> = ({ onLaunchApp }) => {
             <div className="flex flex-col items-center justify-center gap-6 sm:flex-row">
               <div className="flex flex-col items-center">
                 <div className="flex items-center gap-2 text-zinc-300 mb-1">
-                  <Heart className="h-5 w-5 text-[#FF5F00]" />
+                  <Heart className="h-5 w-5 text-brand" />
+
                   <span className="font-bold text-white text-xl">Sofkian</span>
                 </div>
                 <span className="text-xs text-zinc-500 uppercase tracking-wide">
@@ -80,17 +82,20 @@ export const LandingHero: React.FC<LandingHeroProps> = ({ onLaunchApp }) => {
 
               <div className="flex flex-col items-center">
                 <div className="flex items-center gap-2 text-zinc-300 mb-1">
-                  <Gift className="h-5 w-5 text-[#FF5F00]" />
+                  <Gift className="h-5 w-5 text-brand" />
+
                   <span className="font-bold text-white text-xl">OS</span>
                 </div>
                 <span className="text-xs text-zinc-500 uppercase tracking-wide">
-                  de Kud<span className="text-[#FF5F00] font-bold">os</span>
+                  de Kud<span className="text-brand font-bold">os</span>
+
                 </span>
               </div>
 
               <span className="hidden sm:block text-zinc-600 font-mono text-2xl">=</span>
 
-              <div className="text-[#FF5F00] font-bold text-xl border-b-2 border-[#FF5F00] pb-1">
+              <div className="text-brand font-bold text-xl border-b-2 border-brand pb-1">
+
                 Cultura de Recompensas
               </div>
             </div>
@@ -130,13 +135,15 @@ export const LandingHero: React.FC<LandingHeroProps> = ({ onLaunchApp }) => {
               </div>
 
               <div
-                className={`absolute top-0 left-0 h-full bg-[#FF5F00]/20 ${
+                className={`absolute top-0 left-0 h-full bg-brand/20 ${
+
                   isDragging ? '' : 'transition-all duration-300 ease-out'
                 }`}
                 style={{ width: `${sliderValue}%` }}
               />
               <div
-                className={`absolute top-1 bottom-1 w-16 rounded-full bg-[#FF5F00]
+                className={`absolute top-1 bottom-1 w-16 rounded-full bg-brand
+
                 flex items-center justify-center
                 shadow-[0_0_25px_rgba(255,95,0,0.5)]
                 ${isDragging ? '' : 'transition-all duration-300 ease-out'}
@@ -162,7 +169,8 @@ export const LandingHero: React.FC<LandingHeroProps> = ({ onLaunchApp }) => {
           <span className="text-[10px] uppercase tracking-widest text-zinc-500">
             Descubrir Arquitectura
           </span>
-          <ChevronsDown className="h-5 w-5 text-[#FF5F00] animate-bounce" />
+          <ChevronsDown className="h-5 w-5 text-brand animate-bounce" />
+
         </div>
       </div>
     </section>

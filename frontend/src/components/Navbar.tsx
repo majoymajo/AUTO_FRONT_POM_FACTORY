@@ -65,7 +65,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         >
           Sofkian
           <span className="text-white">OS</span>
-          <span className="text-[#FF5F00] animate-pulse">_</span>
+          <span className="text-brand animate-pulse">_</span>
         </button>
 
         <nav className="hidden md:flex items-center text-sm">
@@ -96,7 +96,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             className="
               flex items-center gap-2 px-4
               text-white font-semibold
-              hover:text-[#FF5F00] transition-colors
+              hover:text-brand transition-colors
             "
           >
             {isAppView ? 'Volver' : 'Acceder'}
@@ -133,7 +133,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
             <button
               onClick={handleToggleView}
-              className="mt-4 flex items-center gap-2 text-white font-semibold hover:text-[#FF5F00]"
+              className="mt-4 flex items-center gap-2 text-white font-semibold hover:text-brand"
             >
               {isAppView ? 'Volver' : 'Acceder'}
               <ArrowRight className="h-4 w-4" />
@@ -141,6 +141,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
         </div>
       )}
+
     </header>
   );
 };
