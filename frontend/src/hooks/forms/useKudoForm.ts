@@ -7,7 +7,7 @@ import {
   KUDO_CATEGORIES,
   type KudoFormData,
 } from '../../schemas/kudoFormSchema';
-import { sendKudo } from '../../api/kudosApi';
+import { kudosService } from '../../services';
 
 export const USERS = [
   { id: '1', name: 'Christopher Pallo', email: 'christopher@sofkianos.com', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Christopher&backgroundColor=b6e3f4' },
@@ -55,7 +55,7 @@ export const useKudoForm = () => {
     if (sliderValue > 90) {
       setSliderValue(100);
       try {
-        await sendKudo(formData);
+        await kudosService.send(formData);
         toast.success('¡Kudo enviado! ');
         reset();
       } catch {
