@@ -13,9 +13,10 @@ import org.springframework.stereotype.Component;
  * Event-Driven Consumer — listens to {@code kudos.queue} and delegates
  * processing to the {@link KudoService}.
  * <p>
- * Thanks to the {@code Jackson2JsonMessageConverter} registered in
- * {@link RabbitConfig}, the incoming JSON payload is automatically
- * deserialized into a typed {@link KudoEvent} — no manual parsing needed.
+ * <strong>DLQ-aware:</strong> exceptions are no longer swallowed.
+ * If processing fails, the exception propagates to Spring AMQP, which
+ * NACKs the message and RabbitMQ routes it to the Dead Letter Queue
+ * ({@code kudos.dlq}) via the configured DLX.
  * </p>
  */
 @Slf4j
@@ -29,15 +30,10 @@ public class KudosConsumer {
     public void handleKudo(@Payload KudoEvent event) {
         log.info("Processing started: from={}, to={}, category={}",
                 event.getFrom(), event.getTo(), event.getCategory());
+
         long start = System.currentTimeMillis();
 
-        try {
-            kudoService.saveKudo(event);
-        } catch (Exception e) {
-            log.error("Error processing kudo: from={}, to={}",
-                    event.getFrom(), event.getTo(), e);
-            // In production: throw to NACK the message or route to a DLQ
-        }
+        kudoService.saveKudo(event);
 
         long elapsed = System.currentTimeMillis() - start;
         log.info("Processing finished: from={}, to={} ({} ms)",

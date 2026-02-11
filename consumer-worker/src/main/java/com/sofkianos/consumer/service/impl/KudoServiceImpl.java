@@ -1,8 +1,8 @@
 package com.sofkianos.consumer.service.impl;
 
 import com.sofkianos.consumer.domain.events.KudoEvent;
+import com.sofkianos.consumer.domain.ports.out.KudoPersistencePort;
 import com.sofkianos.consumer.entity.Kudo;
-import com.sofkianos.consumer.repository.KudoRepository;
 import com.sofkianos.consumer.service.KudoService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -10,13 +10,13 @@ import org.springframework.stereotype.Service;
 
 /**
  * Domain Service — maps a typed {@link KudoEvent} to a {@link Kudo} entity
- * and persists it via the repository.
+ * and persists it through the {@link KudoPersistencePort} abstraction.
  * <p>
- * This class is <strong>free of infrastructure concerns</strong>:
+ * This class is <strong>pure domain</strong>:
  * <ul>
- *   <li>No {@code ObjectMapper} — deserialization is handled by the
- *       {@code Jackson2JsonMessageConverter} in RabbitConfig.</li>
- *   <li>No manual JSON parsing ({@code readTree}, {@code path()}, etc.).</li>
+ *   <li>No {@code KudoRepository} — persistence is delegated to the port.</li>
+ *   <li>No JPA imports — infrastructure lives in the adapter.</li>
+ *   <li>No {@code ObjectMapper} — deserialization is handled by Spring AMQP.</li>
  * </ul>
  * The Kudo Builder (Wave 1) enforces all domain invariants at construction.
  * </p>
@@ -26,7 +26,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class KudoServiceImpl implements KudoService {
 
-    private final KudoRepository kudoRepository;
+    private final KudoPersistencePort persistencePort;
 
     @Override
     public void saveKudo(KudoEvent event) {
@@ -41,7 +41,8 @@ public class KudoServiceImpl implements KudoService {
                 .createdAt(event.getTimestamp())   // Preserves original event timestamp
                 .build();
 
-        kudoRepository.save(kudo);
+        persistencePort.save(kudo);
+
         log.info("Kudo persisted successfully: from={}, to={}, category={}",
                 kudo.getFromUser(), kudo.getToUser(), kudo.getCategory());
     }
