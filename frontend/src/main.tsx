@@ -3,14 +3,15 @@ import { createRoot } from 'react-dom/client'
 import { Toaster } from 'sonner'
 import './index.css'
 import App from './App.tsx'
-import 'primereact/resources/themes/lara-light-blue/theme.css'
-import 'primereact/resources/primereact.min.css'
-import 'primeicons/primeicons.css'
-import 'primeflex/primeflex.css'
+import { GlobalErrorBoundary } from './components/common/GlobalErrorBoundary'
 
 createRoot(document.getElementById('root')!).render(
+
   <StrictMode>
-    <App />
+    <GlobalErrorBoundary>
+      <App />
+    </GlobalErrorBoundary>
     <Toaster position="top-center" richColors closeButton />
   </StrictMode>,
 )
+

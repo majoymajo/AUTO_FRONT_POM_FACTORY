@@ -4,8 +4,9 @@ import { useKudoForm } from '../hooks/forms/useKudoForm';
 
 const inputBase =
   'w-full px-4 py-3 rounded-xl bg-white/5 border border-white/5 text-zinc-100 ' +
-  'placeholder-zinc-600 focus:outline-none focus:border-[#FF5F00] ' +
-  'focus:bg-zinc-900/50 focus:ring-1 focus:ring-[#FF5F00] transition-all duration-300 appearance-none';
+  'placeholder-zinc-600 focus:outline-none focus:border-brand ' +
+  'focus:bg-zinc-900/50 focus:ring-1 focus:ring-brand transition-all duration-300 appearance-none';
+
 
 const labelBase =
   'block text-[10px] uppercase tracking-[0.2em] text-zinc-500 font-bold mb-1.5 ml-1';
@@ -27,7 +28,8 @@ export const KudoFormSystem: React.FC = () => {
     <section className="min-h-[90vh] flex items-start justify-center pt-2 px-4 relative overflow-hidden">
       {/* Background Decor */}
       <div className="absolute inset-0 bg-zinc-950 -z-20" />
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-[#FF5F00]/5 blur-[120px] -z-10 rounded-full opacity-40 pointer-events-none" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-brand/5 blur-[120px] -z-10 rounded-full opacity-40 pointer-events-none" />
+
 
       {/* Glass Container */}
       <div className="w-full max-w-md animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -145,12 +147,14 @@ export const KudoFormSystem: React.FC = () => {
                 </div>
 
                 <div
-                  className={`absolute top-0 left-0 h-full bg-gradient-to-r from-[#FF5F00]/20 to-[#FF5F00]/40 ${!isDragging && 'transition-all duration-300'}`}
+                  className={`absolute top-0 left-0 h-full bg-gradient-to-r from-brand/20 to-brand/40 ${!isDragging && 'transition-all duration-300'}`}
+
                   style={{ width: `${sliderValue}%` }}
                 />
 
                 <div
-                  className={`absolute top-1 bottom-1 w-16 rounded-full bg-[#FF5F00] 
+                  className={`absolute top-1 bottom-1 w-16 rounded-full bg-brand 
+
                     flex items-center justify-center text-white
                     shadow-[0_0_15px_rgba(255,95,0,0.4)] border border-[#FF8F4D]
                     ${!isDragging && 'transition-all duration-300 cubic-bezier(0.4, 0, 0.2, 1)'}

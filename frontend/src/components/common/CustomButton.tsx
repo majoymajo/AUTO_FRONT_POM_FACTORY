@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button } from 'primereact/button';
+
 
 interface CustomButtonProps {
   label?: string;
@@ -39,13 +39,10 @@ export const CustomButton: React.FC<CustomButtonProps> = ({
   };
 
   return (
-    <Button
+    <button
       type={type}
-      label={String(children || label)}
-      icon={icon}
       onClick={onClick}
-      disabled={disabled}
-      loading={loading}
+      disabled={disabled || loading}
       className={`
         ${variantClasses[variant]}
         ${sizeClasses[size]}
@@ -62,8 +59,14 @@ export const CustomButton: React.FC<CustomButtonProps> = ({
         disabled:opacity-50
         disabled:cursor-not-allowed
         disabled:hover:scale-100
+        flex items-center justify-center gap-2
         ${className}
       `}
-    />
+    >
+      {loading && <span className="animate-spin">⏳</span>}
+      {icon && <span className={icon} />}
+      {children || label}
+    </button>
+
   );
 };

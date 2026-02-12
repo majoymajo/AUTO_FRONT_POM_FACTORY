@@ -17,12 +17,13 @@ export const LandingTech = () => {
 
   return (
     <section className="relative py-32 overflow-hidden bg-zinc-950">
-      <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-[#FF5F00]/10 to-transparent blur-3xl" />
+      <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-brand/10 to-transparent blur-3xl" />
+
 
       <div className="relative z-10 mb-20 text-center">
         <h2 className="text-4xl sm:text-5xl font-black tracking-tight text-white">
           Stack del{' '}
-          <span className="text-[#FF5F00] drop-shadow-[0_0_20px_rgba(255,95,0,0.6)]">
+          <span className="text-brand drop-shadow-[0_0_20px_rgba(255,95,0,0.6)]">
             Sistema
           </span>
         </h2>
@@ -48,9 +49,10 @@ export const LandingTech = () => {
                     text-6xl
                     text-zinc-300
                     transition-all duration-300
-                    group-hover:text-[#FF5F00]
+                    group-hover:text-brand
                     group-hover:scale-110
                     group-hover:drop-shadow-[0_0_25px_rgba(255,95,0,0.6)]
+
                   "
                 />
                 <span className="mt-4 text-[11px] tracking-widest uppercase text-zinc-500 group-hover:text-white">
@@ -62,7 +64,8 @@ export const LandingTech = () => {
         </div>
       </div>
       <div className="mt-24 flex justify-center">
-        <div className="h-[2px] w-48 bg-gradient-to-r from-transparent via-[#FF5F00] to-transparent opacity-40" />
+        <div className="h-[2px] w-48 bg-gradient-to-r from-transparent via-brand to-transparent opacity-40" />
+
       </div>
     </section>
   );

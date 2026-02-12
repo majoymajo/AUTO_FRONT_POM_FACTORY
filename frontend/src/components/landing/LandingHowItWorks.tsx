@@ -84,7 +84,8 @@ export const LandingHowItWorks: React.FC = () => {
       <div className="container mx-auto px-4 relative z-10">
         <div className="text-center mb-16">
           <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
-            Arquitectura <span className="text-[#FF5F00]">SofkianOS</span>
+            Arquitectura <span className="text-brand">SofkianOS</span>
+
           </h2>
           <p className="mt-4 text-zinc-400 max-w-2xl mx-auto">
             Así es como SofkianOS procesa miles de reconocimientos sin bloquearse.
@@ -109,9 +110,11 @@ export const LandingHowItWorks: React.FC = () => {
           {/* Source Node: Employee */}
           <div className="absolute top-1/2 left-[50px] -translate-y-1/2 flex flex-col items-center gap-3">
             <div className={`w-24 h-24 rounded-2xl bg-zinc-800 border-2 flex items-center justify-center shadow-[0_0_20px_rgba(255,255,255,0.05)] z-10 transition-all duration-300 ${
-              isNodeActive(0) ? 'border-[#FF5F00] shadow-[0_0_30px_rgba(255,95,0,0.5)] scale-110' : 'border-zinc-600'
+              isNodeActive(0) ? 'border-brand shadow-[0_0_30px_rgba(255,95,0,0.5)] scale-110' : 'border-zinc-600'
+
             }`}>
-              <User className={`w-10 h-10 transition-colors ${isNodeActive(0) ? 'text-[#FF5F00]' : 'text-white'}`} />
+              <User className={`w-10 h-10 transition-colors ${isNodeActive(0) ? 'text-brand' : 'text-white'}`} />
+
               {isNodeActive(0) && <div className="absolute -top-2 -right-2 w-4 h-4 bg-green-500 rounded-full border-2 border-zinc-900 animate-pulse" />}
             </div>
             <span className="text-sm font-bold text-zinc-300 bg-zinc-900/80 px-3 py-1 rounded-full border border-zinc-700">Empleado Sofka</span>
@@ -120,9 +123,11 @@ export const LandingHowItWorks: React.FC = () => {
           {/* UI Node: React Web */}
           <div className="absolute top-1/2 left-[320px] -translate-y-1/2 flex flex-col items-center gap-3">
             <div className={`w-40 h-28 rounded-xl bg-zinc-900 border flex flex-col items-center justify-center gap-2 z-10 transition-all duration-300 ${
-              isNodeActive(1) ? 'border-[#FF5F00] shadow-[0_0_30px_rgba(255,95,0,0.3)] scale-110' : 'border-blue-500/30 shadow-[0_0_30px_rgba(59,130,246,0.1)]'
+                isNodeActive(1) ? 'border-brand shadow-[0_0_30px_rgba(255,95,0,0.3)] scale-110' : 'border-blue-500/30 shadow-[0_0_30px_rgba(59,130,246,0.1)]'
+
             }`}>
-              <Globe className={`w-8 h-8 transition-colors ${isNodeActive(1) ? 'text-[#FF5F00]' : 'text-blue-400'}`} />
+                <Globe className={`w-8 h-8 transition-colors ${isNodeActive(1) ? 'text-brand' : 'text-blue-400'}`} />
+
               <span className="text-white font-bold">SofkianOS Web</span>
               <span className="text-[10px] text-blue-300 bg-blue-900/20 px-2 py-0.5 rounded">React + Vite</span>
             </div>
@@ -132,9 +137,11 @@ export const LandingHowItWorks: React.FC = () => {
           {/* Backend Node: Producer */}
           <div className="absolute top-[80px] left-[550px] flex flex-col items-center gap-3">
             <div className={`w-40 h-28 rounded-xl bg-zinc-900 border flex flex-col items-center justify-center gap-2 z-10 transition-all duration-300 ${
-              isNodeActive(2) ? 'border-[#FF5F00] shadow-[0_0_30px_rgba(255,95,0,0.3)] scale-110' : 'border-green-500/30 shadow-[0_0_30px_rgba(34,197,94,0.1)]'
+                isNodeActive(2) ? 'border-brand shadow-[0_0_30px_rgba(255,95,0,0.3)] scale-110' : 'border-green-500/30 shadow-[0_0_30px_rgba(34,197,94,0.1)]'
+
             }`}>
-              <Server className={`w-8 h-8 transition-colors ${isNodeActive(2) ? 'text-[#FF5F00]' : 'text-green-400'}`} />
+                <Server className={`w-8 h-8 transition-colors ${isNodeActive(2) ? 'text-brand' : 'text-green-400'}`} />
+
               <span className="text-white font-bold">Producer API</span>
               <span className="text-[10px] text-green-300 bg-green-900/20 px-2 py-0.5 rounded">Spring Boot</span>
             </div>
@@ -143,16 +150,20 @@ export const LandingHowItWorks: React.FC = () => {
 
           {/* Broker Node: RabbitMQ */}
           <div className="absolute bottom-[80px] left-[550px] flex flex-col items-center gap-3">
-            <div className={`relative w-40 h-28 rounded-xl bg-[#FF5F00]/10 border border-[#FF5F00] flex flex-col items-center justify-center gap-2 z-10 transition-all duration-300 ${
-              isNodeActive(3) ? 'shadow-[0_0_50px_rgba(255,95,0,0.6)] scale-110 bg-[#FF5F00]/30' : 'shadow-[0_0_40px_rgba(255,95,0,0.2)]'
+            <div className={`relative w-40 h-28 rounded-xl bg-brand/10 border border-brand flex flex-col items-center justify-center gap-2 z-10 transition-all duration-300 ${
+              isNodeActive(3) ? 'shadow-[0_0_50px_rgba(255,95,0,0.6)] scale-110 bg-brand/30' : 'shadow-[0_0_40px_rgba(255,95,0,0.2)]'
+
             }`}>
               <div className={isNodeActive(3) ? 'animate-bounce' : ''}>
-                <Layers className="w-10 h-10 text-[#FF5F00]" />
+                <Layers className="w-10 h-10 text-brand" />
+
               </div>
               <span className="text-white font-bold">RabbitMQ</span>
-              <span className="text-[10px] text-orange-200 bg-[#FF5F00]/20 px-2 py-0.5 rounded">Broker / Store</span>
+              <span className="text-[10px] text-orange-200 bg-brand/20 px-2 py-0.5 rounded">Broker / Store</span>
+
             </div>
-            <span className="text-xs text-[#FF5F00] font-bold text-center animate-pulse bg-zinc-950/50 px-2 py-1 rounded border border-[#FF5F00]/30">Desacople Asíncrono</span>
+            <span className="text-xs text-brand font-bold text-center animate-pulse bg-zinc-950/50 px-2 py-1 rounded border border-brand/30">Desacople Asíncrono</span>
+
           </div>
 
           {/* Backend Node: Consumer */}
