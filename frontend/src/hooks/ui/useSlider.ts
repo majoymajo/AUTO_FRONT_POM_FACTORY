@@ -27,11 +27,18 @@ export const useSlider = (onComplete?: () => Promise<void>) => {
 
     if (sliderValue > THRESHOLD) {
       setSliderValue(100);
-      if (onComplete) {
-        await onComplete();
+      try {
+        if (onComplete) {
+          await onComplete();
+        }
+        // Success reset
+        setTimeout(() => setSliderValue(0), 1000);
+      } catch (error) {
+        // Error reset - faster to let user retry
+        setTimeout(() => setSliderValue(0), 500);
+        // Re-throw so the form logic can handle it (toast, etc)
+        throw error;
       }
-      // Reset after a delay
-      setTimeout(() => setSliderValue(0), 1000);
     } else {
       setSliderValue(0);
     }
@@ -65,6 +72,6 @@ export const useSlider = (onComplete?: () => Promise<void>) => {
     isDragging,
     sliderRef,
     handleStart,
-    resetSlider,
+    resetSlider, // Exposed for external control (e.g., on error)
   };
 };

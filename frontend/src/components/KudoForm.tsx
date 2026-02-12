@@ -18,7 +18,7 @@ export const KudoFormSystem: React.FC = () => {
     loadingAvatar,
     sliderRef,
     register,
-    serverError,
+    serverErrors,
     formData,
     toUser,
     USERS,
@@ -140,11 +140,23 @@ export const KudoFormSystem: React.FC = () => {
           </div>
 
           {/* Server Error Banner */}
-          {serverError && (
+          {serverErrors && serverErrors.length > 0 && (
             <div className="rounded-xl bg-red-500/10 border border-red-500/30 px-4 py-3 animate-in fade-in slide-in-from-top-2 duration-300">
-              <p className="text-[11px] text-red-400 font-medium leading-relaxed">
-                ⚠️ {serverError}
-              </p>
+              <div className="flex items-start gap-3">
+                <div className="text-red-400 mt-0.5">⚠️</div>
+                <div className="space-y-1">
+                  <p className="text-[11px] font-bold text-red-300 uppercase tracking-wider">
+                    No pudimos enviar tu Kudo
+                  </p>
+                  <ul className="text-[11px] text-red-400 font-medium leading-relaxed list-disc pl-3 space-y-0.5">
+                    {serverErrors.map((err, idx) => (
+                      <li key={idx}>
+                        <span className="text-red-200 font-semibold">{err.field}:</span> {err.message}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
             </div>
           )}
 

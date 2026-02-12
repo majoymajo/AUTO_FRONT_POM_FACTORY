@@ -7,6 +7,7 @@ import {
 } from '../../schemas/kudoFormSchema';
 import { kudosService } from '../../services';
 import type { AxiosError } from 'axios';
+import { parseAndTranslateErrors, type ValidationError } from '../../utils/errorMapper';
 
 /** Shape of the error body returned by GlobalExceptionHandler. */
 interface ApiErrorBody {
@@ -18,11 +19,6 @@ interface ApiErrorBody {
 
 /**
  * Hook to manage form state and submission logic.
- *
- * Validation is delegated entirely to the **backend**.
- * The frontend sends the payload as-is; if the API returns
- * 400 Bad Request, the error detail is extracted and surfaced
- * via {@link serverError} so the UI can display it inline.
  */
 export const useKudoFormLogic = () => {
   const { register, watch, reset } = useForm<KudoFormData>({
@@ -34,16 +30,13 @@ export const useKudoFormLogic = () => {
     },
   });
 
-  const [serverError, setServerError] = useState<string | null>(null);
+  // Changed from string to ValidationError[]
+  const [serverErrors, setServerErrors] = useState<ValidationError[]>([]);
 
   const formData = watch();
 
-  /**
-   * Sends the form payload and lets the backend validate.
-   * On 400, extracts the detail message and sets serverError.
-   */
   const handleSend = async () => {
-    setServerError(null);
+    setServerErrors([]);
 
     try {
       await kudosService.send(formData);
@@ -53,12 +46,14 @@ export const useKudoFormLogic = () => {
       const axiosErr = err as AxiosError<ApiErrorBody>;
 
       if (axiosErr.response?.status === 400) {
-        const detail =
-          axiosErr.response.data?.detail ?? 'Solicitud inválida. Verifica los campos.';
-        setServerError(detail);
-        toast.error(detail);
+        const detail = axiosErr.response.data?.detail;
+        const parsedErrors = parseAndTranslateErrors(detail);
+        setServerErrors(parsedErrors);
+
+        // Toast shows summary
+        toast.error(`Tienes ${parsedErrors.length} errores en el formulario.`);
       } else {
-        toast.error('Error enviando kudo');
+        toast.error('Error enviando kudo. Por favor intenta de nuevo.');
       }
 
       throw err;
@@ -68,7 +63,7 @@ export const useKudoFormLogic = () => {
   return {
     register,
     formData,
-    serverError,
+    serverErrors, // Renamed for clarity
     reset,
     handleSend,
     KUDO_CATEGORIES,
