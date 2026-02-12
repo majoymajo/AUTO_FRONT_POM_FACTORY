@@ -45,7 +45,7 @@ After four foundational phases (Audit → Pattern Research → Guided Refactorin
 
 | Metric | Value |
 |--------|-------|
-| Sustainability Score | 7.2 / 10 |
+| Sustainability Score | 5.45 / 10 |
 | Debt Interest Rate | 8.5% per quarter |
 | Refactoring Pressure | 62% (threshold: 70%) |
 | Governance Maturity | Level 2/4 (Emerging) |
@@ -70,10 +70,10 @@ After four foundational phases (Audit → Pattern Research → Guided Refactorin
 
 ```
 Phase 1 (Audit):                    Phase 5 (Post-Refactoring):
-Reckless/Inadvertent:  80%   →      Reckless/Inadvertent:  25%
-Prudent/Inadvertent:   15%   →      Prudent/Inadvertent:   35%
-Prudent/Deliberate:     5%   →      Prudent/Deliberate:    38%
-Reckless/Deliberate:    0%   →      Reckless/Deliberate:    2%
+Reckless/Inadvertent:  80%   →      Reckless/Inadvertent:  27%
+Prudent/Inadvertent:   15%   →      Prudent/Inadvertent:   42%
+Prudent/Deliberate:     5%   →      Prudent/Deliberate:    31%
+Reckless/Deliberate:    0%   →      Reckless/Deliberate:    0%
 ```
 
 Refactoring eliminated ~70% of reckless/inadvertent debt. Remaining debt is predominantly **emergent** and **strategic**.
@@ -230,7 +230,7 @@ For every quarter debt remains unaddressed, total remediation effort increases b
 
 **Threshold Alert:** If portfolio interest rate exceeds **15%/quarter**, declare Debt Emergency Sprint (50% capacity for remediation).
 
-### 5.2 Sustainability Score: 7.2 / 10
+### 5.2 Sustainability Score: 5.45 / 10
 
 | Dimension | Score | Weight |
 |-----------|-------|--------|
@@ -243,7 +243,7 @@ For every quarter debt remains unaddressed, total remediation effort increases b
 | Codebase Health | 6.0/10 | 10% |
 | Knowledge Transfer | 8.0/10 | 5% |
 
-**Interpretation:** Sustainable with active management (5.0–7.0 range). Trending upward (+0.8 since Phase 1 baseline of 6.4).
+**Interpretation:** Sustainable with active management (5.0–7.0 range). Trending upward (+1.05 since Phase 1 baseline of 4.4).
 
 ### 5.3 Refactoring Pressure Projection
 
@@ -278,7 +278,7 @@ For every quarter debt remains unaddressed, total remediation effort increases b
 | **DTB-07** | Spring Boot Actuator health check | 2h | None |
 | **DTB-08** | RabbitMQ retry policy configuration | 2h | None |
 
-**Sprint 2 — Frontend + Observability (3.5 days):**
+**Sprint 2 — Frontend + Observability (4.25 days):**
 
 | ID | Action | Effort | Dependencies |
 |----|--------|--------|-------------|
@@ -305,7 +305,7 @@ For every quarter debt remains unaddressed, total remediation effort increases b
 | 5 | **DTB-10** | Rate limiting (Bucket4j) | 1 day |
 | 6 | **DTB-09** | Circuit breaker for RabbitMQ publisher | 1 day |
 
-**Milestone after Sprint 6:** Production-grade resilience, >70% test coverage, full observability. **Sustainability Score: → 8.0/10.**
+**Milestone after Sprint 6:** Production-grade resilience, >70% test coverage, full observability. **Sustainability Score: → 7.5/10.**
 
 ### P3 — Long Term (Sprints 7+)
 
@@ -327,7 +327,7 @@ For every quarter debt remains unaddressed, total remediation effort increases b
 | Backend Test Coverage | 25% | 60% | 75% | 80% |
 | Frontend Test Coverage | 5% | 40% | 65% | 75% |
 | MTTR | >4h | <1h | <30min | <15min |
-| Sustainability Score | 7.2 | 7.8 | 8.3 | 8.8 |
+| Sustainability Score | 5.45 | 6.5 | 7.5 | 8.5 |
 
 ---
 
@@ -405,22 +405,22 @@ The debt profile is **not strategically acceptable as-is** and **not yet structu
 
 2. **The architecture is sound.** Hexagonal, typed contracts, Builder pattern, DLQ — all correctly implemented. Debt exists *around* the architecture, not *within* it.
 
-3. **The trajectory is upward.** Reckless/inadvertent debt dropped from 80% to 25% of the portfolio through Phases 1–4.
+3. **The trajectory is upward.** Reckless/inadvertent debt dropped from 80% to 27% of the portfolio through Phases 1–4.
 
 ### Strategic Recommendation
 
 | Action | Investment | Outcome |
 |--------|-----------|---------|
-| Execute P0 + P1 roadmap (Sprints 1–2) | ~12 days | Pressure: 62% → 38%. Buys 6–9 months of sustainable velocity. |
-| Execute P2 roadmap (Sprints 3–6) | ~11 days | Sustainability Score: 7.2 → 8.0. Production-grade resilience. |
+| Execute P0 + P1 roadmap (Sprints 1–2) | ~9 days | Pressure: 62% → 38%. Buys 6–9 months of sustainable velocity. |
+| Execute P2 roadmap (Sprints 3–6) | ~11 days | Sustainability Score: 5.45 → 7.5. Production-grade resilience. |
 | Monitor weekly | Ongoing | If pressure exceeds 70%, declare debt sprint. |
 
 ### Projections
 
 | Scenario | 6-Month Sustainability | Pressure | Risk |
 |----------|----------------------|----------|------|
-| **Roadmap executed** | 8.3/10 (Healthy) | <25% | Sustainable growth |
-| **Roadmap NOT executed** | 6.5/10 (Declining) | >100% | Feature freeze required |
+| **Roadmap executed** | 7.5/10 (Healthy) | <25% | Sustainable growth |
+| **Roadmap NOT executed** | 4.8/10 (Declining) | >100% | Feature freeze required |
 
 > *The architecture is healthy. The debt is governable. The window for cost-effective remediation is open now — but it is closing. Execute the Short Term roadmap immediately.*
 
