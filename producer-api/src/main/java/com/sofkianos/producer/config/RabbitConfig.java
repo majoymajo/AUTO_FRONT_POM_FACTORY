@@ -2,8 +2,9 @@ package com.sofkianos.producer.config;
 
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
-import org.springframework.amqp.core.TopicExchange;
 import org.springframework.amqp.core.Queue;
+import org.springframework.amqp.core.QueueBuilder;
+import org.springframework.amqp.core.TopicExchange;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -17,9 +18,15 @@ import org.springframework.context.annotation.Configuration;
  *     <li>Asynchronous Messaging: declares exchange, queue, and binding for non-blocking delivery.</li>
  *     <li>Separation of Concerns: isolates messaging infrastructure from web controllers.</li>
  * </ul>
+ *
+ * <p><strong>Important:</strong> The queue declaration must match the Consumer's
+ * declaration exactly — including the {@code x-dead-letter-exchange} argument —
+ * to avoid a {@code precondition_failed} error from RabbitMQ.</p>
  */
 @Configuration
 public class RabbitConfig {
+
+    private static final String DLX_EXCHANGE_NAME = "kudos.dlx";
 
     @Value("${app.rabbitmq.queue}")
     private String queueName;
@@ -32,7 +39,9 @@ public class RabbitConfig {
 
     @Bean
     public Queue kudosQueue() {
-        return new Queue(queueName, true);
+        return QueueBuilder.durable(queueName)
+                .withArgument("x-dead-letter-exchange", DLX_EXCHANGE_NAME)
+                .build();
     }
 
     @Bean
