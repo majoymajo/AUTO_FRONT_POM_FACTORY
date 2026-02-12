@@ -84,38 +84,38 @@ Refactoring eliminated ~70% of reckless/inadvertent debt. Remaining debt is pred
 
 | ID | Title | Quadrant | Layer | Risk | Interest | Timeline |
 |----|-------|----------|-------|------|----------|----------|
-| **DTB-01** | Event Schema Versioning Missing | Prudente/Inadvertida | Backend | 🔴 High | Exponential | Short |
-| **DTB-02** | Consumer Idempotency Not Implemented | Prudente/Inadvertida | Backend | 🔴 High | Exponential | Short |
-| **DTB-03** | Message Deduplication Absent | Prudente/Inadvertida | Backend | 🟡 Medium | Linear | Mid |
-| **DTB-04** | DLQ Replay Mechanism Missing | Prudente/Deliberada | Backend | 🟡 Medium | Stable | Mid |
-| **DTB-05** | Shared Kernel Module Not Extracted | Prudente/Deliberada | Backend | 🟡 Medium | Linear | Mid |
-| **DTB-06** | Database Credentials Hardcoded | Imprudente/Inadvertida | Backend | 🔴 High | Stable | **Immediate** |
-| **DTB-07** | PostgreSQL Health Check Missing | Prudente/Inadvertida | Backend | 🟡 Medium | Stable | Short |
-| **DTB-08** | RabbitMQ Connection Resilience Missing | Prudente/Inadvertida | Backend | 🟡 Medium | Linear | Short |
-| **DTB-09** | No Circuit Breaker for Publisher | Prudente/Deliberada | Backend | 🟡 Medium | Linear | Mid |
-| **DTB-10** | No Rate Limiting on API | Prudente/Deliberada | Backend | 🟡 Medium | Stable | Mid |
-| **DTB-11** | Test Coverage Controllers Only | Prudente/Inadvertida | Backend | 🟡 Medium | Linear | Mid |
-| **DTB-12** | No Integration Tests for Event Flow | Prudente/Inadvertida | Backend | 🔴 High | Exponential | Short |
-| **DTF-01** | Frontend Dead Code (~55%) | Imprudente/Inadvertida | Frontend | 🔴 High | Linear | Short |
-| **DTF-02** | Duplicate API Layers | Imprudente/Inadvertida | Frontend | 🔴 High | Linear | Short |
-| **DTF-03** | Hardcoded User Data in Hook | Imprudente/Inadvertida | Frontend | 🔴 High | Stable | Short |
-| **DTF-04** | Missing React Error Boundaries | Imprudente/Inadvertida | Frontend | 🔴 High | Stable | Short |
-| **DTF-05** | Dead React Router (Not Activated) | Imprudente/Inadvertida | Frontend | 🟡 Medium | Stable | Short |
-| **DTF-06** | Stale Closures in Event Handlers | Imprudente/Inadvertida | Frontend | 🟡 Medium | Linear | Mid |
-| **DTF-07** | Zustand Installed But Unused | Prudente/Deliberada | Frontend | 🟢 Low | Stable | Long |
-| **DTF-08** | API Response Type Safety Missing | Prudente/Inadvertida | Frontend | 🟡 Medium | Linear | Mid |
-| **DTF-09** | Hardcoded Brand Colors (>40×) | Prudente/Deliberada | Frontend | 🟢 Low | Stable | Long |
-| **DTC-01** | No Centralized Observability | Prudente/Inadvertida | Cross-Cutting | 🔴 High | Exponential | Short |
-| **DTC-02** | No Distributed Tracing | Prudente/Inadvertida | Cross-Cutting | 🟡 Medium | Linear | Mid |
-| **DTC-03** | No Structured Logging | Prudente/Inadvertida | Cross-Cutting | 🟡 Medium | Stable | Mid |
-| **DTC-04** | Auth/AuthZ Not Implemented | Prudente/Deliberada | Cross-Cutting | 🟢 Low | Stable | Long |
-| **DTC-05** | Infrastructure Coupling to Supabase | Prudente/Deliberada | Cross-Cutting | 🟢 Low | Stable | Long |
+| **DTB-01** | Event Schema Versioning Missing | Prudent/Inadvertent | Backend | 🔴 High | Exponential | Short |
+| **DTB-02** | Consumer Idempotency Not Implemented | Prudent/Inadvertent | Backend | 🔴 High | Exponential | Short |
+| **DTB-03** | Message Deduplication Absent | Prudent/Inadvertent | Backend | 🟡 Medium | Linear | Mid |
+| **DTB-04** | DLQ Replay Mechanism Missing | Prudent/Deliberate | Backend | 🟡 Medium | Stable | Mid |
+| **DTB-05** | Shared Kernel Module Not Extracted | Prudent/Deliberate | Backend | 🟡 Medium | Linear | Mid |
+| **DTB-06** | Database Credentials Hardcoded | Reckless/Inadvertent | Backend | 🔴 High | Stable | **Immediate** |
+| **DTB-07** | PostgreSQL Health Check Missing | Prudent/Inadvertent | Backend | 🟡 Medium | Stable | Short |
+| **DTB-08** | RabbitMQ Connection Resilience Missing | Prudent/Inadvertent | Backend | 🟡 Medium | Linear | Short |
+| **DTB-09** | No Circuit Breaker for Publisher | Prudent/Deliberate | Backend | 🟡 Medium | Linear | Mid |
+| **DTB-10** | No Rate Limiting on API | Prudent/Deliberate | Backend | 🟡 Medium | Stable | Mid |
+| **DTB-11** | Test Coverage Controllers Only | Prudent/Inadvertent | Backend | 🟡 Medium | Linear | Mid |
+| **DTB-12** | No Integration Tests for Event Flow | Prudent/Inadvertent | Backend | 🔴 High | Exponential | Short |
+| **DTF-01** | Frontend Dead Code (~55%) | Reckless/Inadvertent | Frontend | 🔴 High | Linear | Short |
+| **DTF-02** | Duplicate API Layers | Reckless/Inadvertent | Frontend | 🔴 High | Linear | Short |
+| **DTF-03** | Hardcoded User Data in Hook | Reckless/Inadvertent | Frontend | 🔴 High | Stable | Short |
+| **DTF-04** | Missing React Error Boundaries | Reckless/Inadvertent | Frontend | 🔴 High | Stable | Short |
+| **DTF-05** | Dead React Router (Not Activated) | Reckless/Inadvertent | Frontend | 🟡 Medium | Stable | Short |
+| **DTF-06** | Stale Closures in Event Handlers | Reckless/Inadvertent | Frontend | 🟡 Medium | Linear | Mid |
+| **DTF-07** | Zustand Installed But Unused | Prudent/Deliberate | Frontend | 🟢 Low | Stable | Long |
+| **DTF-08** | API Response Type Safety Missing | Prudent/Inadvertent | Frontend | 🟡 Medium | Linear | Mid |
+| **DTF-09** | Hardcoded Brand Colors (>40×) | Prudent/Deliberate | Frontend | 🟢 Low | Stable | Long |
+| **DTC-01** | No Centralized Observability | Prudent/Inadvertent | Cross-Cutting | 🔴 High | Exponential | Short |
+| **DTC-02** | No Distributed Tracing | Prudent/Inadvertent | Cross-Cutting | 🟡 Medium | Linear | Mid |
+| **DTC-03** | No Structured Logging | Prudent/Inadvertent | Cross-Cutting | 🟡 Medium | Stable | Mid |
+| **DTC-04** | Auth/AuthZ Not Implemented | Prudent/Deliberate | Cross-Cutting | 🟢 Low | Stable | Long |
+| **DTC-05** | Infrastructure Coupling to Supabase | Prudent/Deliberate | Cross-Cutting | 🟢 Low | Stable | Long |
 
 ---
 
 ## 4. Quadrant Matrix Classification
 
-### 4.1 Imprudente / Inadvertida (Reckless / Inadvertent)
+### 4.1 Reckless / Inadvertent
 
 > Debt accumulated unconsciously due to knowledge gaps. No strategic benefit. Highest remediation priority.
 
@@ -131,7 +131,7 @@ Refactoring eliminated ~70% of reckless/inadvertent debt. Remaining debt is pred
 
 ---
 
-### 4.2 Prudente / Inadvertida (Prudent / Inadvertent)
+### 4.2 Prudent / Inadvertent
 
 > Well-intentioned decisions recognized as suboptimal only after gaining deeper understanding. Emergent complexity.
 
@@ -151,7 +151,7 @@ Refactoring eliminated ~70% of reckless/inadvertent debt. Remaining debt is pred
 
 ---
 
-### 4.3 Prudente / Deliberada (Prudent / Deliberate)
+### 4.3 Prudent / Deliberate
 
 > Conscious, strategic shortcuts to accelerate MVP delivery. Documented payback plans. Lowest priority.
 
@@ -168,7 +168,7 @@ Refactoring eliminated ~70% of reckless/inadvertent debt. Remaining debt is pred
 
 ---
 
-### 4.4 Imprudente / Deliberada (Reckless / Deliberate)
+### 4.4 Reckless / Deliberate
 
 > **0 items.** The AI-First methodology successfully prevented conscious reckless shortcuts. Even under time pressure, foundational patterns (Hexagonal, Builder, DLQ) were applied.
 
@@ -177,12 +177,12 @@ Refactoring eliminated ~70% of reckless/inadvertent debt. Remaining debt is pred
 ### 4.5 Quadrant Distribution
 
 ```
-                       DELIBERADA                     INADVERTIDA
+                       DELIBERATE                     INADVERTENT
               ┌────────────────────────────┬────────────────────────────┐
               │                            │                            │
-              │  PRUDENTE / DELIBERADA     │  PRUDENTE / INADVERTIDA    │
+              │  PRUDENT / DELIBERATE      │  PRUDENT / INADVERTENT     │
               │                            │                            │
-  PRUDENTE    │  8 items                   │  11 items                  │
+  PRUDENT     │  8 items                   │  11 items                  │
               │  🔴 0  🟡 4  🟢 4         │  🔴 4  🟡 7               │
               │                            │                            │
               │  Strategic MVP shortcuts   │  Emergent complexity       │
@@ -190,9 +190,9 @@ Refactoring eliminated ~70% of reckless/inadvertent debt. Remaining debt is pred
               │                            │                            │
               ├────────────────────────────┼────────────────────────────┤
               │                            │                            │
-              │  IMPRUDENTE / DELIBERADA   │  IMPRUDENTE / INADVERTIDA  │
+              │  RECKLESS / DELIBERATE     │  RECKLESS / INADVERTENT    │
               │                            │                            │
-  IMPRUDENTE  │  0 items                   │  7 items                   │
+  RECKLESS    │  0 items                   │  7 items                   │
               │                            │  🔴 5  🟡 2               │
               │  No reckless deliberate    │                            │
               │  shortcuts detected        │  Knowledge gaps and        │
@@ -203,10 +203,10 @@ Refactoring eliminated ~70% of reckless/inadvertent debt. Remaining debt is pred
 
 | Quadrant | Items | 🔴 High | 🟡 Medium | 🟢 Low |
 |----------|-------|---------|-----------|--------|
-| Imprudente / Inadvertida | 7 | 5 | 2 | 0 |
-| Prudente / Inadvertida | 11 | 4 | 7 | 0 |
-| Prudente / Deliberada | 8 | 0 | 4 | 4 |
-| Imprudente / Deliberada | 0 | 0 | 0 | 0 |
+| Reckless / Inadvertent | 7 | 5 | 2 | 0 |
+| Prudent / Inadvertent | 11 | 4 | 7 | 0 |
+| Prudent / Deliberate | 8 | 0 | 4 | 4 |
+| Reckless / Deliberate | 0 | 0 | 0 | 0 |
 | **Total** | **26** | **9** | **13** | **4** |
 
 ---
@@ -393,7 +393,7 @@ The debt profile is **not strategically acceptable as-is** and **not yet structu
 
 **Why it is not yet acceptable:**
 
-1. **Q1 (Imprudente/Inadvertida) has 7 items including 5 High-Risk.** A security incident (DTB-06), 55% dead code (DTF-01), dual API layers (DTF-02), and no error boundaries (DTF-04) provide zero strategic value and actively degrade quality.
+1. **Q1 (Reckless/Inadvertent) has 7 items including 5 High-Risk.** A security incident (DTB-06), 55% dead code (DTF-01), dual API layers (DTF-02), and no error boundaries (DTF-04) provide zero strategic value and actively degrade quality.
 
 2. **Four items carry exponential interest** (DTB-01, DTB-02, DTB-12, DTC-01). Left unaddressed for 6 months, their combined effort grows from ~6 days to ~10 days.
 
@@ -401,7 +401,7 @@ The debt profile is **not strategically acceptable as-is** and **not yet structu
 
 **Why it is not structurally dangerous:**
 
-1. **Q4 (Imprudente/Deliberada) is empty.** No conscious reckless shortcuts were taken.
+1. **Q4 (Reckless/Deliberate) is empty.** No conscious reckless shortcuts were taken.
 
 2. **The architecture is sound.** Hexagonal, typed contracts, Builder pattern, DLQ — all correctly implemented. Debt exists *around* the architecture, not *within* it.
 
