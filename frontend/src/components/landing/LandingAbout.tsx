@@ -14,8 +14,10 @@ export const LandingAbout: React.FC = () => {
           </p>
         </div>
         <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
-          <div className="group relative rounded-2xl border border-white/10 bg-white/5 p-8 transition-all hover:border-[#FF5F00]/50 hover:bg-white/[0.07] hover:-translate-y-1">
-            <div className="mb-6 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-[#FF5F00]/10 text-[#FF5F00] group-hover:bg-[#FF5F00] group-hover:text-white transition-colors">
+          <div className="group relative rounded-2xl border border-white/10 bg-white/5 p-8 transition-all hover:border-brand/50 hover:bg-white/[0.07] hover:-translate-y-1">
+
+            <div className="mb-6 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-brand/10 text-brand group-hover:bg-brand group-hover:text-white transition-colors">
+
               <Timer className="h-6 w-6" />
             </div>
             <h3 className="text-xl font-bold text-white mb-3">Sin Interrupciones</h3>
@@ -23,8 +25,9 @@ export const LandingAbout: React.FC = () => {
               Gracias a nuestra arquitectura asíncrona (RabbitMQ), puedes enviar Kudos masivos sin que el sistema se congele.
             </p>
           </div>
-          <div className="group relative rounded-2xl border border-white/10 bg-white/5 p-8 transition-all hover:border-[#FF5F00]/50 hover:bg-white/[0.07] hover:-translate-y-1">
-            <div className="mb-6 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-[#FF5F00]/10 text-[#FF5F00] group-hover:bg-[#FF5F00] group-hover:text-white transition-colors">
+          <div className="group relative rounded-2xl border border-white/10 bg-white/5 p-8 transition-all hover:border-brand/50 hover:bg-white/[0.07] hover:-translate-y-1">
+            <div className="mb-6 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-brand/10 text-brand group-hover:bg-brand group-hover:text-white transition-colors">
+
               <Trophy className="h-6 w-6" />
             </div>
             <h3 className="text-xl font-bold text-white mb-3">Gamificación Justa</h3>
@@ -32,8 +35,9 @@ export const LandingAbout: React.FC = () => {
               Cada reconocimiento suma. Nuestro Worker calcula puntos y categorías en segundo plano.
             </p>
           </div>
-          <div className="group relative rounded-2xl border border-white/10 bg-white/5 p-8 transition-all hover:border-[#FF5F00]/50 hover:bg-white/[0.07] hover:-translate-y-1">
-            <div className="mb-6 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-[#FF5F00]/10 text-[#FF5F00] group-hover:bg-[#FF5F00] group-hover:text-white transition-colors">
+          <div className="group relative rounded-2xl border border-white/10 bg-white/5 p-8 transition-all hover:border-brand/50 hover:bg-white/[0.07] hover:-translate-y-1">
+            <div className="mb-6 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-brand/10 text-brand group-hover:bg-brand group-hover:text-white transition-colors">
+
               <Users className="h-6 w-6" />
             </div>
             <h3 className="text-xl font-bold text-white mb-3">Conexión Remota</h3>

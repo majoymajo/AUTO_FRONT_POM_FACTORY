@@ -26,7 +26,6 @@ import org.springframework.stereotype.Component;
 public class RabbitMqKudoPublisher implements KudoEventPublisher {
 
     private final RabbitTemplate rabbitTemplate;
-    private final ObjectMapper objectMapper;
 
     @Value("${app.rabbitmq.exchange}")
     private String exchangeName;
@@ -37,17 +36,12 @@ public class RabbitMqKudoPublisher implements KudoEventPublisher {
     @Override
     public void publish(KudoEvent event) {
         try {
-            String jsonPayload = objectMapper.writeValueAsString(event);
-
             log.info("Publishing KudoEvent to RabbitMQ: from={}, to={}, category={}",
                     event.getFrom(), event.getTo(), event.getCategory());
 
-            rabbitTemplate.convertAndSend(exchangeName, routingKey, jsonPayload);
+            rabbitTemplate.convertAndSend(exchangeName, routingKey, event);
 
             log.debug("KudoEvent published successfully");
-        } catch (JsonProcessingException e) {
-            log.error("Failed to serialize KudoEvent", e);
-            throw new KudoPublishingException("Error serializing KudoEvent to JSON", e);
         } catch (AmqpException e) {
             log.error("Failed to publish KudoEvent to RabbitMQ", e);
             throw new KudoPublishingException("Error publishing KudoEvent to message broker", e);

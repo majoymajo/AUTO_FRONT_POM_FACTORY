@@ -1,42 +1,47 @@
 import axios from 'axios';
+import type { AxiosInstance, InternalAxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+import { toast } from 'sonner';
 
-export const apiClient = axios.create({
-  baseURL: API_URL,
+/**
+ * Centralized Axios client configuration
+ */
+export const apiClient: AxiosInstance = axios.create({
+  baseURL: import.meta.env.VITE_API_URL ?? '/api',
   headers: {
     'Content-Type': 'application/json',
   },
   timeout: 10000,
 });
 
-
+// Request Interceptor
 apiClient.interceptors.request.use(
-  (config) => {
-
-    const token = localStorage.getItem('authToken');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
+  (config: InternalAxiosRequestConfig) => {
+    // Add auth tokens here if needed in the future
     return config;
   },
-  (error) => {
+  (error: AxiosError) => {
     return Promise.reject(error);
   }
 );
 
-
+// Response Interceptor
 apiClient.interceptors.response.use(
-  (response) => {
+  (response: AxiosResponse) => {
     return response;
   },
-  (error) => {
-
+  (error: AxiosError) => {
+    // Global error handling
+    const message = (error.response?.data as any)?.message || error.message || 'Error de conexión';
+    console.error(`[API Error] ${error.response?.status}: ${message}`);
+    
     if (error.response?.status === 401) {
-
-      localStorage.removeItem('authToken');
-      window.location.href = '/login';
+      toast.error('Sesión expirada');
+      // Potential redirect to login
+    } else if (error.response?.status === 500) {
+      toast.error('Error interno del servidor');
     }
+    
     return Promise.reject(error);
   }
 );
