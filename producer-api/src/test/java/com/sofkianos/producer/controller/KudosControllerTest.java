@@ -36,12 +36,20 @@ class KudosControllerTest {
                 .category("Teamwork")
                 .message("Great job on the project!")
                 .build();
+        
+        com.sofkianos.producer.dto.KudoResponse mockResponse = com.sofkianos.producer.dto.KudoResponse.builder()
+                .id("123-abc")
+                .status("ACCEPTED")
+                .build();
+
+        when(kudoService.sendKudo(any(KudoRequest.class))).thenReturn(mockResponse);
 
         // Act
-        ResponseEntity<Void> response = kudosController.publishKudos(request);
+        ResponseEntity<com.sofkianos.producer.dto.KudoResponse> response = kudosController.publishKudos(request);
 
         // Assert
         assertEquals(HttpStatus.ACCEPTED, response.getStatusCode());
         verify(kudoService, times(1)).sendKudo(any(KudoRequest.class));
+        assertEquals("123-abc", response.getBody().getId());
     }
 }

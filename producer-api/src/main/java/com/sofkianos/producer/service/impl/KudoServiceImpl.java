@@ -30,7 +30,7 @@ public class KudoServiceImpl implements KudoService {
     private final KudoEventPublisher kudoEventPublisher;
 
     @Override
-    public void sendKudo(KudoRequest kudoRequest) {
+    public com.sofkianos.producer.dto.KudoResponse sendKudo(KudoRequest kudoRequest) {
         log.info("Processing Kudo: from={}, to={}", kudoRequest.getFrom(), kudoRequest.getTo());
 
         KudoEvent event = KudoEvent.builder()
@@ -43,6 +43,15 @@ public class KudoServiceImpl implements KudoService {
 
         kudoEventPublisher.publish(event);
 
-        log.info("Kudo published successfully: from={}, to={}", event.getFrom(), event.getTo());
+        String trackingId = java.util.UUID.randomUUID().toString();
+        log.info("Kudo published successfully: from={}, to={}, trackingId={}", 
+                event.getFrom(), event.getTo(), trackingId);
+        
+        return com.sofkianos.producer.dto.KudoResponse.builder()
+                .id(trackingId)
+                .message("Kudo queued successfully")
+                .status("ACCEPTED")
+                .timestamp(LocalDateTime.now())
+                .build();
     }
 }

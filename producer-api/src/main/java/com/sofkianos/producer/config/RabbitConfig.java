@@ -53,4 +53,16 @@ public class RabbitConfig {
     public Binding kudosBinding(Queue kudosQueue, TopicExchange kudosExchange) {
         return BindingBuilder.bind(kudosQueue).to(kudosExchange).with(routingKey);
     }
+
+    @Bean
+    public org.springframework.amqp.support.converter.MessageConverter jsonMessageConverter() {
+        return new org.springframework.amqp.support.converter.Jackson2JsonMessageConverter();
+    }
+
+    @Bean
+    public org.springframework.amqp.rabbit.core.RabbitTemplate rabbitTemplate(org.springframework.amqp.rabbit.connection.ConnectionFactory connectionFactory) {
+        org.springframework.amqp.rabbit.core.RabbitTemplate template = new org.springframework.amqp.rabbit.core.RabbitTemplate(connectionFactory);
+        template.setMessageConverter(jsonMessageConverter());
+        return template;
+    }
 }

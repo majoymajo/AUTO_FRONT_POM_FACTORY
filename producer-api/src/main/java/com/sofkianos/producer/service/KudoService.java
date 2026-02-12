@@ -11,6 +11,7 @@ public interface KudoService {
    * Processes a Kudo request and publishes it to the messaging system.
    *
    * @param kudoRequest the kudo to process
+   * @return the response containing tracking details
    */
-  void sendKudo(KudoRequest kudoRequest);
+  com.sofkianos.producer.dto.KudoResponse sendKudo(KudoRequest kudoRequest);
 }

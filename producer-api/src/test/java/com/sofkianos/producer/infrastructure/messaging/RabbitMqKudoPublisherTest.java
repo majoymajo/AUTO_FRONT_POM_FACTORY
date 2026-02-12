@@ -51,11 +51,12 @@ class RabbitMqKudoPublisherTest {
         publisherAdapter.publish(event);
 
         // Assert: Consume message manually to verify payload contract
+        // Since we configured Jackson2JsonMessageConverter, receiveAndConvert should return the object
         Object message = rabbitTemplate.receiveAndConvert("kudos.queue", 5000);
         assertThat(message).isNotNull();
+        assertThat(message).isInstanceOf(KudoEvent.class);
         
-        // Validation: Verify it is NOT an array [2026,2,11] but a String
-        String json = message.toString(); 
-        assertThat(json).contains("\"timestamp\":\"2026-02-11T12:00:00\"");
+        KudoEvent receivedEvent = (KudoEvent) message;
+        assertThat(receivedEvent.getTimestamp()).isEqualTo(now);
     }
 }

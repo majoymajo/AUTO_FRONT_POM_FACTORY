@@ -22,8 +22,8 @@ public class KudosController {
   private final KudoService kudoService;
 
   @PostMapping
-  public ResponseEntity<Void> publishKudos(@Valid @RequestBody KudoRequest payload) {
-    kudoService.sendKudo(payload);
-    return ResponseEntity.status(HttpStatus.ACCEPTED).build();
+  public ResponseEntity<com.sofkianos.producer.dto.KudoResponse> publishKudos(@Valid @RequestBody KudoRequest payload) {
+    var response = kudoService.sendKudo(payload);
+    return ResponseEntity.status(HttpStatus.ACCEPTED).body(response);
   }
 }
