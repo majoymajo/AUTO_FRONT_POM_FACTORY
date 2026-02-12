@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Menu, X, ArrowRight } from 'lucide-react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavbar } from '../hooks/ui/useNavbar';
 
 export interface NavbarProps {
   onNavigateToSection?: (id: string) => void;
@@ -9,44 +9,14 @@ export interface NavbarProps {
 export const Navbar: React.FC<NavbarProps> = ({
   onNavigateToSection,
 }) => {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const isAppView = location.pathname === '/kudos';
-
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 20);
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  const handleNavClick = (id: string) => {
-    if (location.pathname !== '/') {
-      navigate('/' + (id === 'top' ? '' : '#' + id));
-    } else if (onNavigateToSection) {
-      onNavigateToSection(id);
-    } else {
-      // Internal anchor logic if onLanding but no explicit callback
-      const element = document.getElementById(id);
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth' });
-      } else if (id === 'top') {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      }
-    }
-    setMobileMenuOpen(false);
-  };
-
-  const handleToggleView = () => {
-    if (isAppView) {
-      navigate('/');
-    } else {
-      navigate('/kudos');
-    }
-    setMobileMenuOpen(false);
-  };
+  const {
+    isAppView,
+    isScrolled,
+    mobileMenuOpen,
+    handleNavClick,
+    handleToggleView,
+    toggleMobileMenu,
+  } = useNavbar({ onNavigateToSection });
 
   return (
     <header
@@ -105,7 +75,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
         <button
           className="md:hidden text-zinc-300 hover:text-white"
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          onClick={toggleMobileMenu}
         >
           {mobileMenuOpen ? <X /> : <Menu />}
         </button>
