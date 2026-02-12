@@ -71,13 +71,13 @@ echo "Iniciando contenedores..."
 echo "======================================"
 
 # Build and start containers using screen to avoid SSH disconnection
-sudo docker-compose up -d --build
+sudo docker-compose -f docker-compose.prod.yml up -d --build
 
 echo "======================================"
 echo "Verificando estado de contenedores..."
 echo "======================================"
 sleep 5
-sudo docker-compose ps
+sudo docker-compose -f docker-compose.prod.yml ps
 
 echo "======================================"
 echo "¡Instalación completada!"
@@ -93,6 +93,6 @@ echo "  - Consumer Worker: http://$(curl -s ifconfig.me):8081"
 echo "  - RabbitMQ Management: http://$(curl -s ifconfig.me):15672"
 echo "  - Log Viewer: http://$(curl -s ifconfig.me):8888"
 echo ""
-echo "Para ver logs: sudo docker-compose logs -f"
-echo "Para ver estado: sudo docker-compose ps"
+echo "Para ver logs: sudo docker-compose -f docker-compose.prod.yml logs -f"
+echo "Para ver estado: sudo docker-compose -f docker-compose.prod.yml ps"
 echo "======================================"
