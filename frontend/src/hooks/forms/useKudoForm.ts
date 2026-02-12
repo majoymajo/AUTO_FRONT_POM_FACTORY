@@ -10,7 +10,7 @@ import { useKudoFormLogic } from './useKudoFormLogic';
  */
 export const useKudoForm = () => {
   const { USERS } = useUsers();
-  const { register, formData, handleSend, KUDO_CATEGORIES } = useKudoFormLogic();
+  const { register, formData, serverError, handleSend, KUDO_CATEGORIES } = useKudoFormLogic();
   const { toUser, loadingAvatar } = useAvatarPreview(formData.to);
   const { sliderValue, isDragging, sliderRef, handleStart } = useSlider(handleSend);
 
@@ -18,12 +18,14 @@ export const useKudoForm = () => {
     // Data
     USERS,
     KUDO_CATEGORIES,
-    
+
     // Form state/actions
     register,
+    serverError,
+    formData,
     toUser,
     loadingAvatar,
-    
+
     // Interaction state/actions
     sliderValue,
     isDragging,
