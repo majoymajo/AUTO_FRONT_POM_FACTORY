@@ -257,9 +257,44 @@ Inspecting both containers in Dozzle is the recommended way to confirm that a Ku
 ### Prerequisites
 
 - **Docker** and **Docker Compose** installed
-- **Available ports**: 5173 (Frontend), 8082 (Producer), 8081 (Consumer), 5672 (RabbitMQ AMQP), 15672 (RabbitMQ Management), 8888 (Dozzle)
+- **Available ports**: 5173 (Frontend - dev only), 8082 (Producer), 8081 (Consumer), 5672 (RabbitMQ AMQP), 15672 (RabbitMQ Management), 8888 (Dozzle)
 
-### Quick Start
+### Docker Compose Configurations
+
+SofkianOS provides two Docker Compose configurations for different environments:
+
+#### Development Configuration (`docker-compose.dev.yml`)
+
+**Use for local development.** Includes all services with Frontend running locally.
+
+```bash
+docker compose -f docker-compose.dev.yml up -d --build
+```
+
+**Services:**
+- Frontend (React) — http://localhost:5173
+- Producer API — http://localhost:8082
+- Consumer Worker — http://localhost:8081
+- RabbitMQ — http://localhost:15672
+- Dozzle (Log Viewer) — http://localhost:8888
+
+#### Production Configuration (`docker-compose.prod.yml`)
+
+**Use for AWS deployment.** Backend services only; Frontend is hosted on Vercel.
+
+```bash
+docker compose -f docker-compose.prod.yml up -d --build
+```
+
+**Services:**
+- Producer API — Port 8082
+- Consumer Worker — Port 8081
+- RabbitMQ — Ports 5672, 15672
+- Dozzle (Log Viewer) — Port 8888
+
+**Frontend:** Deployed separately on **Vercel** (https://sofkianos-mvp.vercel.app/)
+
+### Quick Start (Local Development)
 
 1. **Configure environment** (optional):
 
@@ -269,10 +304,10 @@ Inspecting both containers in Dozzle is the recommended way to confirm that a Ku
 
    Default RabbitMQ credentials: `guest` / `guest` (local only).
 
-2. **Start the entire stack**:
+2. **Start the development stack**:
 
    ```bash
-   docker compose up -d --build
+   docker compose -f docker-compose.dev.yml up -d --build
    ```
 
    This command:
@@ -294,32 +329,41 @@ Inspecting both containers in Dozzle is the recommended way to confirm that a Ku
 4. **Stop the stack**:
 
    ```bash
-   docker compose down
+   docker compose -f docker-compose.dev.yml down
    ```
 
    To remove volumes (including RabbitMQ data):
 
    ```bash
-   docker compose down -v
+   docker compose -f docker-compose.dev.yml down -v
    ```
 
-### Service Dependencies
+### Service Dependencies & Startup Order
 
 The orchestration ensures the correct startup order:
 
-- **RabbitMQ** starts first with health checks
-- **Producer API** and **Consumer Worker** wait for RabbitMQ to be healthy
-- **Frontend** waits for Producer API to be available
+**Development** (`docker-compose.dev.yml`):
+- RabbitMQ starts first with health checks
+- Producer API and Consumer Worker wait for RabbitMQ to be healthy
+- Frontend waits for Producer API to be available
 - All services communicate via the `sofkian-net` bridge network
 
-### Testing the Flow
+**Production** (`docker-compose.prod.yml`):
+- RabbitMQ starts first with health checks
+- Producer API and Consumer Worker wait for RabbitMQ to be healthy
+- Frontend is hosted separately on Vercel
+- All services communicate via the `sofkian-net` bridge network
+
+### Testing the Flow (Development)
+
+When using `docker-compose.dev.yml`:
 
 1. Open http://localhost:5173
 2. Navigate to the Kudo form
 3. Send a Kudo (From, To, Category, Message)
-4. Verify Producer API logs: should show HTTP 202 response
+4. Verify Producer API logs (Dozzle): should show HTTP 202 response
 5. Verify RabbitMQ Management UI: check message in `kudos.queue`
-6. Verify Consumer Worker logs: should show message processing
+6. Verify Consumer Worker logs (Dozzle): should show message processing
 7. Verify that Consumer processed the Kudo (check database/logs)
 
 ---
