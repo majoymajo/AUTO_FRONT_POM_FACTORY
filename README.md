@@ -226,7 +226,7 @@ The system is deployed on **AWS EC2** (backend and containers) and **Vercel** (f
 
 | | |
 |---|---|
-| **Link** | https://sofkianos-mvp.vercel.app/ |
+| **Link** | https://sofkianos-mvp-edub.vercel.app/ |
 | **Description** | User interface where Kudos are submitted. Send a Kudo and then verify its flow in Dozzle (see below). |
 
 ### Observability (Crucial) 📊
@@ -234,7 +234,7 @@ The system is deployed on **AWS EC2** (backend and containers) and **Vercel** (f
 | | |
 |---|---|
 | **Tool** | Dozzle (real-time log viewer) |
-| **Link** | http://34.235.165.217:8888/ |
+| **Link** | http://54.210.184.144:8888/ |
 
 Since the system uses **RabbitMQ**, transaction processing is **asynchronous**. The API returns **202 Accepted** immediately; actual processing happens in the Consumer Worker. To see the full flow:
 
@@ -247,8 +247,8 @@ Inspecting both containers in Dozzle is the recommended way to confirm that a Ku
 
 | Service | Swagger Documentation | Health Check |
 |---------|-----------------------|--------------|
-| **Producer API** | [Swagger UI](http://34.235.165.217:8081/swagger-ui/index.html) | [Health](http://34.235.165.217:8081/api/v1/health) |
-| **Consumer Worker** | [Swagger UI](http://34.235.165.217:8082/swagger-ui/index.html) | [Health](http://34.235.165.217:8082/health) |
+| **Producer API** | [Swagger UI](http://54.210.184.144:8081/swagger-ui/index.html) | [Health](http://54.210.184.144:8081/api/v1/health) |
+| **Consumer Worker** | [Swagger UI](http://54.210.184.144:8082/swagger-ui/index.html) | [Health](http://54.210.184.144:8082/health) |
 
 ---
 
