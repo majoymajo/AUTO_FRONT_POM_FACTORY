@@ -58,13 +58,13 @@
 - [x] `src/hooks/landing/useInfiniteScroll.ts`
   - `useInfiniteScroll`
 
-- [ ] `src/hooks/landing/useLaunchSlider.ts`
+- [x] `src/hooks/landing/useLaunchSlider.ts`
   - `useLaunchSlider`
 
-- [ ] `src/hooks/ui/useAvatarPreview.ts`
+- [x] `src/hooks/ui/useAvatarPreview.ts`
   - `useAvatarPreview`
 
-- [ ] `src/hooks/ui/useSlider.ts`
+- [x] `src/hooks/ui/useSlider.ts`
   - `useSlider`
 
 ## 3. Servicios / API clients
