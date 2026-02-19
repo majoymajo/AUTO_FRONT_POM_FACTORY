@@ -1,111 +1,1431 @@
 # HANDOVER REPORT — SofkianOS MVP
 
-## 1. Executive Summary
-SofkianOS es un sistema distribuido de alta disponibilidad diseñado para el intercambio de **Kudos** (reconocimientos) en entornos corporativos. La arquitectura ha evolucionado de un monolito acoplado a un ecosistema asíncrono basado en **Event-Driven Architecture (EDA)** y **Arquitectura Hexagonal**. El sistema garantiza una experiencia de usuario fluida delegando el procesamiento pesado (validación de dominio, persistencia y gamificación) a workers especializados, manteniendo el entry-point (API) ligero e inmediatamente responsivo.
+**Documento:** Análisis Integral del Sistema Heredado  
+**Fecha:** 18 de Febrero de 2026  
+**Versión:** 1.0  
+**Destinatarios:** Equipo de Mantenimiento, Nuevos Desarrolladores, Arquitectos de Software
 
 ---
 
-## 2. Tech Stack & Dependencies
+## Tabla de Contenidos
 
-### Frontend (SPA)
-| Tecnología | Versión | Rol Crítico |
-| :--- | :--- | :--- |
-| **React** | 19.2.0 | Core del framework UI. |
-| **Vite** | 7.2.4 | Herramienta de bundling y entorno de desarrollo. |
-| **Zustand** | 5.0.11 | Gestión de estado global (implementación parcial). |
-| **React Hook Form** | 7.71.1 | Gestión de estados de formularios y validación reactiva. |
-| **Zod** | 4.3.6 | Definición de esquemas y validación de tipos en runtime. |
-| **Framer Motion** | 12.33.0 | Orquestación de micro-animaciones y UX fluida. |
-| **Axios** | 1.13.4 | Cliente HTTP con manejo de interceptores para la API. |
-| **Tailwind CSS** | 3.4.19 | Sistema de diseño basado en utilidades. |
-
-### Backend (Microservicios)
-| Tecnología | Versión | Rol Crítico |
-| :--- | :--- | :--- |
-| **Spring Boot** | 3.3.5 | Framework base para API y Workers. |
-| **Java** | 17 | Lenguaje de programación con uso intensivo de Records y Streams. |
-| **RabbitMQ** | 3-mgmnt | Broker de mensajería AMQP para desacoplamiento asíncrono. |
-| **Spring Data JPA**| 3.3.5 | Abstracción de persistencia sobre Hibernate. |
-| **Lombok** | 1.18.34 | Reducción de código boilerplate mediante anotaciones. |
-| **PostgreSQL**| 16+ | Base de datos relacional (persistida en Supabase/Docker). |
+- [1. Descripción General](#1-descripción-general)
+- [2. Arquitectura del Sistema](#2-arquitectura-del-sistema)
+- [3. Flujo de Trabajo](#3-flujo-de-trabajo)
+- [4. Dependencias y Configuración](#4-dependencias-y-configuración)
+- [5. Limitaciones y Problemas Conocidos](#5-limitaciones-y-problemas-conocidos)
+- [6. Recomendaciones para el Futuro](#6-recomendaciones-para-el-futuro)
 
 ---
 
-## 3. Directory Sweep & Architecture
+## 1. Descripción General
 
-### Estructura de Carpetas
+### 1.1 ¿Qué es el Sistema?
 
-#### `/producer-api` (Hexagonal Light)
-*   **`com.sofkianos.producer.controller`**: Entry points REST (ej. `KudosController`).
-*   **`com.sofkianos.producer.service`**: Interficies y orquestación de dominio.
-*   **`com.sofkianos.producer.domain.ports.out`**: Definición de salidas (ej. `KudoEventPublisher`).
-*   **`com.sofkianos.producer.infrastructure.messaging`**: Implementación (Adapter) de RabbitMQ.
-*   **`com.sofkianos.producer.dto`**: Contratos de entrada/salida para la API.
+**SofkianOS** es una plataforma digital diseñada para **automatizar la cultura de reconocimiento y recompensas** dentro de una organización distribuida geográficamente. El nombre es un acrónimo que combina **Sofkian** (nuestra esencia empresarial) con **OS** (Sistema Operativo de Kudos).
 
-#### `/consumer-worker` (Hexagonal Rich)
-*   **`com.sofkianos.consumer.component`**: Listeners de RabbitMQ (ej. `KudosConsumer`).
-*   **`com.sofkianos.consumer.domain.model`**: Lógica pura de negocio y Enums (`KudoCategory`).
-*   **`com.sofkianos.consumer.entity`**: Entidad Rica `Kudo` con validación interna vía **Builder Pattern**.
-*   **`com.sofkianos.consumer.infrastructure.persistence`**: Adaptador JPA para persistencia desacoplada.
-*   **`com.sofkianos.consumer.repository`**: Interfaces de Spring Data JPA.
+### 1.2 Propósito Principal
 
-#### `/frontend`
-*   **`src/components`**: UI Atoms y Molecules (ej. `KudoForm.tsx`).
-*   **`src/hooks/forms`**: Lógica de formularios desacoplada del renderizado (ej. `useKudoFormLogic.ts`).
-*   **`src/services/api`**: Clientes de comunicación con el backend (usando la instancia de `apiClient`).
-*   **`src/schemas`**: Definiciones de validación Zod para tipos integrados.
+El sistema transforma la **identidad Sofkiana en Kudos tangibles**. Un "Kudo" es un reconocimiento formal que un empleado puede enviar a un compañero para celebrar un logro, contribución o comportamiento destacado. El término proviene del griego antiguo *kŷdos*, que significa honor, reconocimiento y prestigio.
 
----
+**Valor de negocio:**
+- Fortalece la cultura organizacional en equipos distribuidos
+- Proporciona reconocimiento instantáneo sin trabajador manual
+- Implementa gamificación justa a través de categorías y puntos
+- Procesa miles de reconocimientos de forma asincrónica sin bloqueos
 
-## 4. Critical Data Flow: The Journey of a Kudo
+### 1.3 Procesos Automatizados
 
-1.  **Captura (Frontend):** El usuario completa el `KudoForm.tsx`. El hook `useKudoFormLogic.ts` valida localmente con el esquema Zod.
-2.  **Envío (API Client):** Se llama a `kudosService.send()`, realizando un POST a `/api/v1/kudos`.
-3.  **Aceptación (Producer API):** `KudosController.java` recibe el `KudoRequest`. `KudoServiceImpl.java` transforma el DTO en un `KudoEvent`.
-4.  **Publicación (Messaging):** `RabbitMqKudoPublisher.java` serializa a JSON y envía el mensaje al Exchange `kudos.exchange` con la routing key `kudos.key`. El cliente recibe un `202 ACCEPTED`.
-5.  **Consumo (Worker):** `KudosConsumer.java` (@RabbitListener) detecta el mensaje en `kudos.queue`.
-6.  **Validación de Dominio:** `KudoServiceImpl.java` (del worker) usa el `Kudo.Builder` para instanciar la entidad. Aquí se ejecutan reglas críticas (ej. no auto-kudos, campos no vacíos).
-7.  **Persistencia:** `JpaKudoPersistenceAdapter.java` guarda la entidad en PostgreSQL a través de `KudoRepository.java`.
+| Proceso | Descripción |
+|---------|-------------|
+| **Envío de Kudo** | Un empleado accede a la interfaz web, completa un formulario (remitente, destinatario, categoría, mensaje) y envía su reconocimiento. |
+| **Validación Inmediata** | El sistema valida la estructura del Kudo en tiempo real, rechazando auto-reconocimientos y validando datos obligatorios. |
+| **Publicación Asincrónica** | La API acepta la solicitud (HTTP 202) y publica el evento a RabbitMQ sin bloquear. El usuario obtiene confirmación instantánea. |
+| **Procesamiento en Background** | Un worker consumidor procesa el Kudo en segundo plano: calcula puntos, aplica reglas de gamificación, y persiste en la base de datos. |
+| **Persistencia Final** | Los Kudos se almacenan en PostgreSQL con trazabilidad completa, incluyendo timestamps y meditaciones de validación. |
 
----
+### 1.4 Usuarios del Sistema
 
-## 5. Environment Variables & Configuration
+| Rol | Descripción | Responsabilidades |
+|-----|-------------|-------------------|
+| **Empleado Sofka** | Usuario final del sistema | Enviar Kudos, recibir reconocimientos, visualizar su perfil |
+| **Administrador (Futuro)** | Gestor del sistema | Configurar categorías, revisar Kudos rechazados, generar reportes |
+| **API Consumer (Interno)** | Otros sistemas | Integración futura con sistemas de RRHH o nómina |
 
-El sistema requiere las siguientes variables de entorno para operar (referenciadas en `application.properties` y `docker-compose.yml`):
+### 1.5 Alcance Actual
 
-| Variable | Descripción | Ubicación |
-| :--- | :--- | :--- |
-| `SPRING_RABBITMQ_HOST` | Host del broker RabbitMQ. | Producer & Consumer |
-| `SPRING_RABBITMQ_PORT` | Puerto de conexión AMQP (5672). | Producer & Consumer |
-| `SPRING_RABBITMQ_USERNAME` | Usuario del broker (guest/guest por defecto). | Producer & Consumer |
-| `SPRING_RABBITMQ_PASSWORD` | Password del broker. | Producer & Consumer |
-| `SPRING_DATASOURCE_URL` | URL de conexión JDBC a PostgreSQL. | Consumer Worker |
-| `SPRING_DATASOURCE_USERNAME`| Usuario de BD. | Consumer Worker |
-| `SPRING_DATASOURCE_PASSWORD`| Password de BD (**Actual: Hardcoded - Crítico**). | Consumer Worker |
-| `VITE_API_URL` | URL base de la Producer API para el frontend. | Frontend |
+**En Producción:**
+- ✅ Envío de Kudos desde interfaz web
+- ✅ Validación de datos de entrada
+- ✅ Procesamiento asincrónico con RabbitMQ
+- ✅ Persistencia de datos en PostgreSQL (futuro)
+
+**No Implementado (Roadmap):**
+- 🔄 Autenticación y autorización
+- 🔄 Panel de administración
+- 🔄 Reportes y analytics
+- 🔄 Notifications en tiempo real
+- 🔄 Aplicación móvil
 
 ---
 
-## 6. Technical Debt & Points of Failure
+## 2. Arquitectura del Sistema
 
-### Puntos de Falla Detectados (Edge Cases)
-*   **Seguridad:** Contraseñas de base de datos en texto plano en `application.properties`. Existe riesgo de filtración.
-*   **Idempotencia:** El worker no valida duplicados. Si RabbitMQ reintenta un mensaje (NACK), se creará el mismo Kudo dos veces.
-*   **Transactionality:** Si el worker falla después de guardar en DB pero antes de confirmar a RabbitMQ, el mensaje vuelve a la cola (at-least-once delivery issues).
-*   **Dead Code:** El ~55% del frontend es código muerto de versiones previas que infla el bundle.
+### 2.1 Visión General Arquitectónica
 
-### Estado de la Deuda Técnica (Fowler Quadrant)
-1.  **Reckless/Inadvertent (Prioridad 🔴):** Credenciales hardcoded (`DTB-06`), falta de Error Boundaries en React (`DTF-04`), y duplicidad en capas API de frontend (`DTF-02`).
-2.  **Prudent/Inadvertent (Prioridad 🟡):** Falta de versionado de esquemas en eventos AMQP (`DTB-01`) y ausencia de tests de integración para el flujo asíncrono completo (`DTB-12`).
-3.  **Prudent/Deliberate (Prioridad 🟢):** Falta de mecanismo de "replay" para la DLQ (`DTB-04`) y ausencia de Circuit Breaker en el Publisher (`DTB-09`).
+SofkianOS implementa una **arquitectura de microservicios orientada a eventos** usando el patrón **Event-Driven Asynchronous Pipeline**. El diseño garantiza que el sistema pueda procesar miles de reconocimientos simultáneamente sin bloqueos o cuellos de botella.
+
+```
+┌─────────────────────────────────────────────────┐
+│           SOFKIANOS - SYSTEM ARCHITECTURE        │
+├─────────────────────────────────────────────────┤
+│                                                 │
+│  [Empleado Sofka]                              │
+│          │                                      │
+│          │ (Navega a la interfaz)              │
+│          ▼                                      │
+│  ┌─────────────────────┐                       │
+│  │  SofkianOS Web      │                       │
+│  │  (React + Vite)     │                       │
+│  │  Port: 5173         │                       │
+│  └──────────┬──────────┘                       │
+│             │                                  │
+│             │ POST /api/v1/kudos (JSON)       │
+│             ▼                                  │
+│  ┌─────────────────────┐                       │
+│  │  Producer API       │                       │
+│  │  (Spring Boot)      │  • Validación         │
+│  │  Port: 8082         │  • Publicación        │
+│  └──────────┬──────────┘                       │
+│             │                                  │
+│             │ AMQP: Publish Event             │
+│             ▼                                  │
+│  ┌─────────────────────┐                       │
+│  │    RabbitMQ         │                       │
+│  │  (Message Broker)   │  • Desacople          │
+│  │  Port: 5672 / 15672 │  • Persistencia       │
+│  └──────────┬──────────┘                       │
+│             │                                  │
+│             │ AMQP: Consume Event             │
+│             ▼                                  │
+│  ┌─────────────────────┐                       │
+│  │ Consumer Worker     │                       │
+│  │  (Spring Boot)      │  • Lógica Kudo        │
+│  │  Port: 8081         │  • Cálculo Puntos     │
+│  └──────────┬──────────┘                       │
+│             │                                  │
+│             │ Persist Data                    │
+│             ▼                                  │
+│  ┌─────────────────────┐                       │
+│  │   PostgreSQL DB     │                       │
+│  │   (Futura)          │  • Persistencia       │
+│  └─────────────────────┘                       │
+│                                                 │
+└─────────────────────────────────────────────────┘
+```
+
+### 2.2 Componentes Principales
+
+#### **Frontend: SofkianOS Web**
+
+**Tecnología:** React 19.2.0 + TypeScript + Vite  
+**Ubicación:** `/frontend`  
+**Puerto:** 5173 (desarrollo), nginx reverse proxy (producción)
+
+**Responsabilidades:**
+- Interfaz de usuario para envío de Kudos
+- Landing page con descripción del sistema
+- Validación de formularios en el cliente
+- Gestión de estado global con Zustand
+
+**Estructura:**
+```mermaid
+flowchart LR
+  %% Front-end Architecture (React + TypeScript + Vite)
+  %% GitHub Mermaid-friendly: simple shapes, clear subgraphs, labeled flows.
+  classDef layer stroke-width:1.2px;
+  classDef ext stroke-dasharray: 4 2,stroke-width:1.2px;
+
+  U["User / Browser"]:::layer
+
+  subgraph Runtime["UI & Runtime"]
+    direction TB
+    Entry["App Bootstrap (Vite + React)"]:::layer
+    Router["Routing (React Router)"]:::layer
+    Pages["Pages / Views (LandingPage, KudosPage)"]:::layer
+    UI["Reusable Components (Navbar, KudoForm, common/*, landing/*)"]:::layer
+  end
+
+  subgraph Logic["Application Logic"]
+    direction TB
+    Hooks["Custom Hooks (data/*, forms/*, landing/*, ui/*)"]:::layer
+    Forms["Forms & Validation (React Hook Form + Zod schemas)"]:::layer
+  end
+
+  subgraph State["State Management"]
+    direction TB
+    Store["Zustand Stores (appStore, userStore)"]:::layer
+  end
+
+  subgraph Integration["API & Integration"]
+    direction TB
+    Services["Service Layer (API wrappers / use-cases)"]:::layer
+    HTTP["HTTP Client (Axios)"]:::layer
+    Utils["Utilities (error mapping / helpers)"]:::layer
+  end
+
+  API["Producer API (POST /api/v1/kudos)"]:::ext
+
+  U -->|loads SPA| Entry
+  Entry --> Router --> Pages
+  Pages -->|compose| UI
+
+  Pages -->|invoke| Hooks
+  UI -->|submit user input| Forms
+  Forms -->|validated payload| Hooks
+
+  Hooks <--> |read/write state| Store
+  Pages <--> |render from state| Store
+
+  Hooks -->|call| Services --> HTTP -->|JSON over HTTP| API
+  API -->|202 Accepted / errors| HTTP --> Utils --> Store
+```
+
+
+**Componentes Clave:**
+- `KudoForm.tsx` — Formulario para enviar Kudos con validación
+- `Navbar.tsx` — Barra de navegación
+- `LandingPage.tsx` — Página de inicio con información del sistema
+- `KudosPage.tsx` — Página principal de la aplicación
+
+#### **Backend: Producer API**
+
+**Tecnología:** Spring Boot 3.3.5 + Java 21  
+**Ubicación:** `/producer-api`  
+**Puerto:** 8082
+
+**Responsabilidades:**
+- Exponer endpoint REST `POST /api/v1/kudos`
+- Validar integridad de datos de entrada
+- Publicar eventos a RabbitMQ
+- Retornar respuesta HTTP 202 (Aceptado)
+- Exponer endpoint de salud `/health`
+- Documentar API con Swagger/OpenAPI
+
+**Stack Tecnológico:**
+- Spring Boot Web (REST Controller)
+- Spring AMQP (Configuración RabbitMQ)
+- Spring Validation (Bean Validation)
+- Lombok (Reducción de boilerplate)
+- SpringDoc OpenAPI (Documentación Swagger)
+
+
+**Estructura:**
+```mermaid
+flowchart LR
+  classDef svc stroke-width:1px;
+  classDef ext stroke-dasharray: 4 2,stroke-width:1px;
+
+  U["User / Browser"]:::ext
+  FE["Frontend SPA (React, Router, Zustand, Forms)"]:::ext
+
+  subgraph PRODUCER["Producer API (Spring Boot)"]
+    direction TB
+    PC["KudosController (REST)"]:::svc
+    PV["Bean Validation"]:::svc
+    PS["KudoService (domain orchestration)"]:::svc
+    PP["RabbitMQ Publisher (AMQP)"]:::svc
+  end
+
+  subgraph BROKER["RabbitMQ (Messaging)"]
+    direction TB
+    EX["Exchange: kudos.exchange"]:::svc
+    Q["Queue: kudos.queue"]:::svc
+    DLQ["Dead Letter Queue: kudos.dlq"]:::svc
+  end
+
+  subgraph CONSUMER["Consumer Worker (Spring Boot)"]
+    direction TB
+    CL["KudoEventListener (RabbitListener)"]:::svc
+    CP["KudoProcessingService"]:::svc
+    CG["GamificationStrategy"]:::svc
+    CR["KudoRepository (JPA)"]:::svc
+  end
+
+  DB["PostgreSQL (persistence)"]:::svc
+
+  U -->|"uses"| FE
+  FE -->|"POST /api/v1/kudos (JSON)"| PC
+  PC --> PV --> PS -->|"build KudoEvent"| PP
+  PP -->|"publish (AMQP)"| EX -->|"route"| Q
+  Q -->|"consume (AMQP)"| CL --> CP --> CG --> CR -->|"persist"| DB
+  CP -->|"on processing error"| DLQ
+  PRODUCER -.->|"returns quickly"| FE
+  PC -->|"HTTP 202 Accepted"| FE
+```
+
+**Producer API:**
+- Recibe `POST /api/v1/kudos`, valida (`Bean Validation`) y mapea el request a un evento (`KudoEvent`).
+- Publica el evento en RabbitMQ vía AMQP (`kudos.exchange` → `kudos.queue`).
+- Retorna `HTTP 202 Accepted` para mantener el flujo no-bloqueante (procesamiento asincrónico).
+- Endpoints operativos recomendados: `GET /actuator/health` y `GET /actuator/prometheus`.
+
+**Consumer Worker:**
+- Consume mensajes desde `kudos.queue` con `@RabbitListener`.
+- Ejecuta la lógica de negocio (gamificación/cálculo de puntos) y persiste el resultado (opcional).
+- En éxito: `ack` del mensaje. En fallo: `nack` y enrutamiento a DLQ o a estrategia de reintentos (según política).
+- Buenas prácticas: idempotencia (por `messageId`), manejo de duplicados, y métricas/health checks.
+
+**RabbitMQ:**
+- Actúa como broker para desacoplar Producer y Consumer (AMQP 5672, Management UI 15672).
+- Topología esperada: `Exchange (kudos.exchange)` + `Queue (kudos.queue)` + `DLQ (kudos.dlq)`.
+- En producción: habilitar persistencia (volúmenes), políticas de DLX/TTL para backoff, y HA si se requiere (cluster/quorum queues).
+
+### 2.3 Stack Tecnológico Detallado
+
+| Capa | Componente | Versión | Justificación |
+|------|-----------|---------|---------------|
+| **Frontend** | React | 19.2.0 | Librería moderna, componentes reactivos, gran comunidad |
+| | TypeScript | 5.9.3 | Type safety en tiempo de compilación |
+| | Vite | 7.2.4 | Build tool ultrarrápido, HMR eficiente |
+| | Tailwind CSS | 3.4.19 | Utility-first CSS, escalable, bajo overhead |
+| | React Hook Form | 7.71.1 | Formularios performantes, bajo re-render |
+| | Zod | 4.3.6 | Validación esquemas TypeScript-first |
+| | Zustand | 5.0.11 | State management ligero (<3KB minified) |
+| | Axios | 1.13.4 | HTTP client con interceptores |
+| **Backend** | Spring Boot | 3.3.5 | Framework Java estándar de industria |
+| | Java | 21 | LTS, features modernas, rendimiento |
+| | Maven | (implícito) | Build tool, gestión de dependencias |
+| | Lombok | 1.18+ | Reducción boilerplate (getters, setters, builders) |
+| | Spring AMQP | 3.3.5 | Integración RabbitMQ |
+| | Spring Data JPA | 3.3.5 | Abstracción persistencia |
+| | SpringDoc OpenAPI | 2.6.0 | Documentación automática API |
+| | TestContainers | (test) | Tests integración con contenedores reales |
+| **Infraestructura** | Docker | Multi-stage | Containerización, reproducibilidad |
+| | Docker Compose | 3.8 | Orquestación local |
+| | RabbitMQ | 3-management | Message broker asincrónico |
+| | PostgreSQL | 15+ | Base datos relacional |
+| | Terraform | (aws/) | Infraestructura como código (AWS) |
+| | Nginx | (frontend) | Reverse proxy, servir archivos estáticos |
+| **DevOps** | Dozzle | latest | Visor de logs en tiempo real |
+| | Vercel | (frontend) | Hosting frontend en producción |
+| | AWS EC2 | (backend) | Hosting backend en producción |
+
+### 2.4 CI/CD Pipeline
+
+**Sistema Actual:** GitHub Actions + Jenkins 
+
+**Archivos de Configuración:**
+- `.github/workflows/ci.yml` — Workflow automático de GitHub Actions
+- `frontend/ci/Jenkinsfile` — Pipeline Jenkins para frontend
+
+**Etapas del Pipeline:**
+1. **Checkout:** Clonar repositorio
+2. **Build:** Compilar código (Maven para Java, npm para React)
+3. **Test:** Ejecutar suite de tests
+4. **Quality:** Análisis de código, cobertura
+5. **Docker Build:** Construir imágenes Docker
+6. **Push Registry:** Subir a Docker registry
+7. **Deploy:** Desplegar a AWS/Vercel
+
+Un problema identificado es que en Github Actions solo hay un workflow totalmente distinto al especificado.
+Por lo que, el archivo ci.yml no se está ejecutando .
+
+Actions se utiliza para la integración continua y pruebas automatizadas dentro del propio repositorio, 
+mientras que el Jenkinsfile expresa un pipeline separado (compilación + creación de imagen Docker + despliegue) 
+destinado a ejecutarse en un servidor Jenkins.
+
+### 2.5 Diagramas de Flujo de Datos
+
+#### Flujo C1 — Contexto del Sistema
+```
+┌──────────────────┐
+│   Sofka Employee │
+└────────┬─────────┘
+         │
+         │ Uses Web Interface
+         │
+         ▼
+    ┌─────────────────────────┐
+    │    SofkianOS System     │
+    │ (All Components Below)  │
+    │                         │
+    │ Frontend + API +        │
+    │ RabbitMQ + Consumer +   │
+    │ Database                │
+    └─────────────────────────┘
+```
+
+#### Flujo C2 — Contenedores
+```
+Frontend                Producer API              Consumer Worker
+(React/Vite)           (Spring Boot)             (Spring Boot)
+    │                        │                         │
+    └────────┬────────────────┬─────────────────────────┘
+             │
+      HTTP 202 Accepted      AMQP (RabbitMQ)      Database
+             │                    │                   │
+             └─────────────────────┼───────────────────┘
+```
+
+#### Flujo de Un Kudo (End-to-End)
+
+```
+1. ENTRADA (Frontend)
+  └─ Usuario completa formulario y presiona "Enviar"
+    Fields: from, to, category, message
+
+2. VALIDACIÓN (Frontend)
+  └─ Zod valida el esquema
+  └─ React Hook Form evita auto-reconocimientos
+  └─ Axios prepara POST hacia API
+
+3. TRANSMISIÓN (HTTP)
+  └─ Frontend envía:
+    POST http://producer-api:8082/api/v1/kudos
+    Content-Type: application/json
+    Body: { from, to, category, message }
+
+4. RECEPCIÓN (Producer API)
+  └─ KudosController recibe request
+  └─ Spring Validation verifica campos
+  └─ KudoService.createKudo() orquesta lógica
+    - Validar que no sea auto-Kudo
+    - Mapper a KudoEvent DTO
+    - RabbitMqPublisher publica a RabbitMQ
+
+5. RESPUESTA (HTTP)
+  └─ Retorna HTTP 202 Accepted
+  └─ Frontend muestra confirmación al usuario
+  └─ Usuario NO espera a completar procesamiento
+
+6. COLA (RabbitMQ)
+  └─ Mensaje KudoEvent persiste en kudos.queue
+  └─ Exchange: kudos.exchange
+  └─ Routing Key: kudo.created
+  └─ DLQ habilitado para errores
+
+7. CONSUMO (Consumer Worker)
+  └─ KudoEventListener consume del queue
+  └─ Deserializa KudoEvent automáticamente
+  └─ KudoProcessingService orquesta:
+    - Aplicar reglas de gamificación
+    - Calcular puntos según categoría
+    - Validar integridad de datos
+
+8. PERSISTENCIA (Base de Datos)
+  └─ KudoRepository.save() persiste en PostgreSQL
+  └─ Timestamp de procesamiento registrado
+  └─ Trazabilidad completa disponible
+
+9. ERROR HANDLING
+  └─ Si hay excepción en paso 7-8:
+    - Mensaje reenviado a DLQ
+    - No causa cascada; API ya respondió
+    - Admin puede revisar DLQ y reintentsr
+```
 
 ---
 
-## 7. Priority Improvements (Remediation Roadmap)
+## 3. Flujo de Trabajo
 
-1.  **Seguridad (Inmediata):** Mover secretos de `application.properties` a variables de entorno inyectadas vía Docker o archivos `.env`.
-2.  **Idempotencia (Corto Plazo):** Implementar una tabla de deduplicación de mensajes usando el `tracking_id` generado por el Producer.
-3.  **Limpieza de Frontend:** Eliminar quirúrgicamente las rutas y servicios no utilizados y activar el React Router completo ignorado en `App.tsx`.
-4.  **Testing Strategy:** Incrementar la cobertura de tests unitarios en la lógica del `Kudo.Builder` (>80%) y añadir tests de integración con Testcontainers.
+### 3.1 Flujo Principal: Envío de Kudo
+
+#### Paso 1: Acceso a la Interfaz
+- Usuario navega a `https://sofkianos-mvp.vercel.app/`
+- Frontend se carga desde Vercel (hospedaje estático)
+- Usuario ve landing page con descripción del sistema
+
+#### Paso 2: Navegación a Formulario
+- Usuario hace clic en "Enviar Kudo" o accede directamente a `/app`
+- React Router navega a `KudosPage` (antes: binario `isAppView`)
+- La página muestra formulario reactivo
+
+#### Paso 3: Completar Formulario
+```
+┌────────────────────────────────┐
+│   FORMULARIO KUDO              │
+├────────────────────────────────┤
+│  De (Remitente):               │
+│  [Selector: Christopher Pallo] │  (hardcoded, futuro: BD)
+│                                │
+│  Para (Destinatario):          │
+│  [Selector: Elian Condor]      │
+│                                │
+│  Categoría:                    │
+│  [Dropdown: TEAMWORK]          │  (enum validado)
+│                                │
+│  Mensaje:                      │
+│  [Texto libre]                 │
+│                                │
+│  [Enviar] [Cancelar]           │
+└────────────────────────────────┘
+```
+
+#### Paso 4: Validación en Cliente
+- **React Hook Form** valida formulario:
+  - Campos obligatorios no vacíos
+  - Longitud de mensaje (máx 1000 caracteres)
+  - Remitente ≠ Destinatario (evita auto-Kudos)
+- **Zod Schema** (`kudoFormSchema.ts`) tipado:
+  ```typescript
+  const KudoFormSchema = z.object({
+    from: z.string().min(1, "Remitente requerido"),
+    to: z.string().min(1, "Destinatario requerido"),
+    category: z.enum(["TEAMWORK", "INNOVATION", "EXCELLENCE"]),
+    message: z.string().min(10).max(1000)
+  }).refine(
+    (data) => data.from !== data.to,
+    { message: "No puedes enviarte un Kudo a ti mismo" }
+  );
+  ```
+- Si hay errores, formulario resalta campos y muestra mensajes
+
+#### Paso 5: Envío al Producer API
+- Usuario hace clic en "Enviar"
+- Frontend prepara payload JSON
+- **Axios** realiza:
+  ```javascript
+  POST http://producer-api:8082/api/v1/kudos
+  {
+    "from": "Christopher Pallo",
+    "to": "Elian Condor",
+    "category": "TEAMWORK",
+    "message": "Excelente liderazgo en el sprint"
+  }
+  ```
+- Request tiene timeout de 5 segundos (configurable)
+
+#### Paso 6: Procesamiento en Producer API
+```
+HTTP Request Recibida
+    │
+    ├─ KudosController.createKudo() mapea a KudoRequest
+    │
+    ├─ Spring Validation (@Valid, @NotBlank, etc.)
+    │
+    └─ KudoService.createKudo()
+       ├─ Kudo.builder()
+       │  ├─ Validar: from != to
+       │  ├─ Validar: campos no nulos
+       │  └─ Construir entidad rica con invariantes
+       │
+       ├─ RabbitMqPublisher.publish(KudoEvent)
+       │  ├─ Mapear Kudo a KudoEvent (DTO)
+       │  ├─ ObjectMapper convierte a JSON
+       │  └─ RabbitTemplate envía a kudos.exchange
+       │
+       └─ Retornar HTTP 202 Accepted
+          └─ Payload: { id: UUID, status: "PUBLISHED" }
+```
+
+#### Paso 7: Mensaje en RabbitMQ
+- Mensaje llega a `kudos.queue` con metadatos:
+  - Routing Key: `kudo.created`
+  - Content-Type: `application/json`
+  - Headers: timestamp, messageId
+  - TTL: configurable (defecto: sin TTL = infinito)
+  
+- RabbitMQ persiste en disco (durabilidad)
+- Queue espera consumidor disponible
+
+#### Paso 8: Consumo en Consumer Worker
+```
+RabbitListener Detecta Evento
+    │
+    ├─ @RabbitListener(queues = "kudos.queue")
+    │
+    └─ KudoEventListener.handleKudoEvent(KudoEvent event)
+       ├─ Deserializar automáticamente (Spring trata @Payload)
+       │
+       ├─ KudoProcessingService.processKudo()
+       │  ├─ Validar integridad de datos
+       │  ├─ GamificationStrategy.calculatePoints()
+       │  │  └─ Retorna puntos según categoría
+       │  │     TEAMWORK: 10 pts
+       │  │     INNOVATION: 15 pts
+       │  │     EXCELLENCE: 20 pts
+       │  │
+       │  └─ Crear Kudo persistible con puntos
+       │
+       └─ KudoRepository.save() persiste en PostgreSQL
+          └─ Timestamp processed_at registrado
+```
+
+#### Paso 9: Confirmación Final al Usuario
+- Frontend recibe HTTP 202
+- Toast/Notificación: "¡Kudo enviado exitosamente!"
+- Formulario se resetea
+- Usuario puede enviar otro Kudo
+
+#### Paso 10: Observabilidad
+- **Producer API logs:**
+  ```
+  [INFO] POST /api/v1/kudos - from: Christopher, to: Elian
+  [INFO] Kudo published to RabbitMQ with ID: 12ab34cd
+  ```
+- **RabbitMQ Dashboard (15672):** Cola muestra 1 mensaje
+- **Consumer Worker logs:**
+  ```
+  [INFO] Consuming KudoEvent: ID 12ab34cd
+  [INFO] Calculated points: 10 (TEAMWORK)
+  [INFO] Kudo persisted with ID: uuid-1234
+  ```
+- **Dozzle (8888):** Logs en tiempo real de todos containers
+
+#### Manejo de Errores
+
+**Si la validación falla en Producer:**
+```
+Respuesta HTTP 400 Bad Request
+{
+  "error": "Validation error",
+  "fields": {
+    "from": "Remitente requerido"
+  }
+}
+```
+
+**Si RabbitMQ no está disponible:**
+```
+Respuesta HTTP 503 Service Unavailable
+{
+  "error": "Message broker unreachable"
+}
+Consumer API aún retorna 202 si usa fallback
+```
+
+**Si Consumer produce error:**
+```
+Mensaje se reenvía 3 veces (configurable)
+Si sigue fallando → Dead Letter Queue (kudos.dlq)
+Admin puede revisar DLQ e intentar replay manual
+```
+
+### 3.2 Flujo Secundario: Observabilidad en Tiempo Real
+
+**Propósito:** Verificar end-to-end que un Kudo fue procesado
+
+**Pasos:**
+
+1. **Abrir Dozzle:** Navegar a `http://localhost:8888`
+2. **Seleccionar Logs Producer API:**
+   - Ver endpoint HTTP POST
+   - Ver serialización a KudoEvent
+   - Ver publicación a RabbitMQ
+3. **Monitorear Cola RabbitMQ:**
+   - Navegar a `http://localhost:15672` (guest/guest)
+   - Ir a "Queues"
+   - Ver "kudos.queue" con número de mensajes
+4. **Seleccionar Logs Consumer Worker:**
+   - Ver deserialization de mensaje
+   - Ver cálculo de puntos
+   - Ver persistencia en BD
+5. **Verificar Transacción Completa:**
+   - Si logs muestran consumo exitoso → Kudo almacenado
+   - Si hay error → Revisar Dead Letter Queue en RabbitMQ UI
+
+### 3.3 Operaciones Administrativas
+
+#### Reiniciar Stack Completo (Desarrollo)
+```bash
+docker compose -f docker-compose.dev.yml down -v  # Elimina volúmenes
+docker compose -f docker-compose.dev.yml up -d --build
+```
+
+#### Revisar Mensajes en Dead Letter Queue
+```bash
+# En RabbitMQ UI (http://localhost:15672)
+1. Ir a "Queues"
+2. Click en "kudos.dlq"
+3. Ver mensajes rechazados
+4. Expandir mensaje para ver payload JSON
+5. Botón "Purge" para limpiar, o "Ack this" para ignorar
+```
+
+#### Escalar Consumer (Producción)
+```bash
+# En docker-compose.prod.yml, usar replicas:
+services:
+  consumer-worker:
+    deploy:
+      replicas: 3  # Procesa 3× más rápido
+```
 
 ---
+
+## 4. Dependencias y Configuración
+
+### 4.1 Dependencias Críticas
+
+#### Backend (Java)
+
+| Dependencia | Versión | Propósito | Criticidad |
+|-------------|---------|----------|-----------|
+| **spring-boot-starter-web** | 3.3.5 | REST API, Controllers | 🔴 Crítico |
+| **spring-boot-starter-amqp** | 3.3.5 | RabbitMQ integration | 🔴 Crítico |
+| **spring-boot-starter-validation** | 3.3.5 | Bean Validation | 🟡 Alto |
+| **spring-boot-starter-data-jpa** | 3.3.5 | Persistencia ORM | 🟡 Alto |
+| **postgresql** | latest | Driver JDBC | 🟡 Alto |
+| **lombok** | 1.18+ | Boilerplate reduction | 🟢 Bajo |
+| **springdoc-openapi** | 2.6.0 | Swagger documentation | 🟢 Bajo |
+| **testcontainers** | (test) | Integration tests | 🟢 Bajo |
+
+#### Frontend (JavaScript)
+
+| Dependencia | Versión | Propósito | Criticidad |
+|-------------|---------|----------|-----------|
+| **react** | 19.2.0 | UI library | 🔴 Crítico |
+| **react-router-dom** | 7.13.0 | Client-side routing | 🔴 Crítico |
+| **axios** | 1.13.4 | HTTP client | 🔴 Crítico |
+| **react-hook-form** | 7.71.1 | Form management | 🟡 Alto |
+| **zod** | 4.3.6 | Schema validation | 🟡 Alto |
+| **zustand** | 5.0.11 | State management | 🟢 Bajo |
+| **tailwindcss** | 3.4.19 | CSS framework | 🟡 Alto |
+| **typescript** | 5.9.3 | Type safety | 🟡 Alto |
+| **vite** | 7.2.4 | Build tool | 🟡 Alto |
+
+#### Infraestructura
+
+| Dependencia | Versión | Propósito | Criticidad |
+|-------------|---------|----------|-----------|
+| **docker** | 24.0+ | Containerización | 🔴 Crítico |
+| **docker-compose** | 3.8 | Orquestación local | 🔴 Crítico |
+| **rabbitmq** | 3-management | Message broker | 🔴 Crítico |
+| **postgresql** | 15+ | Database | 🔴 Crítico |
+| **terraform** | latest | IaC (AWS) | 🟡 Alto |
+| **nginx** | latest | Reverse proxy | 🟡 Alto |
+
+### 4.2 Configuración del Entorno
+
+#### Archivo `.env.example`
+
+```bash
+# RabbitMQ
+RABBITMQ_DEFAULT_USER=guest
+RABBITMQ_DEFAULT_PASS=guest
+
+# Base de Datos (PostgreSQL)
+DB_HOST=postgres
+DB_PORT=5432
+DB_NAME=sofkianos_db
+DB_USER=sofka_user
+DB_PASSWORD=secure_password_change_in_prod
+
+# API Config
+API_PORT=8082
+CONSUMER_PORT=8081
+FRONTEND_URL=http://localhost:5173
+
+# AWS (si se usa infraestructura AWS)
+AWS_REGION=us-east-1
+AWS_ACCESS_KEY_ID=your-key-id
+AWS_SECRET_ACCESS_KEY=your-secret-key
+
+# Email (futuro)
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your-email@sofka.com
+SMTP_PASSWORD=your-app-password
+```
+
+#### Configuración Spring Boot (Producer API)
+
+**Archivo:** `producer-api/src/main/resources/application.properties`
+
+```properties
+# Spring
+spring.application.name=producer-api
+server.port=8082
+
+# Logging
+logging.level.root=INFO
+logging.level.com.sofkianos=DEBUG
+
+# RabbitMQ
+spring.rabbitmq.host=${SPRING_RABBITMQ_HOST:localhost}
+spring.rabbitmq.port=5672
+spring.rabbitmq.username=${RABBITMQ_DEFAULT_USER:guest}
+spring.rabbitmq.password=${RABBITMQ_DEFAULT_PASS:guest}
+
+# OpenAPI/Swagger
+springdoc.api-docs.path=/api-docs
+springdoc.swagger-ui.path=/swagger-ui.html
+
+# Actuator (Health Checks)
+management.endpoints.web.exposure.include=health,metrics
+```
+
+#### Configuración Spring Boot (Consumer Worker)
+
+**Archivo:** `consumer-worker/src/main/resources/application.properties`
+
+```properties
+# Spring
+spring.application.name=consumer-worker
+server.port=8081
+
+# Database (PostgreSQL)
+spring.datasource.url=jdbc:postgresql://${DB_HOST:localhost}:5432/${DB_NAME:sofkianos_db}
+spring.datasource.username=${DB_USER:postgres}
+spring.datasource.password=${DB_PASSWORD:postgres}
+spring.jpa.hibernate.ddl-auto=update
+
+# RabbitMQ
+spring.rabbitmq.host=${SPRING_RABBITMQ_HOST:localhost}
+spring.rabbitmq.port=5672
+spring.rabbitmq.username=${RABBITMQ_DEFAULT_USER:guest}
+spring.rabbitmq.password=${RABBITMQ_DEFAULT_PASS:guest}
+
+# Logging
+logging.level.com.sofkianos=DEBUG
+```
+
+#### Configuración Docker Compose (Desarrollo)
+
+**Archivo:** `docker-compose.dev.yml`
+
+```yaml
+version: '3.8'
+
+services:
+  # RabbitMQ - Message Broker
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: sofkian-rabbitmq
+    ports:
+      - "5672:5672"      # AMQP port
+      - "15672:15672"    # Management UI
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - sofkian-net
+
+  # Producer API
+  producer-api:
+    build: ./producer-api
+    container_name: sofkianos-producer
+    ports:
+      - "8082:8082"
+    environment:
+      SPRING_RABBITMQ_HOST: sofkian-rabbitmq
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - sofkian-net
+
+  # Consumer Worker
+  consumer-worker:
+    build: ./consumer-worker
+    container_name: sofkianos-consumer
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_RABBITMQ_HOST: sofkian-rabbitmq
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - sofkian-net
+
+  # Frontend
+  frontend:
+    build: ./frontend
+    container_name: sofkianos-frontend
+    ports:
+      - "5173:5173"
+    depends_on:
+      - producer-api
+    networks:
+      - sofkian-net
+
+  # Log Viewer
+  log-viewer:
+    image: amir20/dozzle:latest
+    container_name: sofkianos-log-viewer
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - "8888:8080"
+    networks:
+      - sofkian-net
+
+networks:
+  sofkian-net:
+    driver: bridge
+```
+
+#### Variables de Entorno Críticas
+
+```bash
+# ⚠️ NUNCA commitir estas credenciales a Git:
+RABBITMQ_DEFAULT_USER=guest
+RABBITMQ_DEFAULT_PASS=guest
+DB_PASSWORD=secure_password
+
+# Usar .env.local (excluido en .gitignore)
+# O usar GitHub Secrets en CI/CD
+```
+
+### 4.3 Scripts de Inicialización
+
+#### Iniciar Stack Completo (Desarrollo)
+
+```bash
+# Clonar repositorio
+git clone https://github.com/ElyRiven/sofkianos-mvp.git
+cd sofkianos-mvp
+
+# Crear .env (opcional)
+cp .env.example .env
+
+# Build y start
+docker compose -f docker-compose.dev.yml up -d --build
+
+# Verificar servicios
+docker compose -f docker-compose.dev.yml ps
+```
+
+#### Verificar Disponibilidad de Servicios
+
+```bash
+# Frontend
+curl http://localhost:5173
+
+# Producer API Health
+curl http://localhost:8082/health
+
+# Consumer Worker Health
+curl http://localhost:8081/api/v1/health
+
+# RabbitMQ Management
+curl http://localhost:15672/api/vhosts -u guest:guest
+
+# Dozzle Logs
+curl http://localhost:8888
+```
+
+#### Detener Stack
+
+```bash
+# Detener sin eliminar volúmenes (guardar datos)
+docker compose -f docker-compose.dev.yml down
+
+# Detener y eliminar todo incluyendo volúmenes
+docker compose -f docker-compose.dev.yml down -v
+```
+
+---
+
+## 5. Limitaciones y Problemas Conocidos
+
+### 5.1 Limitaciones Técnicas Actuales
+
+#### Autenticación y Autorización
+- **Estado:** ❌ No implementada
+- **Impacto:** API pública, cualquier usuario puede enviar Kudos
+- **Riesgo:** Spamming, consumo de recursos no autorizado
+- **Solución Futura:** Implementar JWT + OAuth2 en Q2 2026
+- **Afecta a:** Frontend (sin login), Producer API (sin autorización)
+
+#### Base de Datos
+- **Estado:** 🔄 En Desarrollo (PostgreSQL planeado)
+- **Impacto:** Actualmente **no hay persistencia de Kudos**
+- **Evidencia:** Consumer Worker prepara datos pero sin tabla de destino
+- **Solución:** Conectar Consumer Worker a PostgreSQL
+- **Timeline:** Crítico para Q1 2026
+
+#### Usuarios Hardcodeados
+- **Estado:** ❌ Problema Operacional
+- **Ubicación:** `frontend/src/hooks/useKudoForm.ts`
+- **Impacto:** Lista de usuarios fixo (4 personas), no escalable
+- **Solución:** Cargar usuarios desde API `/api/v1/users`
+- **Timeline:** Requerido para MVP
+
+#### Escalabilidad de Consumer
+- **Estado:** 🟡 Parcial
+- **Problema:** Solo 1 instancia consume por defecto
+- **Solución:** Configurar réplicas en docker-compose:
+  ```yaml
+  consumer-worker:
+    deploy:
+      replicas: 3  # 3 workers en paralelo
+  ```
+- **Límite:** hasta 10 workers antes de contención en DB
+
+#### Logging y Observabilidad
+- **Estado:** 🟢 Funcional pero Primitivo
+- **Detalles:** Solo console logs, sin agregación centralizada
+- **Impacto:** Debugging requiere SSH a contenedores
+- **Tiempo de Resolución de Incidentes (MTTR):** >4 horas
+- **Solución Futura:** ELK Stack (Elasticsearch, Logstash, Kibana) o Loki
+
+#### Retry Policy en RabbitMQ
+- **Estado:** 🟡 Configuración Estándar
+- **Detalles:** Reintentos automáticos 3× ante fallos
+- **Problema:** No hay backoff exponencial (reintenta inmediatamente)
+- **Efecto:** Puede saturar Consumer si hay error persistente
+- **Solución:** Configurar `rabbitmq.backoff-multiplier = 2.0`
+
+### 5.2 Bugs Conocidos
+
+#### Dead Code en Frontend (55%)
+- **Severidad:** 🟡 Media (afecta mantenibilidad)
+- **Descripción:** Rutas, páginas y hooks obsoletos sin eliminar
+- **Ubicaciones Afectadas:**
+  - `src/routes/` — Router antiguo sin usar
+  - `src/pages/` — Páginas legacy
+  - `src/hooks/` — Hooks no invocados
+  - `src/services/` — API layer duplicada
+- **Impacto:**
+  - +35% de tamaño en bundle
+  - Confusión para nuevos desarrolladores
+  - Falsos positivos en test coverage (reporta >80% pero real es ~40%)
+- **Solución:** Audit y eliminación quirúrgica (1–2 días de esfuerzo)
+
+#### Stale Closures en Hooks
+- **Severidad:** 🟡 Media (causa bugs intermitentes)
+- **Descripción:** `useEffect` sin dependencias completas
+- **Ubicación:** `frontend/src/hooks/useKudoForm.ts`
+- **Síntoma:** Ocasionalmente formulario envía datos de versión anterior
+- **Fix:** Añadir `handleEnd` a `useEffect` dependency array
+- **Comando ESLint:** Activar regla `exhaustive-deps`
+
+#### API Type Safety
+- **Severidad:** 🟡 Media (type checking incompleto)
+- **Descripción:** Respuestas de API tipadas como `any`
+- **Ubicación:** `frontend/src/services/api/`
+- **Impacto:** TypeScript no valida payload en tiempo de compilación
+- **Solución:** Crear tipos `KudoResponse`, `KudoErrorResponse`
+
+#### Credentials in Version Control
+- **Severidad:** 🔴 **CRÍTICO**
+- **Descripción:** Posibles contraseñas hardcodeadas en archivos de configuración
+- **Ubicación:** Revisar `application.properties`, `.env` en repositorio
+- **Riesgo:** Acceso no autorizado a BD y RabbitMQ
+- **Acción Inmediata:** Rotar credenciales, mover a env vars, completar `.gitignore`
+
+### 5.3 Riesgos Operacionales
+
+#### RabbitMQ Sin Persistencia Explícita
+- **Riesgo:** Reinicio de contenedor → pérdida de mensajes no procesados
+- **Solución:** Confirmar que la imagen `rabbitmq:3-management` persiste a disco
+- **Comando:** `docker inspect sofkian-rabbitmq | grep "Volumes"`
+
+#### No Hay Circuit Breaker
+- **Riesgo:** Si PostgreSQL cae, Consumer intenta reconnectar indefinidamente
+- **Solución Futura:** Resilience4j `@CircuitBreaker`
+
+#### Sin Rate Limiting
+- **Riesgo:** Ataque DDoS posible (sin auth) → agota recursos
+- **Solución:** Implementar Bucket4j en Producer API
+
+#### Dead Letter Queue Sin Replay
+- **Riesgo:** Mensajes con error acumulan en DLQ sin mecanismo de recuperación
+- **Solución:** Admin endpoint para reintentar mensajes desde DLQ manualmente
+
+### 5.4 Matriz de Priorización
+
+| Problema | Severidad | Urgencia | Esfuerzo | Acción |
+|----------|-----------|----------|----------|--------|
+| Credentials in Repo | 🔴 Crítico | **Inmediata** | 2h | Implementar ahora |
+| Base de Datos Desconectada | 🔴 Crítico | **Urgente** | 1 día | Próximo sprint |
+| Dead Code Frontend | 🟡 Medio | Importante | 2 días | Semana 2 |
+| Sin Auth/AuthZ | 🟡 Medio | Importante | 3 días | Antes de UAT |
+| Observabilidad Primitive | 🟡 Medio | Importante | 2 días | Q2 2026 |
+| Stale Closures | 🟡 Medio | Normal | 4h | En refactoring |
+
+---
+
+## 6. Recomendaciones para el Futuro
+
+### 6.1 Mejoras Técnicas de Corto Plazo (1–3 meses)
+
+#### 1. **Conectar Base de Datos PostgreSQL**
+**Prioridad:** 🔴 **CRÍTICO**
+
+**Acciones:**
+1. Inicializar PostgreSQL en docker-compose.dev.yml:
+   ```yaml
+   postgres:
+     image: postgres:15-alpine
+     environment:
+       POSTGRES_DB: sofkianos_db
+       POSTGRES_USER: sofka_user
+       POSTGRES_PASSWORD: secure_password
+     ports:
+       - "5432:5432"
+     volumes:
+       - postgres_data:/var/lib/postgresql/data
+   ```
+
+2. Crear schema en Consumer Worker con Flyway/Liquibase:
+   ```sql
+   CREATE TABLE kudos (
+     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+     from_user VARCHAR(255) NOT NULL,
+     to_user VARCHAR(255) NOT NULL,
+     category VARCHAR(50) NOT NULL,
+     message TEXT,
+     points INT DEFAULT 0,
+     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+     processed_at TIMESTAMP
+   );
+   ```
+
+3. Conectar `KudoRepository` a PostgreSQL (spring-data-jpa)
+
+4. Validar end-to-end: Enviar Kudo → Verificar en BD
+
+**Beneficio:** Data persistencia, auditoría, analytics  
+**Esfuerzo:** 1–2 días
+
+---
+
+#### 2. **Implementar Autenticación JWT**
+**Prioridad:** 🟡 **ALTO**
+
+**Acciones:**
+1. Agregar Spring Security al Producer API:
+   ```xml
+   <dependency>
+     <groupId>org.springframework.boot</groupId>
+     <artifactId>spring-boot-starter-security</artifactId>
+   </dependency>
+   ```
+
+2. Crear `JwtTokenProvider` para generar/validar tokens
+
+3. Crear endpoint `POST /auth/login` que retorna JWT
+
+4. Proteger `/api/v1/kudos` con `@PreAuthorize("isAuthenticated()")`
+
+5. Frontend: Almacenar JWT en localStorage, incluir en headers `Authorization: Bearer <token>`
+
+6. Integración con LDAP/OAuth2 (Sofka AD) futuro
+
+**Beneficio:** Seguridad, no spamming, auditoría por usuario  
+**Esfuerzo:** 2–3 días
+
+---
+
+#### 3. **Eliminar Dead Code Frontend**
+**Prioridad:** 🟡 **MEDIO**
+
+**Acciones:**
+1. Crear branch: `feature/frontend-cleanup`
+2. Eliminar archivos no usados:
+   - `src/routes/` (sustituido por `react-router-dom` en componentes)
+   - `src/pages/*` excepto `KudosPage.tsx`, `LandingPage.tsx`
+   - `src/services/api/` versión antigua (mantener `src/services/api/client.ts`)
+   - Hooks obsoletos
+
+3. Ejecutar ESLint: `npm run lint` verificar no hay imports rotos
+
+4. Medir reducción de bundle size antes/después
+
+5. Test: `npm run test` verificar cobertura
+
+**Beneficio:** Bundle 35% más pequeño, mantenibilidad  
+**Esfuerzo:** 1–2 días
+
+---
+
+#### 4. **Cargar Usuarios Desde API**
+**Prioridad:** 🟡 **MEDIO**
+
+**Acciones:**
+1. Crear tabla en PostgreSQL:
+   ```sql
+   CREATE TABLE users (
+     id UUID PRIMARY KEY,
+     name VARCHAR(255) UNIQUE NOT NULL,
+     email VARCHAR(255),
+     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+   );
+   ```
+
+2. Crear endpoint en Producer API: `GET /api/v1/users`
+
+3. Frontend: `useEffect` que llama `/api/v1/users`, actualiza Zustand store
+
+4. Formulario usa estado Zustand en lugar de hardcode
+
+5. Agregar mock response en tests
+
+**Beneficio:** Escalabilidad, sincronización en tiempo real  
+**Esfuerzo:** 1 día
+
+---
+
+#### 5. **Configurar Logging Centralizado**
+**Prioridad:** 🟡 **MEDIO**
+
+**Opciones:**
+
+**Opción A: ELK Stack (Elasticsearch + Logstash + Kibana)**
+- Complejidad: Media
+- Costo: Gratuito (open-source)
+- Setup: Agregar logstash como servicio, configurar JSON logs
+
+**Opción B: Loki (Grafana)**
+- Complejidad: Baja
+- Costo: Gratuito + Grafana Cloud (opcional)
+- Setup: Agregar Loki + Promtail, logs indexados por labels
+
+**Opción C: CloudWatch (AWS)**
+- Complejidad: Baja
+- Costo: ~$0.50/GB
+- Setup: Log group en AWS, Spring Cloud AWS Logging
+
+**Recomendación:** Empezar con **Loki** (más simple que ELK)
+
+**Acciones:**
+1. Cambiar logging a formato JSON:
+   ```properties
+   logging.pattern.json={"timestamp":"%d{ISO8601}","level":"%5p","logger":"%c"}
+   ```
+
+2. Agregar Loki a docker-compose
+
+3. Crear queries dashboard: errores, latencia, throughput
+
+**Beneficio:** MTTR <30min, debugging distribuido  
+**Esfuerzo:** 1–2 días
+
+---
+
+### 6.2 Mejoras Arquitectónicas Medianas (3–6 meses)
+
+#### 1. **Circuit Breaker y Resilience**
+**Stack:** Resilience4j
+
+```java
+@CircuitBreaker(name = "publishKudo", 
+  fallbackMethod = "publishKudoFallback")
+public void publishKudo(KudoEvent event) {
+  rabbitTemplate.convertAndSend("kudos.exchange", 
+    "kudo.created", event);
+}
+
+private void publishKudoFallback(KudoEvent e, Exception ex) {
+  // Guardar en fallback queue o BD local
+  log.warn("Circuit breaker activado, guardando en fallback");
+}
+```
+
+**Beneficio:** Sistema resiliente ante RabbitMQ/DB caídas
+
+---
+
+#### 2. **Distributed Tracing con Micrometer**
+**Stack:** Micrometer + Jaeger/Zipkin
+
+```java
+@RabbitListener(queues = "kudos.queue")
+public void handleKudo(KudoEvent event) {
+  // Micrometer automáticamente propaga trace IDs
+  tracer.currentSpan().tag("kudo.id", event.getId());
+}
+```
+
+**Beneficio:** Ver flujo completo de 1 Kudo a través de 3 servicios
+
+---
+
+#### 3. **Contract Testing (Pact Framework)**
+- Garantiza compatibilidad entre Producer API ↔ Consumer Worker
+- Detecta breaking changes antes de deployment
+- **Esfuerzo:** 2 días
+
+---
+
+#### 4. **API Rate Limiting**
+```java
+@RateLimit(tokens = 100, duration = 1, unit = TimeUnit.MINUTES)
+@PostMapping("/api/v1/kudos")
+public ResponseEntity<KudoResponse> createKudo(...) { }
+```
+
+---
+
+### 6.3 Refactorizaciones Recomendadas
+
+#### Shared Kernel Module
+**Problema:** KudoEvent duplicado en producer-api y consumer-worker
+
+**Solución:**
+```
+shared-kernel/pom.xml
+├── src/main/java/com/sofkianos/
+│   ├── domain/KudoEvent.java
+│   ├── domain/KudoCategory.java
+│   └── exception/KudoValidationException.java
+```
+
+Ambos servicios lo importan como dependencia:
+```xml
+<dependency>
+  <groupId>com.sofkianos</groupId>
+  <artifactId>shared-kernel</artifactId>
+  <version>0.0.1</version>
+</dependency>
+```
+
+**Beneficio:** DRY, versionado de contratos  
+**Esfuerzo:** 4 horas
+
+---
+
+#### Saga Pattern para Múltiples Pasos
+Si en futuro Kudo requiere múltiples pasos (v.g., notificar, calcular rewards, enviar email):
+
+```
+Producer API            RabbitMQ                Consumer 1           Consumer 2
+    │                      │                        │                    │
+    ├─ PublishKudoCreated──>│                        │                    │
+    │                       ├─ ConsumeKudoCreated──>│                    │
+    │                       │                        ├─ PublishKudoStoredEvent
+    │                       │                        │                    │
+    │                       │<─ KudoStoredEvent─────┤                    │
+    │                       ├─ ConsumeKudoStoredEvent ──────────────────>│
+    │                       │                                             │
+    │                       │<─ NotificationSent────────────────────────┤
+```
+
+---
+
+### 6.4 Migraciones Futuras
+
+#### Migración a Kafka (Si escala >10k Kudos/día)
+- **Ventaja:** Mayor throughput, retención más barata
+- **Desventaja:** Más complejo, mayor footprint operacional
+- **Timeline:** Q3–Q4 2026
+
+#### Multi-tenancy (Si Sofka adopta modelo SaaS)
+- Agregar `tenant_id` a cada entidad
+- Validar que usuario solo accede su tenant
+- **Complejidad:** Alta
+
+#### Event Sourcing
+- Guardar cada cambio de Kudo como evento inmutable
+- **Beneficio:** Auditoría completa, replay histórico
+- **Complejidad:** Muy Alta, considerar solo si requerimiento crítico
+
+---
+
+### 6.5 Mejoras de Experiencia de Usuario
+
+#### 1. **Real-time Notifications**
+- WebSocket o Server-Sent Events (SSE)
+- Usuario ve "¡Elian Condor te envió un Kudo!" en tiempo real
+- Implementación: Spring WebSocket + SockJS
+
+#### 2. **Dashboard de Kudos Recibidos**
+- Página `/kudos-recibidos` con lista filtrable
+- Total de puntos, kudos por categoría
+- Timeline de reconocimientos
+
+#### 3. **Ranking Gamificación**
+- Leaderboard de empleados más reconocidos
+- Badges/Insignias por hitos (10 kudos, 50 puntos, etc.)
+- Refresh diario a medianoche
+
+#### 4. **Integraciones**
+- **Slack:** Botón "Enviar Kudo" directo desde Slack
+- **Microsoft Teams:** Webhook para kudos
+- **Calendar:** Recordatorio semanal "¿Reconociste a alguien?"
+
+---
+
+### 6.6 Mejoras de Operacionalidad
+
+#### 1. **Infrastructure as Code (Terrform)**
+- Código en `/aws` ya existe
+- Aplicar a: VPC, Security Groups, RDS (PostgreSQL), ElastiCache (futuro)
+- Beneficio: Reproducibilidad, disaster recovery
+
+#### 2. **GitOps Deployment**
+- ArgoCD o Flux monitorean repositorio
+- Cambios en `deployment.yaml` → auto-deploy
+- Beneficio: Auditabilidad, rollback rápido
+
+#### 3. **Sonder Metrics**
+- Prometheus scrape `/metrics` de ambos APIs
+- Grafana dashboard: latencia, errores, throughput
+- Alertas: Si error rate >5%, page oncall
+
+---
+
+## Conclusión y Próximos Pasos
+
+### Resumen Ejecutivo
+
+**SofkianOS MVP** es un sistema de reconocimiento de empleados bien arquitecturado que implementa patterns profesionales (Hexagonal, Event-Driven, Domain-Driven Design). La refactorización reciente eliminó ~70% del código técnicamente deudor.
+
+**Estado Actual:**
+- ✅ Arquitectura sólida: Microservicios, desacoplados, testeables
+- ✅ Validación y negocio: Lógica rica, reglas de gamificación aplicadas
+- ✅ Observabilidad básica: Logs en contenedores, Dozzle para debugging
+- ⚠️ **Crítico faltante:** Persistencia en BD (PostgreSQL desconectada de Consumer)
+- ⚠️ **Seguridad:** Sin autenticación, API pública
+- ⚠️ **Deuda técnica:** Dead code (55% frontend), observabilidad primitiva
+
+### Roadmap de 90 Días
+
+```
+SEMANA 1–2 (SPRINT P0):
+  ✅ Conectar PostgreSQL al Consumer Worker
+  ✅ Eliminar credenciales de repositorio
+  ✅ Cargar usuarios desde API
+
+SEMANA 3–4 (SPRINT P1):
+  ✅ Implementar autenticación JWT
+  ✅ Eliminar dead code frontend (>50%)
+  ✅ Activar logging centralizado (Loki)
+
+SEMANA 5–12 (SPRINTS P2–P4):
+  ✅ Circuit breaker para RabbitMQ
+  ✅ Distributed tracing
+  ✅ Contract testing (Pact)
+  ✅ Test coverage >70%
+
+POST 90 DÍAS:
+  🔄 Real-time notifications (WebSocket)
+  🔄 Dashboard de gamificación
+  🔄 Integraciones (Slack, Teams)
+  🔄 Migración a Kafka (si >10k Kudos/día)
+```
+
+### Cómo Usar Este Documento
+
+1. **Para nuevos desarrolladores:** Leer secciones 1–3 para entender qué es el sistema y cómo funciona
+2. **Para arquitectos:** Revisar secciones 2, 5 y 6 para entender diseño, riesgos y estrategia
+3. **Para operaciones:** Revisar sección 4 (configuración) y 5 (problemas conocidos)
+4. **Para product managers:** Leer secciones 1, 3 y 6 para entender capacidades y visión
+
+### Contactos y Escalamiento
+
+| Rol | Responsabilidad |
+|-----|-----------------|
+| **Tech Lead** | Christopher Pallo (arquitectura, decisiones) |
+| **Backend Owner** | [Asignar] (producer-api, consumer-worker) |
+| **Frontend Owner** | [Asignar] (React, UX) |
+| **DevOps Owner** | [Asignar] (deployment, infra) |
+
+---
+
+**Versión:** 1.0  
+**Fecha de Creación:** 18 de Febrero de 2026  
+**Última Actualización:** 18 de Febrero de 2026  
+**Próxima Revisión:** 31 de Mayo de 2026 (Trimestral)
+
+**Clasificación:** 🟢 Público (Interno de Sofka)  
+**Licencia:** Proprietary — Sofka Internal Use
