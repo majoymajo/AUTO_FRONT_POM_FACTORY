@@ -40,16 +40,16 @@
 
 ## 2. Hooks personalizados
 
-- [ ] `src/hooks/useApp.ts`
+- [x] `src/hooks/useApp.ts`
   - `useApp`
 
 - [ ] `src/hooks/forms/useKudoForm.ts`
   - `useKudoForm`
 
-- [ ] `src/hooks/forms/useKudoFormLogic.ts`
+- [x] `src/hooks/forms/useKudoFormLogic.ts`
   - `useKudoFormLogic`
 
-- [ ] `src/hooks/data/useUsers.ts`
+- [x] `src/hooks/data/useUsers.ts`
   - `useUsers`
 
 - [ ] `src/hooks/landing/useArchitectureAnimation.ts`
