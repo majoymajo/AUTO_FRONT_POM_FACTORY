@@ -6,20 +6,19 @@ When generating commit messages:
 - Format: <type>: <short reason>
 - The message must be written in English.
 - Provide only ONE clear and specific reason.
+- Use the emojis provided for each type of commit.
 - Keep it concise (max 12 words after the colon).
 - Do not add descriptions, bullet points, or multiple sentences.
-- Do not use emojis.
 - Use lowercase after the colon.
 
 Allowed types:
-- feat
-- fix
-- docs
-- refactor
-- test
-- chore
-- build
-- ci
+- feature 💻
+- fix 🛠️
+- docs 📗
+- refactor ⚙️
+- test 🧪 
+- build 
+- ci 🔁
 - perf
 
 Examples:
