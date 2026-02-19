@@ -20,22 +20,22 @@
 - [x] `src/components/common/CustomButton.tsx`
   - `CustomButton`
 
-- [ ] `src/components/common/CustomInput.tsx`
+- [x] `src/components/common/CustomInput.tsx`
   - `CustomInput`
 
-- [ ] `src/components/landing/LandingHero.tsx`
+- [x] `src/components/landing/LandingHero.tsx`
   - `LandingHero`
 
-- [ ] `src/components/landing/LandingHowItWorks.tsx`
+- [x] `src/components/landing/LandingHowItWorks.tsx`
   - `LandingHowItWorks`
 
-- [ ] `src/components/landing/LandingTech.tsx`
+- [x] `src/components/landing/LandingTech.tsx`
   - `LandingTech`
 
-- [ ] `src/components/landing/LandingAbout.tsx`
+- [x] `src/components/landing/LandingAbout.tsx`
   - `LandingAbout`
 
-- [ ] `src/components/landing/LandingFooter.tsx`
+- [x] `src/components/landing/LandingFooter.tsx`
   - `LandingFooter`
 
 ## 2. Hooks personalizados
