@@ -54,7 +54,8 @@ This project follows a **Hexagonal / Layered Architecture** with strong separati
 
 ## 3. Reference Paths
 
-- **Operational Commands**: See [COPILOT_RUNBOOK.md](./COPILOT_RUNBOOK.md) for how to build/run.
-- **Backend Standards**: See [instructions/producer-api.md](./instructions/producer-api.md).
-- **Worker Standards**: See [instructions/consumer-worker.md](./instructions/consumer-worker.md).
-- **Frontend Standards**: See [instructions/frontend.md](./instructions/frontend.md).
+- **Backend Standards**: See [instructions/producer-api.instructions.md](./instructions/producer-api.instructions.md).
+- **Worker Standards**: See [instructions/consumer-worker.instructions.md](./instructions/consumer-worker.instructions.md).
+- **Frontend Standards**: See [instructions/frontend.instructions.md](./instructions/frontend.instructions.md).
+- **Docs Standards**: See [instructions/jsdoc-format.instructions.md](./instructions/jsdoc-format.instructions.md).
+- **Commits Standards**: See [instructions/commit.instructions.md](./instructions/commit.instructions.md).
