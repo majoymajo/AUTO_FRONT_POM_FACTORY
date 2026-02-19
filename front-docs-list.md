@@ -43,7 +43,7 @@
 - [x] `src/hooks/useApp.ts`
   - `useApp`
 
-- [ ] `src/hooks/forms/useKudoForm.ts`
+- [x] `src/hooks/forms/useKudoForm.ts`
   - `useKudoForm`
 
 - [x] `src/hooks/forms/useKudoFormLogic.ts`
@@ -52,10 +52,10 @@
 - [x] `src/hooks/data/useUsers.ts`
   - `useUsers`
 
-- [ ] `src/hooks/landing/useArchitectureAnimation.ts`
+- [x] `src/hooks/landing/useArchitectureAnimation.ts`
   - `useArchitectureAnimation`
 
-- [ ] `src/hooks/landing/useInfiniteScroll.ts`
+- [x] `src/hooks/landing/useInfiniteScroll.ts`
   - `useInfiniteScroll`
 
 - [ ] `src/hooks/landing/useLaunchSlider.ts`
