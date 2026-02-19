@@ -8,16 +8,16 @@
 - [x] `src/components/KudoForm.tsx`
   - `KudoForm`
 
-- [ ] `src/components/common/ErrorBoundary.tsx`
+- [x] `src/components/common/ErrorBoundary.tsx`
   - `ErrorBoundary`
 
-- [ ] `src/components/common/FormErrorBoundary.tsx`
+- [x] `src/components/common/FormErrorBoundary.tsx`
   - `FormErrorBoundary`
 
-- [ ] `src/components/common/GlobalErrorBoundary.tsx`
+- [x] `src/components/common/GlobalErrorBoundary.tsx`
   - `GlobalErrorBoundary`
 
-- [ ] `src/components/common/CustomButton.tsx`
+- [x] `src/components/common/CustomButton.tsx`
   - `CustomButton`
 
 - [ ] `src/components/common/CustomInput.tsx`
