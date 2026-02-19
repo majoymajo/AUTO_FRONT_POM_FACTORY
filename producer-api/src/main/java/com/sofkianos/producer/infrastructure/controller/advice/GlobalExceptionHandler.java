@@ -20,12 +20,37 @@ import java.util.stream.Collectors;
  * Translates domain and infrastructure exceptions into
  * well-structured HTTP error responses.
  * </p>
+ *
+ * <h2>Error response shape</h2>
+ * <p>Handlers return a JSON object with the following keys:</p>
+ * <ul>
+ *   <li>{@code timestamp} (ISO-8601 string)</li>
+ *   <li>{@code status} (HTTP status code)</li>
+ *   <li>{@code error} (high-level message)</li>
+ *   <li>{@code detail} (developer-oriented detail)</li>
+ * </ul>
+ *
+ * <h2>Example</h2>
+ * <pre>{@code
+ * {
+ *   "timestamp": "2026-02-19T10:12:33.123",
+ *   "status": 503,
+ *   "error": "The messaging service is temporarily unavailable. Please try again later.",
+ *   "detail": "Error publishing KudoEvent to message broker"
+ * }
+ * }</pre>
  */
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
     // ── 503 Service Unavailable — messaging infrastructure failure ──────
+        /**
+         * Converts {@link KudoPublishingException} into an HTTP {@code 503 Service Unavailable} response.
+         *
+         * @param ex the publishing exception
+         * @return a structured error body suitable for clients
+         */
     @ExceptionHandler(KudoPublishingException.class)
     public ResponseEntity<Map<String, Object>> handleKudoPublishingException(
             KudoPublishingException ex) {
@@ -42,6 +67,12 @@ public class GlobalExceptionHandler {
     }
 
     // ── 400 Bad Request — Bean Validation failures ──────────────────────
+        /**
+         * Converts Bean Validation errors into an HTTP {@code 400 Bad Request} response.
+         *
+         * @param ex validation exception thrown by Spring MVC when {@code @Valid} fails
+         * @return a structured error body with a field-level summary in {@code detail}
+         */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, Object>> handleValidationErrors(
             MethodArgumentNotValidException ex) {
@@ -62,6 +93,12 @@ public class GlobalExceptionHandler {
     }
 
     // ── 404 Not Found — static resource requests (favicon, /, etc.) ────
+        /**
+         * Handles static resource misses when static mappings are disabled.
+         *
+         * @param ex exception raised by Spring MVC for missing resources
+         * @return a {@code 404 Not Found} response
+         */
     @ExceptionHandler(NoResourceFoundException.class)
     public ResponseEntity<Map<String, Object>> handleNoResourceFound(
             NoResourceFoundException ex) {
@@ -78,6 +115,12 @@ public class GlobalExceptionHandler {
     }
 
     // ── 500 Internal Server Error — catch-all ───────────────────────────
+        /**
+         * Catch-all handler that prevents stack traces from leaking to clients.
+         *
+         * @param ex unexpected exception
+         * @return a {@code 500 Internal Server Error} response
+         */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleGenericException(Exception ex) {
 
@@ -93,6 +136,14 @@ public class GlobalExceptionHandler {
     }
 
     // ── Helper ──────────────────────────────────────────────────────────
+        /**
+         * Builds the standard error response body.
+         *
+         * @param status http status to expose to the client
+         * @param error human-friendly error message
+         * @param detail developer-oriented details (kept short)
+         * @return map that will be serialized as JSON
+         */
     private Map<String, Object> errorBody(HttpStatus status, String error, String detail) {
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("timestamp", LocalDateTime.now().toString());

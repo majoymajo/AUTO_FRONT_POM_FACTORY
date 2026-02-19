@@ -25,6 +25,10 @@ import org.springframework.context.annotation.Configuration;
  * expires, RabbitMQ automatically routes it to the Dead Letter Exchange
  * ({@code kudos.dlx}), which in turn delivers it to {@code kudos.dlq}
  * for later inspection or replay.</p>
+ *
+ * <p><strong>Compatibility note:</strong> the Producer and Consumer must declare compatible queue arguments.
+ * In particular, the {@code x-dead-letter-exchange} setting on {@code kudos.queue} must match across services,
+ * or RabbitMQ can reject the declaration with a {@code PRECONDITION_FAILED} error.</p>
  */
 @Configuration
 public class RabbitConfig {
@@ -53,11 +57,23 @@ public class RabbitConfig {
                 .build();
     }
 
+    /**
+     * Topic exchange where kudos events are published.
+     *
+     * @return durable topic exchange
+     */
     @Bean
     public TopicExchange kudosExchange() {
         return new TopicExchange(EXCHANGE_NAME, true, false);
     }
 
+    /**
+     * Binding that routes messages from {@link #kudosExchange()} to {@link #kudosQueue()}.
+     *
+     * @param kudosQueue the main queue
+     * @param kudosExchange the exchange
+     * @return binding using {@link #ROUTING_KEY}
+     */
     @Bean
     public Binding kudosBinding(Queue kudosQueue, TopicExchange kudosExchange) {
         return BindingBuilder.bind(kudosQueue).to(kudosExchange).with(ROUTING_KEY);
@@ -82,6 +98,13 @@ public class RabbitConfig {
         return new FanoutExchange(DLX_EXCHANGE_NAME, true, false);
     }
 
+    /**
+     * Binds the DLQ queue to the DLX exchange.
+     *
+     * @param kudosDlq the dead-letter queue
+     * @param kudosDlx the dead-letter exchange
+     * @return binding for dead-lettered messages
+     */
     @Bean
     public Binding dlqBinding(Queue kudosDlq, FanoutExchange kudosDlx) {
         return BindingBuilder.bind(kudosDlq).to(kudosDlx);
@@ -91,6 +114,11 @@ public class RabbitConfig {
     //  Message Converter
     // ═══════════════════════════════════════════════════════════════════
 
+    /**
+     * JSON converter used by Spring AMQP to deserialize messages into {@code KudoEvent}.
+     *
+     * @return Jackson-based message converter
+     */
     @Bean
     public MessageConverter jsonMessageConverter() {
         return new Jackson2JsonMessageConverter();
