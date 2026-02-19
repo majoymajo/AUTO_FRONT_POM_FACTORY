@@ -69,23 +69,23 @@
 
 ## 3. Servicios / API clients
 
-- [ ] `src/services/api/client.ts`
+- [x] `src/services/api/client.ts`
   - `apiClient` (instancia/configuración principal)
   - Cualquier función helper exportada (por ejemplo, para configurar headers, interceptores, etc.)
 
-- [ ] `src/services/api/kudosService.ts`
+- [x] `src/services/api/kudosService.ts`
   - `kudosService`
   - Métodos públicos utilizados desde hooks/componentes (por ejemplo: `sendKudo`, `getKudos`, `getKudosByUser`, etc.)
 
 ## 4. Stores (Zustand)
 
-- [ ] `src/store/appStore.ts`
+- [x] `src/store/appStore.ts`
   - `useAppStore` (estado, acciones principales)
 
-- [ ] `src/store/userStore.ts`
+- [x] `src/store/userStore.ts`
   - `useUserStore` (estado, acciones principales)
 
 ## 5. Utilidades puras
 
-- [ ] `src/utils/errorMapper.ts`
+- [x] `src/utils/errorMapper.ts`
   - Funciones exportadas para mapear errores de API a errores de UI/mensajes de usuario
