@@ -1,49 +1,95 @@
-import React, { useState, useEffect } from 'react';
-import { Menu, X, ArrowRight } from 'lucide-react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import React, { useState, useEffect } from "react";
+import { Menu, X, ArrowRight } from "lucide-react";
+import { useNavigate, useLocation } from "react-router-dom";
 
+/**
+ * Propiedades del componente Navbar.
+ *
+ * @interface NavbarProps
+ * @property {(id: string) => void} [onNavigateToSection] - Callback opcional para navegar a secciones específicas de la página.
+ */
 export interface NavbarProps {
   onNavigateToSection?: (id: string) => void;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({
-  onNavigateToSection,
-}) => {
+/**
+ * Componente de barra de navegación sticky con soporte responsive y menú móvil.
+ *
+ * Renderiza una barra de navegación fija en la parte superior que cambia su apariencia
+ * al hacer scroll. Incluye navegación entre vistas (Landing/App), enlaces a secciones
+ * y un menú hamburguesa para dispositivos móviles. El componente adapta su contenido
+ * según la ruta actual ('/kudos' para vista de aplicación, '/' para landing).
+ *
+ * @component
+ * @param {NavbarProps} props - Propiedades del componente.
+ * @param {(id: string) => void} [props.onNavigateToSection] - Función callback para manejar navegación a secciones.
+ *        Si no se proporciona, usa scroll nativo a elementos por ID.
+ *
+ * @returns {JSX.Element} Elemento header con navegación responsive.
+ *
+ * @example
+ * ```tsx
+ * // Uso en landing page con callback personalizado
+ * <Navbar onNavigateToSection={(id) => scrollToSection(id)} />
+ *
+ * // Uso básico sin callback (usa scroll nativo)
+ * <Navbar />
+ * ```
+ */
+export const Navbar: React.FC<NavbarProps> = ({ onNavigateToSection }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const isAppView = location.pathname === '/kudos';
+  const isAppView = location.pathname === "/kudos";
 
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  /**
+   * Maneja la navegación a una sección específica de la página.
+   *
+   * Decide la estrategia de navegación según la ruta actual:
+   * - Si no está en landing ('/'), navega a la landing con el hash de sección
+   * - Si está en landing y existe callback, lo ejecuta
+   * - Si está en landing sin callback, hace scroll nativo al elemento
+   *
+   * @param {string} id - ID de la sección destino o 'top' para ir al inicio.
+   * @returns {void}
+   */
   const handleNavClick = (id: string) => {
-    if (location.pathname !== '/') {
-      navigate('/' + (id === 'top' ? '' : '#' + id));
+    if (location.pathname !== "/") {
+      navigate("/" + (id === "top" ? "" : "#" + id));
     } else if (onNavigateToSection) {
       onNavigateToSection(id);
     } else {
       // Internal anchor logic if onLanding but no explicit callback
       const element = document.getElementById(id);
       if (element) {
-        element.scrollIntoView({ behavior: 'smooth' });
-      } else if (id === 'top') {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        element.scrollIntoView({ behavior: "smooth" });
+      } else if (id === "top") {
+        window.scrollTo({ top: 0, behavior: "smooth" });
       }
     }
     setMobileMenuOpen(false);
   };
 
+  /**
+   * Alterna entre la vista de aplicación (/kudos) y la landing page (/).
+   *
+   * Navega a la ruta opuesta a la actual y cierra el menú móvil si está abierto.
+   *
+   * @returns {void}
+   */
   const handleToggleView = () => {
     if (isAppView) {
-      navigate('/');
+      navigate("/");
     } else {
-      navigate('/kudos');
+      navigate("/kudos");
     }
     setMobileMenuOpen(false);
   };
@@ -53,14 +99,16 @@ export const Navbar: React.FC<NavbarProps> = ({
       className={`
         fixed top-0 z-50 w-full
         transition-all duration-300
-        ${isScrolled || mobileMenuOpen
-          ? 'bg-zinc-950/90 backdrop-blur-md border-b border-white/10'
-          : 'bg-transparent'}
+        ${
+          isScrolled || mobileMenuOpen
+            ? "bg-zinc-950/90 backdrop-blur-md border-b border-white/10"
+            : "bg-transparent"
+        }
       `}
     >
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6 lg:px-8">
         <button
-          onClick={() => handleNavClick('top')}
+          onClick={() => handleNavClick("top")}
           className="text-xl font-black tracking-tight text-white"
         >
           Sofkian
@@ -72,7 +120,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           {!isAppView && (
             <>
               <button
-                onClick={() => handleNavClick('como-funciona')}
+                onClick={() => handleNavClick("como-funciona")}
                 className="px-4 text-zinc-400 hover:text-white transition-colors"
               >
                 Cómo funciona
@@ -81,7 +129,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               <div className="h-5 w-px bg-white/10" />
 
               <button
-                onClick={() => handleNavClick('tecnologia')}
+                onClick={() => handleNavClick("tecnologia")}
                 className="px-4 text-zinc-400 hover:text-white transition-colors"
               >
                 Tecnología
@@ -99,7 +147,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               hover:text-brand transition-colors
             "
           >
-            {isAppView ? 'Volver' : 'Acceder'}
+            {isAppView ? "Volver" : "Acceder"}
           </button>
         </nav>
 
@@ -117,13 +165,13 @@ export const Navbar: React.FC<NavbarProps> = ({
             {!isAppView && (
               <>
                 <button
-                  onClick={() => handleNavClick('como-funciona')}
+                  onClick={() => handleNavClick("como-funciona")}
                   className="text-left text-zinc-400 hover:text-white"
                 >
                   Cómo funciona
                 </button>
                 <button
-                  onClick={() => handleNavClick('tecnologia')}
+                  onClick={() => handleNavClick("tecnologia")}
                   className="text-left text-zinc-400 hover:text-white"
                 >
                   Tecnología
@@ -135,13 +183,12 @@ export const Navbar: React.FC<NavbarProps> = ({
               onClick={handleToggleView}
               className="mt-4 flex items-center gap-2 text-white font-semibold hover:text-brand"
             >
-              {isAppView ? 'Volver' : 'Acceder'}
+              {isAppView ? "Volver" : "Acceder"}
               <ArrowRight className="h-4 w-4" />
             </button>
           </div>
         </div>
       )}
-
     </header>
   );
 };
