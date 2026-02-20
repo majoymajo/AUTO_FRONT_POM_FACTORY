@@ -405,6 +405,18 @@ Expected files:
 
 ---
 
+## Contributing
+
+Found a bug, a security issue, or a piece of technical debt? Use the structured issue templates:
+
+- 🐛 [Bug Report](https://github.com/ElyRiven/sofkianos-mvp/issues/new?template=bug_report.yml)
+- 🔧 [Technical Debt / Known Limitation](https://github.com/ElyRiven/sofkianos-mvp/issues/new?template=technical_debt.yml)
+- 🔴 [Security Issue](https://github.com/ElyRiven/sofkianos-mvp/issues/new?template=security_issue.yml)
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide on how the templates work, severity levels, and branch/commit conventions.
+
+---
+
 ## License
 
 Proprietary — Sofka Internal Use
