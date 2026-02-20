@@ -75,13 +75,13 @@ jobs:
         working-directory: ./producer-api
         continue-on-error: true
         run: |
-          ./mvnw compile spotbugs:spotbugs -Dspotbugs.failOnError=false || true
+          ./mvnw compile spotbugs:spotbugs -Dspotbugs.failOnError=false
           
       - name: Run SpotBugs on Consumer Worker
         working-directory: ./consumer-worker
         continue-on-error: true
         run: |
-          ./mvnw compile spotbugs:spotbugs -Dspotbugs.failOnError=false || true
+          ./mvnw compile spotbugs:spotbugs -Dspotbugs.failOnError=false
 
       # ========================================================================
       # FRONTEND ANALYSIS (ESLint)
@@ -94,7 +94,7 @@ jobs:
         working-directory: ./frontend
         continue-on-error: true
         run: |
-          npm run lint -- --format json --output-file eslint-report.json || true
+          npm run lint -- --format json --output-file eslint-report.json
           
       - name: Upload ESLint Report
         uses: actions/upload-artifact@v4
