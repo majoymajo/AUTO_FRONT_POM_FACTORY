@@ -159,40 +159,42 @@ jobs:
                 if (existing) continue;
                 
                 const severity = message.severity === 2 ? '🟠 Major' : '🟡 Minor';
-                const issueTitle = `[Bug]: ESLint - ${message.ruleId} in ${path.basename(file.filePath)}`;
-                const issueBody = `## 🐛 Bug Report
-
-**📋 Description**
-ESLint detected a code quality issue in the frontend codebase.
-
-**🔁 Steps to Reproduce**
-1. Open file: \`${file.filePath}\`
-2. Go to line ${message.line}, column ${message.column}
-3. Observe the issue: ${message.message}
-
-**✅ Expected Results**
-The code should follow ESLint rules and best practices.
-
-**❌ Actual Results**
-ESLint rule \`${message.ruleId}\` is violated.
-
-**🚨 Severity Level**
-${severity} — Code quality issue
-
-**🔍 Validation**
-- **Confirmed by**: ESLint automated scan
-- **Environment**: Source code
-- **Rule**: ${message.ruleId}
-- **File**: ${file.filePath}
-- **Line**: ${message.line}:${message.column}
-
-**📁 Affected Files / Components**
-\`${file.filePath}\`
-
-**💡 Proposed Solution**
-${message.fix ? 'Auto-fix available via ESLint' : 'Manual fix required'}
-${message.ruleId ? `\nSee: https://eslint.org/docs/rules/${message.ruleId}` : ''}
-`;
+                const fileName = require('path').basename(file.filePath);
+                const issueTitle = `[Bug]: ESLint - ${message.ruleId} in ${fileName}`;
+                const issueBody = [
+                  '## 🐛 Bug Report',
+                  '',
+                  '**📋 Description**',
+                  'ESLint detected a code quality issue in the frontend codebase.',
+                  '',
+                  '**🔁 Steps to Reproduce**',
+                  `1. Open file: ${file.filePath}`,
+                  `2. Go to line ${message.line}, column ${message.column}`,
+                  `3. Observe the issue: ${message.message}`,
+                  '',
+                  '**✅ Expected Results**',
+                  'The code should follow ESLint rules and best practices.',
+                  '',
+                  '**❌ Actual Results**',
+                  `ESLint rule "${message.ruleId}" is violated.`,
+                  '',
+                  '**🚨 Severity Level**',
+                  `${severity} — Code quality issue`,
+                  '',
+                  '**🔍 Validation**',
+                  '- **Confirmed by**: ESLint automated scan',
+                  '- **Environment**: Source code',
+                  `- **Rule**: ${message.ruleId}`,
+                  `- **File**: ${file.filePath}`,
+                  `- **Line**: ${message.line}:${message.column}`,
+                  '',
+                  '**📁 Affected Files / Components**',
+                  `${file.filePath}`,
+                  '',
+                  '**💡 Proposed Solution**',
+                  message.fix ? 'Auto-fix available via ESLint' : 'Manual fix required',
+                  message.ruleId ? `See: https://eslint.org/docs/rules/${message.ruleId}` : ''
+                ].filter(line => line !== undefined).join('\n');
 
                 issues.push({
                   key: issueKey,
@@ -260,64 +262,70 @@ ${message.ruleId ? `\nSee: https://eslint.org/docs/rules/${message.ruleId}` : ''
                 
                 const severity = severityMap[alert.rule.security_severity_level] || '🟠 Major';
                 
-                const issueBody = isSecurityIssue ? `## 🔴 Security Issue
-
-**📋 Description**
-CodeQL detected a security vulnerability: ${alert.rule.description}
-
-**🔁 Steps to Reproduce / Verify**
-1. Open file: \`${alert.most_recent_instance.location.path}\`
-2. Review line ${alert.most_recent_instance.location.start_line}
-3. Examine the code for: ${alert.rule.name}
-
-**✅ Expected (Secure) Behaviour**
-${alert.rule.help || 'Code should follow security best practices'}
-
-**❌ Actual (Vulnerable) Behaviour**
-${alert.most_recent_instance.message.text}
-
-**🚨 Severity Level**
-${severity} — Security vulnerability detected
-
-**🔍 Validation**
-- **Confirmed by**: CodeQL automated security scan
-- **Environment**: Source code
-- **Alert Number**: #${alert.number}
-- **File**: ${alert.most_recent_instance.location.path}
-- **Line**: ${alert.most_recent_instance.location.start_line}
-
-**📁 Affected Files / Components**
-\`${alert.most_recent_instance.location.path}\`
-
-**💡 Proposed Long-Term Solution**
-${alert.rule.help_uri ? `See CodeQL documentation: ${alert.rule.help_uri}` : 'Review and apply security best practices'}
-` : `## 🐛 Bug Report
-
-**📋 Description**
-CodeQL detected a code quality issue: ${alert.rule.description}
-
-**🔁 Steps to Reproduce**
-1. Open file: \`${alert.most_recent_instance.location.path}\`
-2. Go to line ${alert.most_recent_instance.location.start_line}
-3. Review: ${alert.most_recent_instance.message.text}
-
-**✅ Expected Results**
-${alert.rule.help || 'Code should follow best practices'}
-
-**❌ Actual Results**
-${alert.most_recent_instance.message.text}
-
-**🚨 Severity Level**
-${severity}
-
-**🔍 Validation**
-- **Confirmed by**: CodeQL scan
-- **File**: ${alert.most_recent_instance.location.path}
-- **Line**: ${alert.most_recent_instance.location.start_line}
-
-**📁 Affected Files / Components**
-\`${alert.most_recent_instance.location.path}\`
-`;
+                const securityBody = [
+                  '## 🔴 Security Issue',
+                  '',
+                  '**📋 Description**',
+                  `CodeQL detected a security vulnerability: ${alert.rule.description}`,
+                  '',
+                  '**🔁 Steps to Reproduce / Verify**',
+                  `1. Open file: ${alert.most_recent_instance.location.path}`,
+                  `2. Review line ${alert.most_recent_instance.location.start_line}`,
+                  `3. Examine the code for: ${alert.rule.name}`,
+                  '',
+                  '**✅ Expected (Secure) Behaviour**',
+                  alert.rule.help || 'Code should follow security best practices',
+                  '',
+                  '**❌ Actual (Vulnerable) Behaviour**',
+                  alert.most_recent_instance.message.text,
+                  '',
+                  '**🚨 Severity Level**',
+                  `${severity} — Security vulnerability detected`,
+                  '',
+                  '**🔍 Validation**',
+                  '- **Confirmed by**: CodeQL automated security scan',
+                  '- **Environment**: Source code',
+                  `- **Alert Number**: #${alert.number}`,
+                  `- **File**: ${alert.most_recent_instance.location.path}`,
+                  `- **Line**: ${alert.most_recent_instance.location.start_line}`,
+                  '',
+                  '**📁 Affected Files / Components**',
+                  alert.most_recent_instance.location.path,
+                  '',
+                  '**💡 Proposed Long-Term Solution**',
+                  alert.rule.help_uri ? `See CodeQL documentation: ${alert.rule.help_uri}` : 'Review and apply security best practices'
+                ].join('\n');
+                
+                const bugBody = [
+                  '## 🐛 Bug Report',
+                  '',
+                  '**📋 Description**',
+                  `CodeQL detected a code quality issue: ${alert.rule.description}`,
+                  '',
+                  '**🔁 Steps to Reproduce**',
+                  `1. Open file: ${alert.most_recent_instance.location.path}`,
+                  `2. Go to line ${alert.most_recent_instance.location.start_line}`,
+                  `3. Review: ${alert.most_recent_instance.message.text}`,
+                  '',
+                  '**✅ Expected Results**',
+                  alert.rule.help || 'Code should follow best practices',
+                  '',
+                  '**❌ Actual Results**',
+                  alert.most_recent_instance.message.text,
+                  '',
+                  '**🚨 Severity Level**',
+                  severity,
+                  '',
+                  '**🔍 Validation**',
+                  '- **Confirmed by**: CodeQL scan',
+                  `- **File**: ${alert.most_recent_instance.location.path}`,
+                  `- **Line**: ${alert.most_recent_instance.location.start_line}`,
+                  '',
+                  '**📁 Affected Files / Components**',
+                  alert.most_recent_instance.location.path
+                ].join('\n');
+                
+                const issueBody = isSecurityIssue ? securityBody : bugBody;
 
                 try {
                   const labels = isSecurityIssue 
@@ -347,18 +355,20 @@ ${severity}
         uses: actions/github-script@v7
         with:
           script: |
-            const comment = `## 🔍 Automated Bug Scan Completed
-
-The automated bug scanning workflow has completed. Issues have been created for detected problems:
-
-- ✅ **ESLint Analysis**: Frontend code quality checked
-- ✅ **CodeQL Analysis**: Security and code quality scanned
-- ✅ **SpotBugs**: Backend code analysis (if applicable)
-
-Check the [Issues](https://github.com/${context.repo.owner}/${context.repo.repo}/issues?q=is%3Aissue+is%3Aopen+label%3Aautomated-scan) tab for automated findings.
-
-**Note**: Only the most critical issues are auto-created to avoid spam. Review the Actions artifacts for full reports.
-            `;
+            const issuesUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/issues?q=is%3Aissue+is%3Aopen+label%3Aautomated-scan`;
+            const comment = [
+              '## 🔍 Automated Bug Scan Completed',
+              '',
+              'The automated bug scanning workflow has completed. Issues have been created for detected problems:',
+              '',
+              '- ✅ **ESLint Analysis**: Frontend code quality checked',
+              '- ✅ **CodeQL Analysis**: Security and code quality scanned',
+              '- ✅ **SpotBugs**: Backend code analysis (if applicable)',
+              '',
+              `Check the [Issues](${issuesUrl}) tab for automated findings.`,
+              '',
+              '**Note**: Only the most critical issues are auto-created to avoid spam. Review the Actions artifacts for full reports.'
+            ].join('\n');
             
             await github.rest.issues.createComment({
               owner: context.repo.owner,
