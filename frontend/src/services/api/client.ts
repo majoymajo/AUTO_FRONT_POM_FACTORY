@@ -9,6 +9,22 @@ import type {
 import { toast } from "sonner";
 
 /**
+ * Estructura de respuesta de error devuelta por el API.
+ *
+ * @interface ApiErrorResponse
+ * @property {string} [message] - Mensaje de error legible.
+ * @property {number} [status] - Código de estado HTTP.
+ * @property {string} [error] - Nombre del error.
+ * @property {string} [detail] - Detalle adicional del error.
+ */
+interface ApiErrorResponse {
+  message?: string;
+  status?: number;
+  error?: string;
+  detail?: string;
+}
+
+/**
  * Cliente Axios centralizado para todas las peticiones HTTP de la aplicación.
  *
  * Configuración base:
@@ -84,7 +100,7 @@ apiClient.interceptors.response.use(
   (error: AxiosError) => {
     // Global error handling
     const message =
-      (error.response?.data as any)?.message ||
+      (error.response?.data as ApiErrorResponse)?.message ||
       error.message ||
       "Error de conexión";
     console.error(`[API Error] ${error.response?.status}: ${message}`);
