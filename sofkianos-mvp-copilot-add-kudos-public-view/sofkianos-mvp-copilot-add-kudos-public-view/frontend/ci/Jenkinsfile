@@ -1,0 +1,126 @@
+// ============================================
+// Jenkins Pipeline for React Application
+// ============================================
+
+pipeline {
+    // Use any available agent
+    agent any
+    
+    // Define stages of the pipeline
+    stages {
+        
+        // STAGE 1: Checkout
+        // Get the code from Git repository
+        stage('Checkout') {
+            steps {
+                echo '📥 Downloading code from repository...'
+                checkout scm
+            }
+        }
+        
+        // STAGE 2: Install Dependencies
+        // Install all npm packages
+        stage('Install Dependencies') {
+            steps {
+                echo '📦 Installing dependencies...'
+                dir('fronted') {
+                    sh 'npm ci'
+                }
+            }
+        }
+        
+        // STAGE 3: Run Tests
+        // Execute tests (if you have any)
+        stage('Test') {
+            steps {
+                echo '🧪 Running tests...'
+                dir('fronted') {
+                    // Uncomment when you add tests
+                    // sh 'npm run test'
+                    echo 'Tests skipped (add tests later)'
+                }
+            }
+        }
+        
+        // STAGE 4: Build
+        // Build the React application
+        stage('Build') {
+            steps {
+                echo '🔨 Building application...'
+                dir('fronted') {
+                    sh 'npm run build'
+                }
+            }
+        }
+        
+        // STAGE 5: Build Docker Image
+        // Create Docker image
+        stage('Build Docker Image') {
+            steps {
+                echo '🐳 Building Docker image...'
+                dir('fronted') {
+                    script {
+                        // Build with a version tag
+                        sh "docker build -t kudos-app:${BUILD_NUMBER} ."
+                        sh "docker tag kudos-app:${BUILD_NUMBER} kudos-app:latest"
+                    }
+                }
+            }
+        }
+        
+        // STAGE 6: Deploy (Optional)
+        // Deploy to production
+        stage('Deploy') {
+            steps {
+                echo '🚀 Deploying application...'
+                script {
+                    // Stop old container if exists
+                    sh 'docker stop kudos-app || true'
+                    sh 'docker rm kudos-app || true'
+                    
+                    // Run new container
+                    sh """
+                        docker run -d \
+                        --name kudos-app \
+                        -p 8080:80 \
+                        kudos-app:latest
+                    """
+                }
+                echo '✅ Application deployed at http://localhost:8080'
+            }
+        }
+    }
+    
+    // What to do after pipeline finishes
+    post {
+        // If successful
+        success {
+            echo '✅ Pipeline completed successfully!'
+        }
+        
+        // If failed
+        failure {
+            echo '❌ Pipeline failed!'
+        }
+        
+        // Always clean up workspace
+        always {
+            echo '🧹 Cleaning up...'
+            cleanWs()
+        }
+    }
+}
+
+// ============================================
+// How this pipeline works:
+// 
+// 1. Checkout: Gets your code from Git
+// 2. Install: Downloads all npm packages
+// 3. Test: Runs your tests
+// 4. Build: Creates production files
+// 5. Docker: Builds Docker image
+// 6. Deploy: Runs the container
+//
+// Jenkins will run this automatically when
+// you push code to your repository
+// ============================================
