@@ -5,10 +5,16 @@ FROM eclipse-temurin:17-jdk-alpine AS builder
 
 WORKDIR /build
 
+RUN apk add --no-cache wget dos2unix
+
 COPY mvnw .
 COPY .mvn .mvn
 COPY pom.xml .
 RUN chmod +x mvnw
+RUN dos2unix mvnw
+
+# Ensure Maven wrapper artifacts exist when building inside Linux
+RUN ./mvnw -N wrapper:wrapper
 
 RUN ./mvnw dependency:go-offline -B
 
