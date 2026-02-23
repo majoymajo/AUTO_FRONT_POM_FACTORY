@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   rabbitmq:
@@ -13,7 +13,32 @@ services:
     networks:
       - sofkian-net
     healthcheck:
-      test: [ "CMD", "rabbitmq-diagnostics", "-q", "ping" ]
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  db:
+    container_name: sofkianos-database
+    image: postgres:14.3
+    restart: always
+
+    ports:
+      - "5432:5432"
+
+    environment:
+      POSTGRES_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+      POSTGRES_DB: sofkianos_db
+
+    volumes:
+      - postgres-db:/var/lib/postgresql/data
+
+    networks:
+      - sofkian-net
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -39,8 +64,15 @@ services:
       - "8081:8081"
     environment:
       SPRING_RABBITMQ_HOST: sofkian-rabbitmq
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/sofkianos_db
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+      SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT: org.hibernate.dialect.PostgreSQLDialect
+
     depends_on:
       rabbitmq:
+        condition: service_healthy
+      db:
         condition: service_healthy
     networks:
       - sofkian-net
@@ -64,6 +96,10 @@ services:
       - "8888:8080"
     networks:
       - sofkian-net
+
+volumes:
+  postgres-db:
+    external: false
 
 networks:
   sofkian-net:
