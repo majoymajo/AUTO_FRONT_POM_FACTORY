@@ -23,17 +23,13 @@ services:
     container_name: sofkianos-database
     image: postgres:14.3
     restart: always
-
     ports:
       - "5432:5432"
-
     environment:
       POSTGRES_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
       POSTGRES_DB: sofkianos_db
-
     volumes:
       - postgres-db:/var/lib/postgresql/data
-
     networks:
       - sofkian-net
 
@@ -63,8 +59,8 @@ services:
     ports:
       - "8081:8081"
     environment:
-      SPRING_RABBITMQ_HOST: sofkian-rabbitmq
-      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/sofkianos_db
+      SPRING_RABBITMQ_HOST: ${SPRING_RABBITMQ_HOST}
+      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
       SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
       SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
       SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT: org.hibernate.dialect.PostgreSQLDialect
