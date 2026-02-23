@@ -1,1 +1,0 @@
-// Placeholder for KudosQueryControllerTest.java. Please copy the actual implementation from the source.
