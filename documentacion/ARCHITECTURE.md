@@ -7,7 +7,7 @@ El objetivo de esta fase de re-arquitectura es documentar estos *dolores* y cont
 
 ---
 
-## 1.1. Dolores del Monolito Distribuido (Estado Actual)
+## 1.1. Dolores del Monolito Heredado(Estado Actual)
 
 Basado en el inventario de deuda técnica, los principales obstáculos identificados son:
 
@@ -16,7 +16,7 @@ Basado en el inventario de deuda técnica, los principales obstáculos identific
 - Duplicación manual de la entidad `KudoEvent` entre el Producer y el Consumer.
 - Ausencia de versionamiento de contratos: un cambio en el Producer **rompe inmediatamente** al Consumer.
 
-### 🔴 Lógica Secuestrada en la Infraestructura
+### 🔴 Lógica Mezclada en la Infraestructura
 - La lógica de negocio está dispersa y mezclada dentro de:
     - Controllers de la API.
     - Métodos de escucha de RabbitMQ.
