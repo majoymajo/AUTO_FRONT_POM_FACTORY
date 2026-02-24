@@ -2,7 +2,7 @@ package com.sofkianos.producer.controller;
 
 import com.sofkianos.producer.dto.KudoListItemDTO;
 import com.sofkianos.producer.dto.PagedKudoResponse;
-import com.sofkianos.producer.service.KudoQueryService;
+import com.sofkianos.producer.service.KudoService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -23,14 +23,14 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(KudosQueryController.class)
-class KudosQueryControllerTest {
+@WebMvcTest(KudosController.class)
+class KudosControllerGetTest {
 
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
-    private KudoQueryService kudoQueryService;
+        @MockBean
+        private KudoService kudoService;
 
     @Nested
     @DisplayName("AC-01: Public endpoint accessibility")
@@ -44,7 +44,7 @@ class KudosQueryControllerTest {
                     PageRequest.of(0, 20, Sort.by(Sort.Direction.DESC, "createdAt")),
                     0
             );
-            when(kudoQueryService.searchKudos(any())).thenReturn(emptyPage);
+            when(kudoService.searchKudos(any())).thenReturn(emptyPage);
 
             mockMvc.perform(get("/api/v1/kudos"))
                     .andExpect(status().isOk())
@@ -70,7 +70,7 @@ class KudosQueryControllerTest {
 
             var page = new PageImpl<>(List.of(kudo),
                     PageRequest.of(0, 20, Sort.by(Sort.Direction.DESC, "createdAt")), 1);
-            when(kudoQueryService.searchKudos(any())).thenReturn(page);
+            when(kudoService.searchKudos(any())).thenReturn(page);
 
             mockMvc.perform(get("/api/v1/kudos"))
                     .andExpect(status().isOk())
@@ -106,7 +106,7 @@ class KudosQueryControllerTest {
 
             var page = new PageImpl<>(List.of(kudo2, kudo1),
                     PageRequest.of(0, 20, Sort.by(Sort.Direction.DESC, "createdAt")), 2);
-            when(kudoQueryService.searchKudos(any())).thenReturn(page);
+            when(kudoService.searchKudos(any())).thenReturn(page);
 
             mockMvc.perform(get("/api/v1/kudos"))
                     .andExpect(status().isOk())
@@ -127,7 +127,7 @@ class KudosQueryControllerTest {
                     PageRequest.of(2, 10, Sort.by(Sort.Direction.DESC, "createdAt")),
                     50
             );
-            when(kudoQueryService.searchKudos(any())).thenReturn(page);
+            when(kudoService.searchKudos(any())).thenReturn(page);
 
             mockMvc.perform(get("/api/v1/kudos")
                             .param("page", "2")
@@ -142,7 +142,7 @@ class KudosQueryControllerTest {
         @Test
         @DisplayName("Should enforce max page size of 50")
         void getKudos_ExceedsMaxSize_CapsAt50() throws Exception {
-            when(kudoQueryService.searchKudos(any())).thenReturn(
+            when(kudoService.searchKudos(any())).thenReturn(
                     new PageImpl<>(Collections.emptyList()));
             mockMvc.perform(get("/api/v1/kudos")
                             .param("size", "200"))

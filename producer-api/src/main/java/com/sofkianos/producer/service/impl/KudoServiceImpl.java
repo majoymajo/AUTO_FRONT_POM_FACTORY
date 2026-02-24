@@ -27,7 +27,8 @@ import java.time.LocalDateTime;
 @RequiredArgsConstructor
 public class KudoServiceImpl implements KudoService {
 
-    private final KudoEventPublisher kudoEventPublisher;
+        private final KudoEventPublisher kudoEventPublisher;
+        private final com.sofkianos.producer.repository.KudoQueryRepository kudoQueryRepository;
 
     @Override
     public com.sofkianos.producer.dto.KudoResponse sendKudo(KudoRequest kudoRequest) {
@@ -54,4 +55,28 @@ public class KudoServiceImpl implements KudoService {
                 .timestamp(LocalDateTime.now())
                 .build();
     }
+
+    @Override
+    public org.springframework.data.domain.Page<com.sofkianos.producer.dto.KudoListItemDTO> searchKudos(com.sofkianos.producer.dto.KudoSearchCriteria criteria) {
+        org.springframework.data.domain.Sort.Direction direction = "ASC".equalsIgnoreCase(criteria.getSortDirection())
+                ? org.springframework.data.domain.Sort.Direction.ASC
+                : org.springframework.data.domain.Sort.Direction.DESC;
+
+        org.springframework.data.domain.PageRequest pageable = org.springframework.data.domain.PageRequest.of(
+                criteria.getPage(),
+                criteria.getEffectiveSize(),
+                org.springframework.data.domain.Sort.by(direction, "createdAt")
+        );
+
+        return kudoQueryRepository
+                .findAll(com.sofkianos.producer.specification.KudoSpecifications.fromCriteria(criteria), pageable)
+                .map(kudo -> com.sofkianos.producer.dto.KudoListItemDTO.builder()
+                        .receptor(com.sofkianos.producer.util.EmailMaskingUtil.toDisplayName(kudo.getToUser()))
+                        .emisor(com.sofkianos.producer.util.EmailMaskingUtil.toDisplayName(kudo.getFromUser()))
+                        .mensaje(kudo.getMessage())
+                        .fecha(kudo.getCreatedAt())
+                        .categoria(kudo.getCategory() != null ? kudo.getCategory().name() : null)
+                        .build());
+    }
+}
 }
