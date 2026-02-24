@@ -2,8 +2,9 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Navbar } from './components/Navbar';
 import LandingPage from './pages/LandingPage';
 import KudosPage from './pages/KudosPage';
-import KudosPublicPage from './pages/KudosPublicPage';
+
 import './index.css';
+import KudosPublicPage from './pages/__tests__/KudosPublicPage';
 
 function App() {
   return (
