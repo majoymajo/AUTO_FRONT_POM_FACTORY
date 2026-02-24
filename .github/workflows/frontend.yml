@@ -1,0 +1,212 @@
+# ==============================================================================
+# FRONTEND CI/CD WORKFLOW
+#
+# PURPOSE:
+#   Independent pipeline for the frontend React application.
+#   Runs linting & unit tests, builds the Docker image, and deploys to AWS EC2.
+#
+# DESIGN DECISIONS:
+#   - Isolated from backend — only triggers when frontend code changes
+#   - Uses `!` negation patterns to skip doc/non-code file changes
+#   - Lint step catches style issues early before tests run
+#   - Docker image uses multi-stage build (Node builder → Nginx runtime)
+#   - Deploy updates only the frontend container, leaving backend untouched
+# ==============================================================================
+
+name: Frontend CI/CD
+
+# ──────────────────────────────────────────────────────────────────────────────
+# TRIGGERS
+# ──────────────────────────────────────────────────────────────────────────────
+# Runs on push/PR to main, develop, and feature/** branches.
+# Only triggers when frontend CODE files are modified.
+#
+# The `!` negation patterns ensure that documentation and non-code files
+# (.md, .txt, .pdf, images, logs) do NOT trigger this workflow,
+# even if those files are inside the frontend/ directory.
+# ──────────────────────────────────────────────────────────────────────────────
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - "feature/**"
+    paths:
+      - "frontend/**"
+      - ".github/workflows/frontend.yml"
+      # ── Exclude documentation / non-code files ──
+      - "!**/*.md"
+      - "!**/*.txt"
+      - "!**/*.pdf"
+      - "!**/*.png"
+      - "!**/*.jpg"
+      - "!**/*.jpeg"
+      - "!**/*.gif"
+      - "!**/*.svg"
+      - "!**/*.log"
+
+  pull_request:
+    branches:
+      - main
+      - develop
+      - "feature/**"
+    paths:
+      - "frontend/**"
+      - ".github/workflows/frontend.yml"
+      # ── Exclude documentation / non-code files ──
+      - "!**/*.md"
+      - "!**/*.txt"
+      - "!**/*.pdf"
+      - "!**/*.png"
+      - "!**/*.jpg"
+      - "!**/*.jpeg"
+      - "!**/*.gif"
+      - "!**/*.svg"
+      - "!**/*.log"
+
+# ──────────────────────────────────────────────────────────────────────────────
+# GLOBAL ENVIRONMENT VARIABLES
+# ──────────────────────────────────────────────────────────────────────────────
+env:
+  NODE_VERSION: '20'
+  FRONTEND_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/sofkianos-frontend
+
+jobs:
+  # ========================================================================
+  # JOB 1 — TEST & LINT
+  # ========================================================================
+  # Runs ESLint for code quality and Vitest for unit tests.
+  # If ANY check fails the workflow stops → merge is blocked
+  # (when branch protection rules require this check to pass).
+  # ========================================================================
+  test:
+    name: "🧪 Frontend Tests & Lint"
+    runs-on: ubuntu-latest
+
+    steps:
+      # -- Checkout source code -----------------------------------------------
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # -- Setup Node.js with npm dependency caching -------------------------
+      # Caches the npm store to avoid re-downloading dependencies each run.
+      - name: Set up Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      # -- Install exact dependency versions from lockfile --------------------
+      # `npm ci` is faster than `npm install` and guarantees reproducibility.
+      - name: Install Dependencies
+        working-directory: ./frontend
+        run: npm ci
+
+      # -- Run ESLint to enforce code quality ---------------------------------
+      - name: Lint
+        working-directory: ./frontend
+        run: npm run lint
+
+      # -- Run Vitest unit tests ----------------------------------------------
+      # Script "test:unit" is defined as "vitest run" in package.json
+      - name: Run Unit Tests
+        working-directory: ./frontend
+        run: npm run test:unit
+
+      # -- Upload coverage report even on failure for debugging ---------------
+      - name: Upload Coverage Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: frontend-coverage
+          path: frontend/coverage/
+          retention-days: 3
+
+  # ========================================================================
+  # JOB 2 — DOCKER BUILD & PUSH
+  # ========================================================================
+  # Builds the frontend Docker image using the multi-stage Dockerfile
+  # (Node 20 builder → Nginx runtime), then pushes to Docker Hub.
+  #
+  # Only runs AFTER tests pass (`needs: test`) and only on push events
+  # (not on PRs, to avoid pushing throwaway images).
+  # ========================================================================
+  docker-build:
+    name: "🐳 Docker Build & Push"
+    needs: [test]                       # Fail-fast: skip if tests fail
+    if: github.event_name == 'push'     # Don't push images for PRs
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # -- Login to Docker Hub ------------------------------------------------
+      # Requires repository secrets: DOCKERHUB_USERNAME and DOCKERHUB_TOKEN
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # -- Setup Docker Buildx for layer caching ------------------------------
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # -- Build & push the frontend image ------------------------------------
+      # Tags:
+      #   - latest       → always points to the newest build
+      #   - <commit-sha> → immutable tag tied to the exact commit for rollback
+      - name: Build & Push Frontend
+        uses: docker/build-push-action@v6
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          push: true
+          tags: |
+            ${{ env.FRONTEND_IMAGE }}:latest
+            ${{ env.FRONTEND_IMAGE }}:${{ github.sha }}
+          cache-from: type=gha          # GitHub Actions cache for Docker layers
+          cache-to: type=gha,mode=max
+
+  # ========================================================================
+  # JOB 3 — DEPLOY TO EC2
+  # ========================================================================
+  # SSHs into the AWS EC2 instance, pulls the latest frontend image,
+  # and restarts only the frontend container.
+  #
+  # Only runs on pushes to `main` (production deploys).
+  # Requires secrets: EC2_HOST, EC2_USER, EC2_SSH_KEY.
+  # ========================================================================
+  deploy:
+    name: "🚀 Deploy Frontend"
+    needs: [docker-build]
+    if: github.ref == 'refs/heads/main'   # Deploy only from main branch
+    runs-on: ubuntu-latest
+
+    steps:
+      # -- SSH into EC2 and update the frontend container ---------------------
+      # Only the frontend container is restarted (--no-deps keeps backend
+      # and RabbitMQ untouched).
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd ~/sofkianos-mvp
+
+            # Pull latest code (nginx.conf, docker-compose changes, etc.)
+            git pull origin main
+
+            # Pull the freshly built Docker image
+            docker pull ${{ env.FRONTEND_IMAGE }}:latest
+
+            # Restart only the frontend container (zero-downtime for backend)
+            docker-compose -f docker-compose.prod.yml up -d \
+              --no-deps --force-recreate frontend
+
+            # Show running containers for verification
+            docker-compose -f docker-compose.prod.yml ps
