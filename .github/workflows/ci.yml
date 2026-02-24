@@ -1,31 +1,102 @@
+# ==============================================================================
+# CI Workflow – Sofkianos MVP
+#
+# PURPOSE:
+#   Automatically builds the environment and runs ALL tests (unit, integration,
+#   and E2E) on every push and pull request.  If any test fails the workflow
+#   fails, which blocks merging when branch-protection rules are enabled.
+#
+# FILE-FILTERING:
+#   Changes to documentation / non-code files (.md, .txt, .pdf, images, etc.)
+#   are excluded via paths-ignore so the pipeline is not triggered unnecessarily.
+# ==============================================================================
+
 name: CI Sofkianos MVP
 
+# ──────────────────────────────────────────────────────────────────────────────
+# TRIGGERS
+# ──────────────────────────────────────────────────────────────────────────────
+# Runs on every push AND every pull_request targeting the listed branches.
+# The `feature/**` glob matches any branch under the feature/ prefix
+# (e.g. feature/login, feature/payments/stripe).
+#
+# paths-ignore ensures the workflow is SKIPPED when only non-code files change
+# (documentation, images, logs, etc.).
+# ──────────────────────────────────────────────────────────────────────────────
 on:
   push:
-    branches: [ "main", "develop" ]
-  pull_request:
-    branches: [ "main", "develop" ]
+    branches:
+      - main
+      - develop
+      - "feature/**"          # any feature branch
+    paths-ignore:
+      - "**/*.md"             # Markdown docs (README, CHANGELOG, etc.)
+      - "**/*.txt"            # Plain-text docs
+      - "**/*.pdf"            # PDF documents
+      - "**/*.png"            # Image assets
+      - "**/*.jpg"            # Image assets
+      - "**/*.jpeg"           # Image assets
+      - "**/*.gif"            # Image assets
+      - "**/*.svg"            # SVG illustrations
+      - "**/*.log"            # Log files
+      - "docs/**"             # Entire docs directory
+      - "documentacion/**"    # Project-specific docs directory
+      - "TDD/**"              # TDD reference materials
+      - "Handover Engineering/**" # Handover docs
+      - "LICENSE"             # License file
+      - ".gitignore"          # Git config
 
+  pull_request:
+    branches:
+      - main
+      - develop
+      - "feature/**"          # any feature branch
+    paths-ignore:
+      - "**/*.md"
+      - "**/*.txt"
+      - "**/*.pdf"
+      - "**/*.png"
+      - "**/*.jpg"
+      - "**/*.jpeg"
+      - "**/*.gif"
+      - "**/*.svg"
+      - "**/*.log"
+      - "docs/**"
+      - "documentacion/**"
+      - "TDD/**"
+      - "Handover Engineering/**"
+      - "LICENSE"
+      - ".gitignore"
+
+# ──────────────────────────────────────────────────────────────────────────────
+# GLOBAL ENVIRONMENT VARIABLES
+# ──────────────────────────────────────────────────────────────────────────────
+# Shared across all jobs so tool versions stay consistent.
+# ──────────────────────────────────────────────────────────────────────────────
 env:
-  # Common
   JAVA_VERSION: '17'
   NODE_VERSION: '20'
-  
-  # Integration / E2E
-  VITE_API_URL: http://localhost:8080/api # Frontend to Backend
-  SPRING_PROFILES_ACTIVE: test
+  VITE_API_URL: http://localhost:8080/api   # Frontend → Backend URL for E2E
+  SPRING_PROFILES_ACTIVE: test              # Use "test" Spring profile
 
 jobs:
   # ========================================================================
-  # 1. BACKEND TEST (Unit + Integration with Testcontainers)
+  # JOB 1 – BACKEND TESTS  (Unit + Integration with Testcontainers)
+  # ========================================================================
+  # Runs Maven tests for both the consumer-worker and producer-api modules.
+  # If ANY test fails here, the job fails → the overall workflow fails →
+  # the merge is blocked (when branch protection rules require this check).
   # ========================================================================
   backend-test:
-    name: Backend Tests (Java)
+    name: "🔧 Backend Tests (Java)"
     runs-on: ubuntu-latest
+
     steps:
+      # -- Checkout the source code ------------------------------------------
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      # -- Install JDK 17 with Maven caching ---------------------------------
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
@@ -33,18 +104,21 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
 
-      # Test Consumer Worker
+      # -- Run consumer-worker unit tests -------------------------------------
       - name: Test Consumer Worker
         working-directory: ./consumer-worker
         run: ./mvnw test
 
-      # Test Producer API (includes Testcontainers)
-      # GitHub Actions has Docker enabled by default, so Testcontainers work OOTB.
+      # -- Run producer-api tests (includes Testcontainers integration) -------
+      # GitHub Actions runners have Docker pre-installed, so Testcontainers
+      # works out of the box without extra setup.
       - name: Test Producer API
         working-directory: ./producer-api
         run: ./mvnw test
 
-      # Generate Coverage Report (Aggregated if possible, or individual)
+      # -- Upload JaCoCo test & coverage reports as artifacts -----------------
+      # `if: always()` ensures reports are uploaded even when tests fail,
+      # making it easier to debug failures.
       - name: Upload JaCoCo Coverage
         uses: actions/upload-artifact@v4
         if: always()
@@ -56,15 +130,20 @@ jobs:
           retention-days: 1
 
   # ========================================================================
-  # 2. FRONTEND TEST (Unit)
+  # JOB 2 – FRONTEND TESTS  (Vitest unit tests)
+  # ========================================================================
+  # Runs the Vitest test suite for the frontend React/Vue/etc. application.
+  # A failure here also blocks the merge.
   # ========================================================================
   frontend-test:
-    name: Frontend Tests (Vitest)
+    name: "🧪 Frontend Tests (Vitest)"
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      # -- Install Node.js with npm caching ----------------------------------
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
@@ -72,14 +151,18 @@ jobs:
           cache: 'npm'
           cache-dependency-path: frontend/package-lock.json
 
+      # -- Install exact dependency versions from lockfile --------------------
       - name: Install Dependencies
         working-directory: ./frontend
         run: npm ci
 
+      # -- Execute unit tests -------------------------------------------------
+      # Expects the script "test:unit": "vitest run" in package.json
       - name: Run Unit Tests
         working-directory: ./frontend
-        run: npm run test:unit # Assumes script "test:unit": "vitest run" exists
+        run: npm run test:unit
 
+      # -- Upload coverage reports (always, for debugging) --------------------
       - name: Upload Coverage
         if: always()
         uses: actions/upload-artifact@v4
@@ -88,26 +171,36 @@ jobs:
           path: frontend/coverage/
 
   # ========================================================================
-  # 3. E2E TEST (Playwright)
-  #    Prerequisite: Backend and Frontend must be running
+  # JOB 3 – END-TO-END TESTS  (Playwright)
+  # ========================================================================
+  # This job only runs AFTER both backend-test and frontend-test pass
+  # (see `needs:`). This implements a fail-fast strategy: if unit/integration
+  # tests fail, we skip the expensive E2E suite entirely.
+  #
+  # The job spins up the full stack (backend + frontend + RabbitMQ) inside
+  # the runner, then executes Playwright against the running application.
   # ========================================================================
   e2e-test:
-    name: E2E Tests (Playwright)
-    needs: [backend-test, frontend-test] # Fail fast if unit tests fail
+    name: "🎭 E2E Tests (Playwright)"
+    needs: [backend-test, frontend-test]   # Fail-fast: skip if prior jobs fail
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 20                    # Hard cap to prevent hung runs
+
+    # Use the official Playwright container which has all browser binaries
+    # and system dependencies pre-installed.
     container:
-      image: mcr.microsoft.com/playwright:v1.41.0-jammy # Pre-installed Playwright dependencies to save time
+      image: mcr.microsoft.com/playwright:v1.41.0-jammy
       options: --user 1001
 
+    # -- Service containers ---------------------------------------------------
+    # RabbitMQ is required by the Producer API at startup.
+    # The health-check ensures the service is fully ready before steps begin.
     services:
-      # We need RabbitMQ for the Producer to start up successfully
       rabbitmq:
         image: rabbitmq:3-management
         ports:
           - 5672:5672
           - 15672:15672
-        # Health check to ensure it's ready before steps start
         options: >-
           --health-cmd "rabbitmq-diagnostics -q ping"
           --health-interval 10s
@@ -118,7 +211,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # Setup Java for Backend execution
+      # -- Setup Java (for building and running the backend) ------------------
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
@@ -126,7 +219,7 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
 
-      # Setup Node for Frontend serving and Playwright
+      # -- Setup Node (for frontend build + Playwright runner) ----------------
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
@@ -134,24 +227,27 @@ jobs:
           cache: 'npm'
           cache-dependency-path: frontend/package-lock.json
 
-      # ------------------------------------------------------------------
+      # ----------------------------------------------------------------
       # BUILD & START BACKEND
-      # ------------------------------------------------------------------
-      - name: Build Producer API (Skip tests separately as they ran in prev job)
+      # ----------------------------------------------------------------
+      # Tests were already validated in job 1, so we skip them here with
+      # -DskipTests to save time.
+      - name: Build Producer API (skip tests)
         working-directory: ./producer-api
         run: ./mvnw package -DskipTests
 
+      # Start the backend JAR in the background and wait until the
+      # /actuator/health endpoint reports UP before proceeding.
       - name: Start Backend in Background
         working-directory: ./producer-api
         run: |
           nohup java -jar target/*.jar --spring.rabbitmq.host=rabbitmq > backend.log 2>&1 &
           echo "Waiting for Backend to start..."
-          # Simple health check loop (adjust endpoint as needed)
           timeout 60s bash -c 'until curl -s http://localhost:8080/actuator/health | grep UP; do sleep 2; done' || (cat backend.log && exit 1)
 
-      # ------------------------------------------------------------------
+      # ----------------------------------------------------------------
       # PREPARE & START FRONTEND
-      # ------------------------------------------------------------------
+      # ----------------------------------------------------------------
       - name: Install Frontend Dependencies
         working-directory: ./frontend
         run: npm ci
@@ -160,6 +256,7 @@ jobs:
         working-directory: ./frontend
         run: npm run build
 
+      # Serve the production build locally so Playwright can interact with it.
       - name: Start Frontend (Preview)
         working-directory: ./frontend
         run: |
@@ -167,19 +264,18 @@ jobs:
           echo "Waiting for Frontend..."
           timeout 30s bash -c 'until curl -s http://localhost:5173; do sleep 1; done'
 
-      # ------------------------------------------------------------------
-      # RUN PLAYWRIGHT
-      # ------------------------------------------------------------------
+      # ----------------------------------------------------------------
+      # RUN PLAYWRIGHT E2E TESTS
+      # ----------------------------------------------------------------
       - name: Run Playwright Tests
         working-directory: ./frontend
         env:
-          # Point Playwright to the running frontend
           PLAYWRIGHT_TEST_BASE_URL: http://localhost:5173
         run: npx playwright test
 
-      # ------------------------------------------------------------------
-      # ARTIFACTS
-      # ------------------------------------------------------------------
+      # ----------------------------------------------------------------
+      # ARTIFACTS – always upload the HTML report for post-mortem analysis
+      # ----------------------------------------------------------------
       - name: Upload Playwright Report
         uses: actions/upload-artifact@v4
         if: always()
