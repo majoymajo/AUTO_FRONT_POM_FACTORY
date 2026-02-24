@@ -20,8 +20,8 @@ services:
       start_period: 30s
 
   db:
-    container_name: sofkianos-database
     image: postgres:14.3
+    container_name: sofkianos-database
     restart: always
     ports:
       - "5432:5432"
@@ -41,7 +41,7 @@ services:
       start_period: 30s
 
   producer-api:
-    build: ./producer-api
+    image: elyriven/sofkianos-producer:latest
     container_name: sofkianos-producer
     ports:
       - "8082:8082"
@@ -54,7 +54,7 @@ services:
       - sofkian-net
 
   consumer-worker:
-    build: ./consumer-worker
+    image: elyriven/sofkianos-consumer:latest
     container_name: sofkianos-consumer
     ports:
       - "8081:8081"
@@ -74,7 +74,7 @@ services:
       - sofkian-net
 
   frontend:
-    build: ./frontend
+    image: elyriven/sofkianos-frontend:latest
     container_name: sofkianos-frontend
     ports:
       - "5173:5173"
@@ -96,6 +96,7 @@ services:
 volumes:
   postgres-db:
     external: false
+    driver: local
 
 networks:
   sofkian-net:
