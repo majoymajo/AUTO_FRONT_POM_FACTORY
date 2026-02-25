@@ -16,15 +16,6 @@
 name: Frontend CI/CD
 
 # ──────────────────────────────────────────────────────────────────────────────
-# PERMISSIONS
-# ──────────────────────────────────────────────────────────────────────────────
-# Required for creating issues automatically from ESLint results
-permissions:
-  contents: read       # Read repository code
-  issues: write        # Create and update issues
-  pull-requests: read  # Read PR info (optional)
-
-# ──────────────────────────────────────────────────────────────────────────────
 # TRIGGERS
 # ──────────────────────────────────────────────────────────────────────────────
 # Runs on push/PR to main, develop, and feature/** branches.
@@ -81,6 +72,7 @@ env:
   FRONTEND_IMAGE: ${{ secrets.DOCKER_USER }}/sofkianos-frontend
 
 jobs:
+
   # ========================================================================
   # JOB 1 — TEST & LINT
   # ========================================================================
@@ -91,6 +83,15 @@ jobs:
   test:
     name: "🧪 Frontend Tests & Lint"
     runs-on: ubuntu-latest
+    
+    # ──────────────────────────────────────────────────────────────────────────────
+    # PERMISSIONS
+    # ──────────────────────────────────────────────────────────────────────────────
+    # Required for creating issues automatically from ESLint results
+    permissions:
+      contents: read       # Read repository code
+      issues: write        # Create and update issues
+      pull-requests: read  # Read PR info (optional)
 
     steps:
       # -- Checkout source code -----------------------------------------------
