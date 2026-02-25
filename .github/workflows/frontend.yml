@@ -137,97 +137,14 @@ jobs:
           name: eslint-report
           path: frontend/eslint-report.json
           retention-days: 7
-
-      # ========================================================================
-      # TESTING: Create Sample Issue (Remove after testing)
-      # ========================================================================
-      # This is a TEST STEP to verify that issue creation works correctly
-      # before integrating with the real ESLint report.
-      # 
-      # USAGE:
-      #   1. Push to any branch to trigger this workflow
-      #   2. Verify that a test issue is created in GitHub Issues
-      #   3. Once confirmed, comment this step and uncomment the real ones below
-      # ========================================================================
-      - name: "[TEST] Create Sample ESLint Issue"
-        if: always() && github.event_name == 'push'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SHORT_SHA: ${{ github.sha }}
-          REPO: ${{ github.repository }}
-          ACTOR: ${{ github.actor }}
-          BRANCH: ${{ github.ref_name }}
-          RUN_ID: ${{ github.run_id }}
-        run: |
-          SHORT_SHA=${SHORT_SHA:0:7}
-          
-          # Create JSON payload using jq with multiline body
-          jq -n \
-            --arg title "[LINT] [TEST] no-unused-vars in src/components/TestComponent.tsx" \
-            --arg body "## 🚨 ESLint Violation Detected
-
-          **File:** \`src/components/TestComponent.tsx:42\`  
-          **Rule:** [\`no-unused-vars\`](https://eslint.org/docs/latest/rules/no-unused-vars)  
-          **Severity:** Error
-
-          ### 📝 Error Message
-          > 'testVariable' is assigned a value but never used.
-
-          ### 🛠 Automated Context
-          - **Commit:** [\`$SHORT_SHA\`](https://github.com/$REPO/commit/$GITHUB_SHA)
-          - **Author:** @$ACTOR
-          - **Branch:** \`$BRANCH\`
-          - **Workflow Run:** [View Logs](https://github.com/$REPO/actions/runs/$RUN_ID)
-
-          ### 🔍 Code Context
-          \`\`\`typescript
-          // src/components/TestComponent.tsx:42
-             40 | function TestComponent() {
-             41 |   const [data, setData] = useState();
-          →  42 |   const testVariable = \"unused\";
-             43 |   return <div>{data}</div>
-             44 | }
-          \`\`\`
-
-          ---
-          _⚠️ **THIS IS A TEST ISSUE** - This issue was automatically generated to test the CI/CD workflow._" \
-            --argjson labels '["eslint", "code-quality", "priority-high", "bug", "test"]' \
-            '{title: $title, body: $body, labels: $labels}' > /tmp/issue_payload.json
-          
-          # Create issue via GitHub API
-          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
-            -H "Authorization: token $GITHUB_TOKEN" \
-            -H "Accept: application/vnd.github.v3+json" \
-            https://api.github.com/repos/$REPO/issues \
-            -d @/tmp/issue_payload.json)
-          
-          HTTP_STATUS=$(echo "$RESPONSE" | tail -n1)
-          RESPONSE_BODY=$(echo "$RESPONSE" | sed '$d')
-          
-          if [ "$HTTP_STATUS" -eq 201 ]; then
-            ISSUE_NUMBER=$(echo "$RESPONSE_BODY" | jq -r '.number')
-            ISSUE_URL=$(echo "$RESPONSE_BODY" | jq -r '.html_url')
-            echo "✅ Test issue #$ISSUE_NUMBER created successfully!"
-            echo "📎 URL: $ISSUE_URL"
-          else
-            echo "❌ Failed to create issue. HTTP Status: $HTTP_STATUS"
-            echo "Response: $RESPONSE_BODY"
-            exit 1
-          fi
-
-      # ========================================================================
-      # PRODUCTION: Real ESLint Issue Creation (Currently commented for testing)
-      # ========================================================================
-      # Uncomment these steps after verifying the test issue works correctly
-      # ========================================================================
       
       # -- Prepare environment for automated issue creation -------------------
       # Installs @octokit/rest library needed to interact with GitHub API.
 
-      # - name: Install Octokit for Issue Creation
-      #   if: always() && github.event_name == 'push' && github.ref == 'refs/heads/develop'
-      #   working-directory: ./frontend
-      #   run: npm install @octokit/rest
+      - name: Install Octokit for Issue Creation
+        if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+        working-directory: ./frontend
+        run: npm install @octokit/rest
       
       # -- Create GitHub Issues from ESLint violations ------------------------
       # Executes the automation script that:
@@ -239,16 +156,16 @@ jobs:
       # Only triggers on 'develop' branch to centralize issue tracking.
       # Environment variables provide context for issue descriptions.
 
-      # - name: Generate ESLint Issues
-      #   if: always() && github.event_name == 'push' && github.ref == 'refs/heads/develop'
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #     GITHUB_REPOSITORY: ${{ github.repository }}
-      #     GITHUB_SHA: ${{ github.sha }}
-      #     GITHUB_REF_NAME: ${{ github.ref_name }}
-      #     GITHUB_ACTOR: ${{ github.actor }}
-      #     GITHUB_RUN_ID: ${{ github.run_id }}
-      #   run: node ../.github/scripts/create-eslint-issues.js
+      - name: Generate ESLint Issues
+        if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_SHA: ${{ github.sha }}
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
+        run: node ../.github/scripts/create-eslint-issues.js
 
       # -- Run Vitest unit tests ----------------------------------------------
       # Script "test:unit" is defined as "vitest run" in package.json
