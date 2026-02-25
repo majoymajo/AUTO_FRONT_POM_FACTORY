@@ -153,13 +153,18 @@ jobs:
         if: always() && github.event_name == 'push'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SHORT_SHA: ${{ github.sha }}
+          REPO: ${{ github.repository }}
+          ACTOR: ${{ github.actor }}
+          BRANCH: ${{ github.ref_name }}
+          RUN_ID: ${{ github.run_id }}
         run: |
-          # Extract short commit hash for display
-          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+          SHORT_SHA=${SHORT_SHA:0:7}
           
-          # Build issue body with the custom template
-          ISSUE_BODY=$(cat <<'EOF'
-          ## 🚨 ESLint Violation Detected
+          # Create JSON payload using jq with multiline body
+          jq -n \
+            --arg title "[LINT] [TEST] no-unused-vars in src/components/TestComponent.tsx" \
+            --arg body "## 🚨 ESLint Violation Detected
 
           **File:** \`src/components/TestComponent.tsx:42\`  
           **Rule:** [\`no-unused-vars\`](https://eslint.org/docs/latest/rules/no-unused-vars)  
@@ -169,40 +174,46 @@ jobs:
           > 'testVariable' is assigned a value but never used.
 
           ### 🛠 Automated Context
-          - **Commit:** [\`$SHORT_SHA\`](https://github.com/${{ github.repository }}/commit/${{ github.sha }})
-          - **Author:** @${{ github.actor }}
-          - **Branch:** \`${{ github.ref_name }}\`
-          - **Workflow Run:** [View Logs](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+          - **Commit:** [\`$SHORT_SHA\`](https://github.com/$REPO/commit/$GITHUB_SHA)
+          - **Author:** @$ACTOR
+          - **Branch:** \`$BRANCH\`
+          - **Workflow Run:** [View Logs](https://github.com/$REPO/actions/runs/$RUN_ID)
 
           ### 🔍 Code Context
           \`\`\`typescript
           // src/components/TestComponent.tsx:42
              40 | function TestComponent() {
              41 |   const [data, setData] = useState();
-          →  42 |   const testVariable = "unused";
+          →  42 |   const testVariable = \"unused\";
              43 |   return <div>{data}</div>
              44 | }
           \`\`\`
 
           ---
-          _⚠️ **THIS IS A TEST ISSUE** - This issue was automatically generated to test the CI/CD workflow. Please fix the linting error and close this issue._
-          EOF
-          )
+          _⚠️ **THIS IS A TEST ISSUE** - This issue was automatically generated to test the CI/CD workflow._" \
+            --argjson labels '["eslint", "code-quality", "priority-high", "bug", "test"]' \
+            '{title: $title, body: $body, labels: $labels}' > /tmp/issue_payload.json
           
           # Create issue via GitHub API
-          curl -X POST \
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
             -H "Authorization: token $GITHUB_TOKEN" \
             -H "Accept: application/vnd.github.v3+json" \
-            https://api.github.com/repos/${{ github.repository }}/issues \
-            -d @- <<EOF
-          {
-            "title": "[LINT] [TEST] no-unused-vars in src/components/TestComponent.tsx",
-            "body": "$ISSUE_BODY",
-            "labels": ["eslint", "code-quality", "priority-high", "bug", "test"]
-          }
-          EOF
+            https://api.github.com/repos/$REPO/issues \
+            -d @/tmp/issue_payload.json)
           
-          echo "✅ Test issue created successfully!"
+          HTTP_STATUS=$(echo "$RESPONSE" | tail -n1)
+          RESPONSE_BODY=$(echo "$RESPONSE" | sed '$d')
+          
+          if [ "$HTTP_STATUS" -eq 201 ]; then
+            ISSUE_NUMBER=$(echo "$RESPONSE_BODY" | jq -r '.number')
+            ISSUE_URL=$(echo "$RESPONSE_BODY" | jq -r '.html_url')
+            echo "✅ Test issue #$ISSUE_NUMBER created successfully!"
+            echo "📎 URL: $ISSUE_URL"
+          else
+            echo "❌ Failed to create issue. HTTP Status: $HTTP_STATUS"
+            echo "Response: $RESPONSE_BODY"
+            exit 1
+          fi
 
       # ========================================================================
       # PRODUCTION: Real ESLint Issue Creation (Currently commented for testing)
