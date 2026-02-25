@@ -18,7 +18,7 @@
 
 ## Reason for Being
 
-SofkianOS transforms the Sofkian identity into tangible **Kudos**. The term **Kudos** comes from the Greek *kŷdos*, meaning honor, recognition, and prestige for an achievement. This system represents how we celebrate the real contributions of each person, creating a **Rewards Culture** that strengthens bonds between geographically distributed teams.
+SofkianOS transforms the Sofkian identity into tangible **Kudos**. The term **Kudos** comes from the Greek _kŷdos_, meaning honor, recognition, and prestige for an achievement. This system represents how we celebrate the real contributions of each person, creating a **Rewards Culture** that strengthens bonds between geographically distributed teams.
 
 **Sofkian** (our essence) + **OS** (Operating System of Kudos) = **Rewards Culture**
 
@@ -45,6 +45,7 @@ SofkianOS operates as a distributed system where Kudos flow through multiple bou
 6. **Database (PostgreSQL)** → Final persistence (future)
 
 **Key Benefits**:
+
 - **Non-Blocking API**: Producer responds instantly (202), processing occurs asynchronously
 - **Scalability**: Multiple Consumer instances can process messages in parallel
 - **Resilience**: Messages persist in RabbitMQ if Consumers are temporarily unavailable
@@ -77,18 +78,18 @@ SofkianOS operates as a distributed system where Kudos flow through multiple bou
 
 ### Specific Versions
 
-| Category        | Technology              | Version        |
-|-----------------|-------------------------|----------------|
-| **Frontend**    | React                   | 19.2.0         |
-|                 | TypeScript              | 5.9.3          |
-|                 | Vite                    | 7.2.4          |
-|                 | Tailwind CSS            | 3.4.19         |
-| **Backend**     | Spring Boot             | 3.3.5          |
-|                 | Java                    | 17             |
-|                 | Maven                   | (Spring Parent)|
-| **Messaging**   | RabbitMQ                | 3-management  |
-| **Infrastructure** | Docker              | Multi-stage    |
-|                 | Terraform               | (AWS)          |
+| Category           | Technology   | Version         |
+| ------------------ | ------------ | --------------- |
+| **Frontend**       | React        | 19.2.0          |
+|                    | TypeScript   | 5.9.3           |
+|                    | Vite         | 7.2.4           |
+|                    | Tailwind CSS | 3.4.19          |
+| **Backend**        | Spring Boot  | 3.3.5           |
+|                    | Java         | 17              |
+|                    | Maven        | (Spring Parent) |
+| **Messaging**      | RabbitMQ     | 3-management    |
+| **Infrastructure** | Docker       | Multi-stage     |
+|                    | Terraform    | (AWS)           |
 
 ---
 
@@ -122,12 +123,12 @@ Detailed view of internal components of each service (Controllers, Services, Con
 
 This repository contains three main services, each with its own README:
 
-| Service              | Path                  | Description                                    | README                                    |
-|----------------------|-----------------------|------------------------------------------------|-------------------------------------------|
-| **Frontend**         | `/frontend`           | React SPA with landing page and Kudo form      | [Frontend README](./frontend/README.md)   |
-| **Producer API**     | `/producer-api`       | REST API gateway that publishes to RabbitMQ    | [Producer README](./producer-api/README.md) |
-| **Consumer Worker**  | `/consumer-worker`    | Asynchronous worker that processes Kudos       | [Consumer README](./consumer-worker/README.md) |
-| **Infrastructure**   | `/aws`                | Terraform configurations for AWS               | (See `.tf` files)                         |
+| Service             | Path               | Description                                 | README                                         |
+| ------------------- | ------------------ | ------------------------------------------- | ---------------------------------------------- |
+| **Frontend**        | `/frontend`        | React SPA with landing page and Kudo form   | [Frontend README](./frontend/README.md)        |
+| **Producer API**    | `/producer-api`    | REST API gateway that publishes to RabbitMQ | [Producer README](./producer-api/README.md)    |
+| **Consumer Worker** | `/consumer-worker` | Asynchronous worker that processes Kudos    | [Consumer README](./consumer-worker/README.md) |
+| **Infrastructure**  | `/aws`             | Terraform configurations for AWS            | (See `.tf` files)                              |
 
 ---
 
@@ -141,7 +142,7 @@ This repository contains three main services, each with its own README:
 
 SofkianOS adopts an **AI-First** approach to development:
 
-- **Humans = Architects.** We define vision, requirements, architecture, and quality criteria. We decide *what* to build and *why*.
+- **Humans = Architects.** We define vision, requirements, architecture, and quality criteria. We decide _what_ to build and _why_.
 - **AI = Junior Developer.** AI executes implementation under human direction: code, tests, and documentation. We review and refine its output.
 
 We do not treat AI as a replacement for judgment; we use it as a disciplined executor that we orchestrate and validate.
@@ -156,15 +157,15 @@ We do not treat AI as a replacement for judgment; we use it as a disciplined exe
 
 ### 3. Roles
 
-| Responsibility        | Owner   | Description |
-|-----------------------|---------|-------------|
-| Strategy              | Humans  | Product/technology direction, priorities, architecture decisions. |
-| Prompt Engineering    | Humans  | Designing and improving prompts; defining [ROLE], [CONTEXT], [CONSTRAINT], [OUTPUT]. |
-| Security Review       | Humans  | Review of dependencies, auth, data handling, and security-sensitive changes. |
-| PR Merging            | Humans  | Final approval and merge to `develop` / `main`; no automated merge without human gate. |
-| Coding                | AI      | Implementation of features, refactors, and fixes from approved specifications. |
-| Unit Tests            | AI      | Writing and maintaining unit tests aligned with acceptance criteria. |
-| Documentation        | AI      | Inline docs, README updates, and technical documentation from human outlines. |
+| Responsibility     | Owner  | Description                                                                            |
+| ------------------ | ------ | -------------------------------------------------------------------------------------- |
+| Strategy           | Humans | Product/technology direction, priorities, architecture decisions.                      |
+| Prompt Engineering | Humans | Designing and improving prompts; defining [ROLE], [CONTEXT], [CONSTRAINT], [OUTPUT].   |
+| Security Review    | Humans | Review of dependencies, auth, data handling, and security-sensitive changes.           |
+| PR Merging         | Humans | Final approval and merge to `develop` / `main`; no automated merge without human gate. |
+| Coding             | AI     | Implementation of features, refactors, and fixes from approved specifications.         |
+| Unit Tests         | AI     | Writing and maintaining unit tests aligned with acceptance criteria.                   |
+| Documentation      | AI     | Inline docs, README updates, and technical documentation from human outlines.          |
 
 ### 4. Prompt Protocol
 
@@ -192,11 +193,11 @@ Prompts that omit any of the four parts must be completed by the author before s
 
 We use a simple branching model:
 
-| Branch       | Purpose |
-|--------------|---------|
-| `main`       | Production-ready code. Protected; only updated via merges from `develop` (or release process). |
-| `develop`    | Integration branch. All feature work is merged here after review. |
-| `feature/*`  | One branch per feature/task (e.g., `feature/auth-login`, `feature/api-projects`). Branched from `develop`, merged back into `develop` via PR. |
+| Branch      | Purpose                                                                                                                                       |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `main`      | Production-ready code. Protected; only updated via merges from `develop` (or release process).                                                |
+| `develop`   | Integration branch. All feature work is merged here after review.                                                                             |
+| `feature/*` | One branch per feature/task (e.g., `feature/auth-login`, `feature/api-projects`). Branched from `develop`, merged back into `develop` via PR. |
 
 **Rules:**
 
@@ -208,13 +209,13 @@ We use a simple branching model:
 
 ### Summary
 
-| Principle        | Rule |
-|------------------|------|
-| Methodology      | AI-First: Humans architect, AI implements. |
-| Golden Rule      | No manual boilerplate; AI generates scaffolding. |
-| Roles            | Humans: Strategy, Prompts, Security, Merge. AI: Code, Tests, Docs. |
-| Prompts          | Always use [ROLE] + [CONTEXT] + [CONSTRAINT] + [OUTPUT]. |
-| Git              | `main`, `develop`, `feature/*`; humans gate merges. |
+| Principle   | Rule                                                               |
+| ----------- | ------------------------------------------------------------------ |
+| Methodology | AI-First: Humans architect, AI implements.                         |
+| Golden Rule | No manual boilerplate; AI generates scaffolding.                   |
+| Roles       | Humans: Strategy, Prompts, Security, Merge. AI: Code, Tests, Docs. |
+| Prompts     | Always use [ROLE] + [CONTEXT] + [CONSTRAINT] + [OUTPUT].           |
+| Git         | `main`, `develop`, `feature/*`; humans gate merges.                |
 
 ---
 
@@ -224,17 +225,17 @@ The system is deployed on **AWS EC2** (backend and containers) and **Vercel** (f
 
 ### Frontend (UI) 🟢
 
-| | |
-|---|---|
-| **Link** | https://sofkianos-mvp-edub.vercel.app/ |
+|                 |                                                                                                       |
+| --------------- | ----------------------------------------------------------------------------------------------------- |
+| **Link**        | https://sofkianos-mvp-edub.vercel.app/                                                                |
 | **Description** | User interface where Kudos are submitted. Send a Kudo and then verify its flow in Dozzle (see below). |
 
 ### Observability (Crucial) 📊
 
-| | |
-|---|---|
+|          |                               |
+| -------- | ----------------------------- |
 | **Tool** | Dozzle (real-time log viewer) |
-| **Link** | http://54.210.184.144:8888/ |
+| **Link** | http://54.210.184.144:8888/   |
 
 Since the system uses **RabbitMQ**, transaction processing is **asynchronous**. The API returns **202 Accepted** immediately; actual processing happens in the Consumer Worker. To see the full flow:
 
@@ -245,10 +246,10 @@ Inspecting both containers in Dozzle is the recommended way to confirm that a Ku
 
 ### Backend Services & Health 🟢
 
-| Service | Swagger Documentation | Health Check |
-|---------|-----------------------|--------------|
-| **Producer API** | [Swagger UI](http://54.210.184.144:8081/swagger-ui/index.html) | [Health](http://54.210.184.144:8081/api/v1/health) |
-| **Consumer Worker** | [Swagger UI](http://54.210.184.144:8082/swagger-ui/index.html) | [Health](http://54.210.184.144:8082/health) |
+| Service             | Swagger Documentation                                          | Health Check                                       |
+| ------------------- | -------------------------------------------------------------- | -------------------------------------------------- |
+| **Producer API**    | [Swagger UI](http://54.210.184.144:8081/swagger-ui/index.html) | [Health](http://54.210.184.144:8081/api/v1/health) |
+| **Consumer Worker** | [Swagger UI](http://54.210.184.144:8082/swagger-ui/index.html) | [Health](http://54.210.184.144:8082/health)        |
 
 ---
 
@@ -261,9 +262,25 @@ Inspecting both containers in Dozzle is the recommended way to confirm that a Ku
 
 ### Docker Compose Configurations
 
-SofkianOS provides two Docker Compose configurations for different environments:
+SofkianOS provides three Docker Compose configurations for different environments:
 
-#### Development Configuration (`docker-compose.dev.yml`)
+#### Development Configuration with Local DB (`docker-compose.yml`)
+
+**Use for local development.** Includes all services with Frontend running locally.
+
+```bash
+docker compose -f docker-compose.yml up -d --build
+```
+
+**Services:**
+
+- Frontend (React) — http://localhost:5173
+- Producer API — http://localhost:8082
+- Consumer Worker — http://localhost:8081
+- RabbitMQ — http://localhost:15672
+- Dozzle (Log Viewer) — http://localhost:8888
+
+#### Development Configuration without DB (`docker-compose.dev.yml`)
 
 **Use for local development.** Includes all services with Frontend running locally.
 
@@ -272,6 +289,7 @@ docker compose -f docker-compose.dev.yml up -d --build
 ```
 
 **Services:**
+
 - Frontend (React) — http://localhost:5173
 - Producer API — http://localhost:8082
 - Consumer Worker — http://localhost:8081
@@ -287,6 +305,7 @@ docker compose -f docker-compose.prod.yml up -d --build
 ```
 
 **Services:**
+
 - Producer API — Port 8082
 - Consumer Worker — Port 8081
 - RabbitMQ — Ports 5672, 15672
@@ -307,6 +326,10 @@ docker compose -f docker-compose.prod.yml up -d --build
 2. **Start the development stack**:
 
    ```bash
+   docker compose -f docker-compose.yml up -d --build
+
+   OR
+
    docker compose -f docker-compose.dev.yml up -d --build
    ```
 
@@ -319,7 +342,6 @@ docker compose -f docker-compose.prod.yml up -d --build
    - Starts Dozzle log viewer
 
 3. **Verify services**:
-
    - **Frontend**: http://localhost:5173
    - **Producer API**: http://localhost:8082/api/v1/kudos (POST)
    - **Consumer Worker**: http://localhost:8081/api/v1/health
@@ -329,12 +351,20 @@ docker compose -f docker-compose.prod.yml up -d --build
 4. **Stop the stack**:
 
    ```bash
+   docker compose -f docker-compose.yml down
+
+   OR
+
    docker compose -f docker-compose.dev.yml down
    ```
 
    To remove volumes (including RabbitMQ data):
 
    ```bash
+   docker compose -f docker-compose.yml down -v
+
+   OR
+
    docker compose -f docker-compose.dev.yml down -v
    ```
 
@@ -343,12 +373,14 @@ docker compose -f docker-compose.prod.yml up -d --build
 The orchestration ensures the correct startup order:
 
 **Development** (`docker-compose.dev.yml`):
+
 - RabbitMQ starts first with health checks
 - Producer API and Consumer Worker wait for RabbitMQ to be healthy
 - Frontend waits for Producer API to be available
 - All services communicate via the `sofkian-net` bridge network
 
 **Production** (`docker-compose.prod.yml`):
+
 - RabbitMQ starts first with health checks
 - Producer API and Consumer Worker wait for RabbitMQ to be healthy
 - Frontend is hosted separately on Vercel
@@ -398,6 +430,7 @@ mkdir -p assets
 ```
 
 Expected files:
+
 - `sofka-logo.png` — Sofka logo
 - `architecture-c1.png` — System context diagram
 - `architecture-c2.png` — Container diagram

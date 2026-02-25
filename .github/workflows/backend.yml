@@ -73,7 +73,7 @@ on:
 # Shared across all jobs so tool versions and image names stay consistent.
 # ──────────────────────────────────────────────────────────────────────────────
 env:
-  JAVA_VERSION: '17'
+  JAVA_VERSION: "17"
   SPRING_PROFILES_ACTIVE: test
 
   # Docker Hub image names — prefixed with the Docker Hub username
@@ -104,8 +104,8 @@ jobs:
         uses: actions/setup-java@v4
         with:
           java-version: ${{ env.JAVA_VERSION }}
-          distribution: 'temurin'
-          cache: 'maven'
+          distribution: "temurin"
+          cache: "maven"
 
       # -- Consumer Worker unit tests -----------------------------------------
       - name: Test Consumer Worker
@@ -142,8 +142,8 @@ jobs:
   # ========================================================================
   docker-build:
     name: "🐳 Docker Build & Push"
-    needs: [test]                       # Fail-fast: skip if tests fail
-    if: github.event_name == 'push'     # Don't push images for PRs
+    needs: [test] # Fail-fast: skip if tests fail
+    if: github.event_name == 'push' # Don't push images for PRs
     runs-on: ubuntu-latest
 
     steps:
@@ -176,7 +176,7 @@ jobs:
           tags: |
             ${{ env.PRODUCER_IMAGE }}:latest
             ${{ env.PRODUCER_IMAGE }}:${{ github.sha }}
-          cache-from: type=gha          # GitHub Actions cache for Docker layers
+          cache-from: type=gha # GitHub Actions cache for Docker layers
           cache-to: type=gha,mode=max
 
       # -- Build & push Consumer Worker image ---------------------------------
@@ -204,7 +204,7 @@ jobs:
   deploy:
     name: "🚀 Deploy Backend"
     needs: [docker-build]
-    if: github.ref == 'refs/heads/main'   # Deploy only from main branch
+    if: github.ref == 'refs/heads/main' # Deploy only from main branch
     runs-on: ubuntu-latest
 
     steps:

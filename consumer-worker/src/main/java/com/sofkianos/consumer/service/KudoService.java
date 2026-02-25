@@ -10,7 +10,7 @@ public interface KudoService {
     /**
      * Persists a kudo from the given typed event.
      *
-     * @param event the deserialized kudo event from the message broker
+     * @param message the deserialized kudo event from the message broker
      */
-    void saveKudo(KudoEvent event);
+    void saveKudo(KudoEvent message);
 }

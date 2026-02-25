@@ -1,10 +1,8 @@
 package com.sofkianos.producer.infrastructure.messaging;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sofkianos.producer.domain.events.KudoEvent;
 import com.sofkianos.producer.domain.ports.out.KudoEventPublisher;
-import com.sofkianos.producer.exception.KudoPublishingException;
+import com.sofkianos.producer.infrastructure.exception.KudoPublishingException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.AmqpException;
@@ -24,12 +22,10 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class RabbitMqKudoPublisher implements KudoEventPublisher {
-
     private final RabbitTemplate rabbitTemplate;
 
     @Value("${app.rabbitmq.exchange}")
     private String exchangeName;
-
     @Value("${app.rabbitmq.routing-key}")
     private String routingKey;
 

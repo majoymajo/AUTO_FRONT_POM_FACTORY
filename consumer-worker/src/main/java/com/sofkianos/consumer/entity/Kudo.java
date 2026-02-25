@@ -1,7 +1,7 @@
 package com.sofkianos.consumer.entity;
 
 import com.sofkianos.consumer.domain.model.KudoCategory;
-import com.sofkianos.consumer.exception.InvalidKudoException;
+import com.sofkianos.consumer.infrastructure.exception.InvalidKudoException;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
