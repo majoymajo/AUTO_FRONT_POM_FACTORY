@@ -24,17 +24,13 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Kudo {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
     private String fromUser;
     private String toUser;
-
     @Enumerated(EnumType.STRING)
     private KudoCategory category;
-
     private String message;
     private LocalDateTime createdAt;
 }
