@@ -1,10 +1,10 @@
 package com.sofkianos.producer.controller;
 
-import com.sofkianos.producer.dto.KudoRequest;
-import com.sofkianos.producer.dto.KudoResponse;
-import com.sofkianos.producer.dto.KudoSearchCriteria;
-import com.sofkianos.producer.dto.PagedKudoResponse;
-import com.sofkianos.producer.service.KudoService;
+import com.sofkianos.producer.application.dto.KudoRequest;
+import com.sofkianos.producer.application.dto.KudoResponse;
+import com.sofkianos.producer.application.dto.KudoSearchCriteria;
+import com.sofkianos.producer.application.dto.PagedKudoResponse;
+import com.sofkianos.producer.application.ports.in.KudoService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

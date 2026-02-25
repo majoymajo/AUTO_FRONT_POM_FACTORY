@@ -1,7 +1,7 @@
 package com.sofkianos.producer.specification;
 
-import com.sofkianos.producer.dto.KudoSearchCriteria;
-import com.sofkianos.producer.entity.Kudo;
+import com.sofkianos.producer.application.dto.KudoSearchCriteria;
+import com.sofkianos.producer.infrastructure.outbound.persistence.KudoEntity;
 import com.sofkianos.producer.domain.valueobject.KudoCategory;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
@@ -24,7 +24,7 @@ public final class KudoSpecifications {
      * @param criteria the search criteria
      * @return a composed specification matching all provided filters
      */
-    public static Specification<Kudo> fromCriteria(KudoSearchCriteria criteria) {
+    public static Specification<KudoEntity> fromCriteria(KudoSearchCriteria criteria) {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 

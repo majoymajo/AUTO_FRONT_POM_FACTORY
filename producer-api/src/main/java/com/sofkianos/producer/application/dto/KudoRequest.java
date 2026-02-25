@@ -1,4 +1,4 @@
-package com.sofkianos.producer.dto;
+package com.sofkianos.producer.application.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

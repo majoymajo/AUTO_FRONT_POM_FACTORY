@@ -1,11 +1,11 @@
 package com.sofkianos.producer.service;
 
-import com.sofkianos.producer.dto.KudoListItemDTO;
-import com.sofkianos.producer.dto.KudoSearchCriteria;
-import com.sofkianos.producer.entity.Kudo;
+import com.sofkianos.producer.application.dto.KudoListItemDTO;
+import com.sofkianos.producer.application.dto.KudoSearchCriteria;
+import com.sofkianos.producer.infrastructure.outbound.persistence.KudoEntity;
 import com.sofkianos.producer.domain.valueobject.KudoCategory;
-import com.sofkianos.producer.repository.KudoQueryRepository;
-import com.sofkianos.producer.service.impl.KudoServiceImpl;
+import com.sofkianos.producer.infrastructure.outbound.persistence.KudoQueryRepository;
+import com.sofkianos.producer.application.usecase.KudoServiceImpl;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -32,7 +32,7 @@ class KudoQueryServiceTest {
     @Test
     @DisplayName("Should map Kudo entity to KudoListItemDTO without sensitive data")
     void searchKudos_MapsEntityToDTO_NoSensitiveData() {
-        var entity = Kudo.builder()
+        var entity = KudoEntity.builder()
                 .id(42L)
                 .fromUser("juan.perez@sofka.com")
                 .toUser("maria.garcia@sofka.com")
@@ -61,7 +61,7 @@ class KudoQueryServiceTest {
     @Test
     @DisplayName("Should handle null emisor (anonymous kudo) gracefully")
     void searchKudos_NullEmisor_ReturnsAnonymous() {
-        var entity = Kudo.builder()
+        var entity = KudoEntity.builder()
                 .id(99L)
                 .fromUser(null)
                 .toUser("maria.garcia@sofka.com")

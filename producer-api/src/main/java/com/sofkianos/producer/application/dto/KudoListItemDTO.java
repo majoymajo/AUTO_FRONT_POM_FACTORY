@@ -1,4 +1,4 @@
-package com.sofkianos.producer.dto;
+package com.sofkianos.producer.application.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

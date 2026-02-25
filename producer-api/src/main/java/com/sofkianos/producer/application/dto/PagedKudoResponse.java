@@ -1,4 +1,4 @@
-package com.sofkianos.producer.dto;
+package com.sofkianos.producer.application.dto;
 
 import org.springframework.data.domain.Page;
 

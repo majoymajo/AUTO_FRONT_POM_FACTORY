@@ -1,8 +1,7 @@
 package com.sofkianos.producer.controller;
 
-import com.sofkianos.producer.dto.KudoListItemDTO;
-import com.sofkianos.producer.dto.PagedKudoResponse;
-import com.sofkianos.producer.service.KudoService;
+import com.sofkianos.producer.application.dto.KudoListItemDTO;
+import com.sofkianos.producer.application.ports.in.KudoService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

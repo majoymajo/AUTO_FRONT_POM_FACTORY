@@ -1,16 +1,15 @@
-package com.sofkianos.producer.service;
+package com.sofkianos.producer.application.ports.in;
 
-import com.sofkianos.producer.dto.KudoListItemDTO;
-import com.sofkianos.producer.dto.KudoRequest;
-import com.sofkianos.producer.dto.KudoResponse;
-import com.sofkianos.producer.dto.KudoSearchCriteria;
+import com.sofkianos.producer.application.dto.KudoListItemDTO;
+import com.sofkianos.producer.application.dto.KudoRequest;
+import com.sofkianos.producer.application.dto.KudoResponse;
+import com.sofkianos.producer.application.dto.KudoSearchCriteria;
 import org.springframework.data.domain.Page;
 
 /**
  * Service interface for handling Kudos.
  */
 public interface KudoService {
-
   /**
    * Processes a Kudo request and publishes it to the messaging system.
    *

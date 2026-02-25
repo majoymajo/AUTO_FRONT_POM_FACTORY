@@ -1,6 +1,9 @@
 package com.sofkianos.producer.domain.ports.out;
 
+import com.sofkianos.producer.application.dto.KudoSearchCriteria;
 import com.sofkianos.producer.domain.model.Kudo;
+import org.springframework.data.domain.Page;
+
 import java.util.Optional;
 
 /**
@@ -8,19 +11,7 @@ import java.util.Optional;
  * Decouples the domain from Spring Data JPA.
  */
 public interface KudoRepository {
-    /**
-     * Persists a Kudo domain model.
-     * 
-     * @param kudo the kudo to save
-     * @return the saved kudo with generated ID
-     */
     Kudo save(Kudo kudo);
-
-    /**
-     * Finds a kudo by its ID.
-     * 
-     * @param id the id to search for
-     * @return optional containing the found kudo
-     */
     Optional<Kudo> findById(Long id);
+    Page<Kudo> search(KudoSearchCriteria criteria);
 }
