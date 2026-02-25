@@ -16,6 +16,15 @@
 name: Frontend CI/CD
 
 # ──────────────────────────────────────────────────────────────────────────────
+# PERMISSIONS
+# ──────────────────────────────────────────────────────────────────────────────
+# Required for creating issues automatically from ESLint results
+permissions:
+  contents: read       # Read repository code
+  issues: write        # Create and update issues
+  pull-requests: read  # Read PR info (optional)
+
+# ──────────────────────────────────────────────────────────────────────────────
 # TRIGGERS
 # ──────────────────────────────────────────────────────────────────────────────
 # Runs on push/PR to main, develop, and feature/** branches.
@@ -104,10 +113,131 @@ jobs:
         run: npm install
 
       # -- Run ESLint to enforce code quality ---------------------------------
+      # Executes ESLint twice:
+      #   1. With JSON output for automated issue creation
+      #   2. With console output for human-readable logs
+      # The `|| true` prevents failure on lint errors (handled by continue-on-error)
       - name: Lint
         working-directory: ./frontend
-        run: npm run lint
+        run: |
+          npm run lint -- --format json --output-file eslint-report.json || true
+          npm run lint
         continue-on-error: true
+
+      # -- Upload ESLint report as artifact -----------------------------------
+      # Saves the JSON report for 7 days to enable:
+      #   - Automated issue creation from the report
+      #   - Manual inspection and debugging
+      #   - Historical analysis of code quality trends
+      # Runs even if linting fails (if: always())
+      - name: Upload ESLint Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: eslint-report
+          path: frontend/eslint-report.json
+          retention-days: 7
+
+      # ========================================================================
+      # TESTING: Create Sample Issue (Remove after testing)
+      # ========================================================================
+      # This is a TEST STEP to verify that issue creation works correctly
+      # before integrating with the real ESLint report.
+      # 
+      # USAGE:
+      #   1. Push to any branch to trigger this workflow
+      #   2. Verify that a test issue is created in GitHub Issues
+      #   3. Once confirmed, comment this step and uncomment the real ones below
+      # ========================================================================
+      - name: "[TEST] Create Sample ESLint Issue"
+        if: always() && github.event_name == 'push'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Extract short commit hash for display
+          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+          
+          # Build issue body with the custom template
+          ISSUE_BODY=$(cat <<'EOF'
+          ## 🚨 ESLint Violation Detected
+
+          **File:** \`src/components/TestComponent.tsx:42\`  
+          **Rule:** [\`no-unused-vars\`](https://eslint.org/docs/latest/rules/no-unused-vars)  
+          **Severity:** Error
+
+          ### 📝 Error Message
+          > 'testVariable' is assigned a value but never used.
+
+          ### 🛠 Automated Context
+          - **Commit:** [\`$SHORT_SHA\`](https://github.com/${{ github.repository }}/commit/${{ github.sha }})
+          - **Author:** @${{ github.actor }}
+          - **Branch:** \`${{ github.ref_name }}\`
+          - **Workflow Run:** [View Logs](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+
+          ### 🔍 Code Context
+          \`\`\`typescript
+          // src/components/TestComponent.tsx:42
+             40 | function TestComponent() {
+             41 |   const [data, setData] = useState();
+          →  42 |   const testVariable = "unused";
+             43 |   return <div>{data}</div>
+             44 | }
+          \`\`\`
+
+          ---
+          _⚠️ **THIS IS A TEST ISSUE** - This issue was automatically generated to test the CI/CD workflow. Please fix the linting error and close this issue._
+          EOF
+          )
+          
+          # Create issue via GitHub API
+          curl -X POST \
+            -H "Authorization: token $GITHUB_TOKEN" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/${{ github.repository }}/issues \
+            -d @- <<EOF
+          {
+            "title": "[LINT] [TEST] no-unused-vars in src/components/TestComponent.tsx",
+            "body": "$ISSUE_BODY",
+            "labels": ["eslint", "code-quality", "priority-high", "bug", "test"]
+          }
+          EOF
+          
+          echo "✅ Test issue created successfully!"
+
+      # ========================================================================
+      # PRODUCTION: Real ESLint Issue Creation (Currently commented for testing)
+      # ========================================================================
+      # Uncomment these steps after verifying the test issue works correctly
+      # ========================================================================
+      
+      # -- Prepare environment for automated issue creation -------------------
+      # Installs @octokit/rest library needed to interact with GitHub API.
+
+      # - name: Install Octokit for Issue Creation
+      #   if: always() && github.event_name == 'push' && github.ref == 'refs/heads/develop'
+      #   working-directory: ./frontend
+      #   run: npm install @octokit/rest
+      
+      # -- Create GitHub Issues from ESLint violations ------------------------
+      # Executes the automation script that:
+      #   1. Reads eslint-report.json generated in the Lint step
+      #   2. Parses errors and warnings with file/line context
+      #   3. Checks for existing open issues to avoid duplicates
+      #   4. Creates new issues with professional formatting
+      # 
+      # Only triggers on 'develop' branch to centralize issue tracking.
+      # Environment variables provide context for issue descriptions.
+
+      # - name: Generate ESLint Issues
+      #   if: always() && github.event_name == 'push' && github.ref == 'refs/heads/develop'
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #     GITHUB_REPOSITORY: ${{ github.repository }}
+      #     GITHUB_SHA: ${{ github.sha }}
+      #     GITHUB_REF_NAME: ${{ github.ref_name }}
+      #     GITHUB_ACTOR: ${{ github.actor }}
+      #     GITHUB_RUN_ID: ${{ github.run_id }}
+      #   run: node ../.github/scripts/create-eslint-issues.js
 
       # -- Run Vitest unit tests ----------------------------------------------
       # Script "test:unit" is defined as "vitest run" in package.json
