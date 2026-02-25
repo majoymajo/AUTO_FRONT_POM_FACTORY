@@ -3,6 +3,7 @@ package com.sofkianos.producer.controller;
 import com.sofkianos.producer.application.dto.KudoRequest;
 import com.sofkianos.producer.application.dto.KudoResponse;
 import com.sofkianos.producer.application.ports.in.KudoService;
+import com.sofkianos.producer.infrastructure.inbound.web.KudosController;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

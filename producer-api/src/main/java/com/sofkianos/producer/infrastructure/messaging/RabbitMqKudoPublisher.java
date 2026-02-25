@@ -1,5 +1,6 @@
 package com.sofkianos.producer.infrastructure.messaging;
 
+import com.sofkianos.producer.domain.model.Kudo;
 import com.sofkianos.producer.infrastructure.events.KudoEvent;
 import com.sofkianos.producer.domain.ports.out.KudoEventPublisher;
 import com.sofkianos.producer.infrastructure.exception.KudoPublishingException;
@@ -23,15 +24,20 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class RabbitMqKudoPublisher implements KudoEventPublisher {
     private final RabbitTemplate rabbitTemplate;
-
     @Value("${app.rabbitmq.exchange}")
     private String exchangeName;
     @Value("${app.rabbitmq.routing-key}")
     private String routingKey;
 
     @Override
-    public void publish(KudoEvent event) {
+    public void publish(Kudo kudo) {
         try {
+            KudoEvent event = KudoEvent.builder()
+                    .from(kudo.fromUser()) .to(kudo.toUser())
+                    .category(kudo.category() != null ? kudo.category().name() : null)
+                    .message(kudo.message()) .timestamp(kudo.createdAt())
+                    .build();
+
             log.info("Publishing KudoEvent to RabbitMQ: from={}, to={}, category={}",
                     event.getFrom(), event.getTo(), event.getCategory());
 

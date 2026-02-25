@@ -1,4 +1,4 @@
-package com.sofkianos.producer.controller;
+package com.sofkianos.producer.infrastructure.inbound.web;
 
 import com.sofkianos.producer.application.dto.KudoRequest;
 import com.sofkianos.producer.application.dto.KudoResponse;
@@ -18,7 +18,6 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/kudos")
 @RequiredArgsConstructor
 public class KudosController {
-
   private final KudoService kudoService;
 
   @PostMapping

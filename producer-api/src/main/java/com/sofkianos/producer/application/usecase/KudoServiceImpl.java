@@ -3,7 +3,6 @@ package com.sofkianos.producer.application.usecase;
 import com.sofkianos.producer.domain.model.Kudo;
 import com.sofkianos.producer.domain.ports.out.KudoRepository;
 import com.sofkianos.producer.domain.valueobject.KudoCategory;
-import com.sofkianos.producer.infrastructure.events.KudoEvent;
 import com.sofkianos.producer.domain.ports.out.KudoEventPublisher;
 import com.sofkianos.producer.application.dto.KudoListItemDTO;
 import com.sofkianos.producer.application.dto.KudoRequest;
@@ -12,7 +11,6 @@ import com.sofkianos.producer.application.dto.KudoSearchCriteria;
 import com.sofkianos.producer.infrastructure.exception.KudoPublishingException;
 import com.sofkianos.producer.infrastructure.exception.ResourceNotFoundException;
 import com.sofkianos.producer.application.ports.in.KudoService;
-import com.sofkianos.producer.specification.KudoSpecifications;
 import com.sofkianos.producer.util.EmailMaskingUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -54,7 +52,7 @@ public class KudoServiceImpl implements KudoService {
                         KudoCategory.valueOf(kudoRequest.getCategory()),
                         kudoRequest.getMessage()
                 );
-                Optional.ofNullable(kudo)
+                Optional.of(kudo)
                         .map(e -> {
                                 kudoEventPublisher.publish(e);
                                 return e;

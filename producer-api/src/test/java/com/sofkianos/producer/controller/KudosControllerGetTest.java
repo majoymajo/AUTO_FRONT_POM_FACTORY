@@ -2,6 +2,7 @@ package com.sofkianos.producer.controller;
 
 import com.sofkianos.producer.application.dto.KudoListItemDTO;
 import com.sofkianos.producer.application.ports.in.KudoService;
+import com.sofkianos.producer.infrastructure.inbound.web.KudosController;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

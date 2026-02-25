@@ -1,4 +1,4 @@
-package com.sofkianos.producer.controller;
+package com.sofkianos.producer.infrastructure.inbound.web;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
