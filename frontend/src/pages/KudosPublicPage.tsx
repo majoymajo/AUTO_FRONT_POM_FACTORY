@@ -1,5 +1,6 @@
 import React from 'react';
 import { useKudosPublic } from '../hooks/data/useKudosPublic';
+import type { KudoPublicItem } from '../models/kudoPublic';
 
 /**
  * Formats a date string to a localized display string.
@@ -71,7 +72,7 @@ const KudosPublicPage: React.FC = () => {
               data-testid="kudos-public-list"
               className="grid gap-6 sm:grid-cols-2"
             >
-              {data.content.map((kudo, index) => (
+              {data.content.map((kudo: KudoPublicItem, index: number) => (
                 <div
                   key={`${kudo.receptor}-${kudo.emisor}-${kudo.fecha}-${index}`}
                   data-testid="kudo-card"
