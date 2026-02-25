@@ -326,43 +326,7 @@
 
 ---
 
-## 🚀 Implementar despliegue blue/green o canary para minimizar riesgos en producción (US-010)
-
-### 1. Definición de la HU
-**Como** persona de DevOps
-**Quiero** implementar despliegue blue/green o canary
-**Para** minimizar riesgos y permitir rollback rápido en producción
-
-### 2. Especificaciones de Arquitectura y Despliegue
-* **Capa de Clean Architecture:** Infraestructura
-* **Patrón Aplicado:** Adaptadores de despliegue progresivo
-* **Estrategia de Despliegue:** Blue-Green o Canary
-
-### 3. Matriz de Calidad INVEST
-| Criterio | Puntuación (0-3) | Justificación de la nota |
-| :--- | :---: | :--- |
-| **Independent** | 3 | Puede implementarse por servicio |
-| **Negotiable** | 3 | Se puede elegir la estrategia adecuada |
-| **Valuable** | 3 | Reduce riesgos de fallos en producción |
-| **Estimable** | 3 | Alcance claro y medible |
-| **Small** | 2 | Puede requerir dividirse por servicio |
-| **Testable** | 3 | Se valida con despliegues controlados y métricas |
-
-### 4. Validación (Gherkin)
-- **Escenario:** Despliegue progresivo en producción
-  - **Dado** que se requiere actualizar un servicio crítico
-  - **Cuando** se realiza un despliegue blue/green o canary
-  - **Entonces** se puede monitorear el tráfico y revertir rápidamente si hay fallos
-
-### 5. Definición de Hecho (DoD)
-- [ ] Instalada en entornos de pre-producción.
-- [ ] Pruebas de humo (Smoke Tests) superadas.
-- [ ] Pruebas de regresión completadas.
-- [ ] Estrategia documentada y validada en simulacros.
-
----
-
-## 🚀 Automatizar backups y restauración de datos críticos (US-011)
+## 🚀 Automatizar backups y restauración de datos críticos (US-010)
 
 ### 1. Definición de la HU
 **Como** persona de operaciones
@@ -398,7 +362,7 @@
 
 ---
 
-## 🚀 Validar cumplimiento de políticas de seguridad y compliance en el pipeline (US-012)
+## 🚀 Validar cumplimiento de políticas de seguridad y compliance en el pipeline (US-011)
 
 ### 1. Definición de la HU
 **Como** persona responsable de cumplimiento
@@ -434,7 +398,7 @@
 
 ---
 
-## 🚀 Estrategia de transición y migración de datos entre versiones (US-013)
+## 🚀 Estrategia de transición y migración de datos entre versiones (US-012)
 
 ### 1. Definición de la HU
 **Como** persona de operaciones
@@ -470,7 +434,7 @@
 
 ---
 
-## 🚀 Pruebas de performance y stress automatizadas en el pipeline (US-014)
+## 🚀 Pruebas de performance y stress automatizadas en el pipeline (US-013)
 
 ### 1. Definición de la HU
 **Como** persona de QA
@@ -506,7 +470,7 @@
 
 ---
 
-## 🚀 Validación de infraestructura provisionada y destrucción segura de recursos obsoletos (US-015)
+## 🚀 Validación de infraestructura provisionada y destrucción segura de recursos obsoletos (US-014)
 
 ### 1. Definición de la HU
 **Como** persona de DevOps
