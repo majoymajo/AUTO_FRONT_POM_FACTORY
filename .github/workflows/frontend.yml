@@ -145,6 +145,12 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      # -- Extract short SHA for tagging --------------------------------------
+      # Generates a 7-character short SHA from the commit hash
+      - name: Generate Short SHA
+        id: short-sha
+        run: echo "sha_short=$(git rev-parse --short=7 HEAD)" >> $GITHUB_OUTPUT
+
       # -- Login to Docker Hub ------------------------------------------------
       # Requires repository secrets: DOCKER_USER and DOCKER_PASSWORD
       - name: Login to Docker Hub
@@ -160,7 +166,7 @@ jobs:
       # -- Build & push the frontend image ------------------------------------
       # Tags:
       #   - latest       → always points to the newest build
-      #   - <commit-sha> → immutable tag tied to the exact commit for rollback
+      #   - <short-sha>  → immutable 7-char tag tied to the commit for rollback
       - name: Build & Push Frontend
         uses: docker/build-push-action@v6
         with:
@@ -169,7 +175,7 @@ jobs:
           push: true
           tags: |
             ${{ env.FRONTEND_IMAGE }}:latest
-            ${{ env.FRONTEND_IMAGE }}:${{ github.sha }}
+            ${{ env.FRONTEND_IMAGE }}:${{ steps.short-sha.outputs.sha_short }}
           cache-from: type=gha          # GitHub Actions cache for Docker layers
           cache-to: type=gha,mode=max
 
