@@ -5,8 +5,7 @@ import com.sofkianos.producer.dto.KudoSearchCriteria;
 import com.sofkianos.producer.entity.Kudo;
 import com.sofkianos.producer.entity.KudoCategory;
 import com.sofkianos.producer.repository.KudoQueryRepository;
-import com.sofkianos.producer.service.impl.KudoQueryServiceImpl;
-import org.junit.jupiter.api.BeforeEach;
+import com.sofkianos.producer.service.impl.KudoServiceImpl;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -26,16 +25,9 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class KudoQueryServiceTest {
-
     @Mock
     private KudoQueryRepository kudoQueryRepository;
-
-    private KudoQueryServiceImpl kudoQueryService;
-
-    @BeforeEach
-    void setUp() {
-        kudoQueryService = new KudoQueryServiceImpl(kudoQueryRepository);
-    }
+    private KudoServiceImpl kudoQueryService;
 
     @Test
     @DisplayName("Should map Kudo entity to KudoListItemDTO without sensitive data")
