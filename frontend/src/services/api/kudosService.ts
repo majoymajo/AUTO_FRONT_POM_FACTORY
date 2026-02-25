@@ -1,6 +1,6 @@
 import { apiClient } from "./client";
 import type { KudoFormData } from "../../schemas/kudoFormSchema";
-import type { KudoListParams, PagedKudoResponse } from "../../types/models/kudoPublic";
+import type { KudoListParams, PagedKudoResponse } from "../../models/kudoPublic";
 
 /**
  * Servicio que encapsula todas las operaciones relacionadas con Kudos.
