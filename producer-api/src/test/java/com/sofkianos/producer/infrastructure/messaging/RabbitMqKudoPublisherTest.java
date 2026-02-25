@@ -1,7 +1,7 @@
 package com.sofkianos.producer.infrastructure.messaging;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.sofkianos.producer.domain.events.KudoEvent;
+import com.sofkianos.producer.infrastructure.events.KudoEvent;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -15,7 +15,6 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.awaitility.Awaitility.await;
 
 @Testcontainers

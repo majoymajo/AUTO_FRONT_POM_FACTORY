@@ -1,6 +1,6 @@
 package com.sofkianos.producer.service.impl;
 
-import com.sofkianos.producer.domain.events.KudoEvent;
+import com.sofkianos.producer.infrastructure.events.KudoEvent;
 import com.sofkianos.producer.domain.ports.out.KudoEventPublisher;
 import com.sofkianos.producer.dto.KudoListItemDTO;
 import com.sofkianos.producer.dto.KudoRequest;

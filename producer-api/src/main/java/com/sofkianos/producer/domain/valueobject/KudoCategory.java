@@ -1,4 +1,4 @@
-package com.sofkianos.producer.entity;
+package com.sofkianos.producer.domain.valueobject;
 
 import java.util.Arrays;
 

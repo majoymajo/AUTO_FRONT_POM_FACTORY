@@ -2,7 +2,7 @@ package com.sofkianos.producer.specification;
 
 import com.sofkianos.producer.dto.KudoSearchCriteria;
 import com.sofkianos.producer.entity.Kudo;
-import com.sofkianos.producer.entity.KudoCategory;
+import com.sofkianos.producer.domain.valueobject.KudoCategory;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
 

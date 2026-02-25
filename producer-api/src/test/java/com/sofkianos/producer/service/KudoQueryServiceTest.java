@@ -3,7 +3,7 @@ package com.sofkianos.producer.service;
 import com.sofkianos.producer.dto.KudoListItemDTO;
 import com.sofkianos.producer.dto.KudoSearchCriteria;
 import com.sofkianos.producer.entity.Kudo;
-import com.sofkianos.producer.entity.KudoCategory;
+import com.sofkianos.producer.domain.valueobject.KudoCategory;
 import com.sofkianos.producer.repository.KudoQueryRepository;
 import com.sofkianos.producer.service.impl.KudoServiceImpl;
 import org.junit.jupiter.api.DisplayName;

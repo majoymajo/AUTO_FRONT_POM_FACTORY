@@ -1,6 +1,7 @@
 package com.sofkianos.producer.controller;
 
 import com.sofkianos.producer.dto.KudoRequest;
+import com.sofkianos.producer.dto.KudoResponse;
 import com.sofkianos.producer.dto.KudoSearchCriteria;
 import com.sofkianos.producer.dto.PagedKudoResponse;
 import com.sofkianos.producer.service.KudoService;
@@ -21,7 +22,7 @@ public class KudosController {
   private final KudoService kudoService;
 
   @PostMapping
-  public ResponseEntity<com.sofkianos.producer.dto.KudoResponse> publishKudos(@Valid @RequestBody KudoRequest payload) {
+  public ResponseEntity<KudoResponse> publishKudos(@Valid @RequestBody KudoRequest payload) {
     var response = kudoService.sendKudo(payload);
     return ResponseEntity.status(HttpStatus.ACCEPTED).body(response);
   }

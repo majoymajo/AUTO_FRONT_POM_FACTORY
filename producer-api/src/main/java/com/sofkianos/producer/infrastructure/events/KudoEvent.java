@@ -1,4 +1,4 @@
-package com.sofkianos.producer.domain.events;
+package com.sofkianos.producer.infrastructure.events;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

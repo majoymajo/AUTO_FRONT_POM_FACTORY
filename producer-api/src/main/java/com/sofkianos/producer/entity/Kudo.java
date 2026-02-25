@@ -1,5 +1,6 @@
 package com.sofkianos.producer.entity;
 
+import com.sofkianos.producer.domain.valueobject.KudoCategory;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
