@@ -4,7 +4,7 @@ import com.sofkianos.producer.application.dto.KudoListItemDTO;
 import com.sofkianos.producer.application.dto.KudoRequest;
 import com.sofkianos.producer.application.dto.KudoResponse;
 import com.sofkianos.producer.application.dto.KudoSearchCriteria;
-import org.springframework.data.domain.Page;
+import com.sofkianos.producer.domain.model.PagedResult;
 
 /**
  * Service interface for handling Kudos.
@@ -22,7 +22,8 @@ public interface KudoService {
    * Searches kudos matching the given criteria with pagination.
    *
    * @param criteria the search and pagination parameters
-   * @return a page of {@link KudoListItemDTO} with safe, non-sensitive fields
+   * @return a paged result of {@link KudoListItemDTO} with safe, non-sensitive
+   *         fields
    */
-  Page<KudoListItemDTO> searchKudos(KudoSearchCriteria criteria);
+  PagedResult<KudoListItemDTO> searchKudos(KudoSearchCriteria criteria);
 }

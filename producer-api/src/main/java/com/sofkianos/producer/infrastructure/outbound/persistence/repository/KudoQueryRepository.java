@@ -1,5 +1,6 @@
-package com.sofkianos.producer.infrastructure.outbound.persistence;
+package com.sofkianos.producer.infrastructure.outbound.persistence.repository;
 
+import com.sofkianos.producer.infrastructure.outbound.persistence.entity.KudoEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 

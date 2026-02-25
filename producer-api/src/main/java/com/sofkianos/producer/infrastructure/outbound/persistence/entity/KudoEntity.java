@@ -1,4 +1,4 @@
-package com.sofkianos.producer.infrastructure.outbound.persistence;
+package com.sofkianos.producer.infrastructure.outbound.persistence.entity;
 
 import com.sofkianos.producer.domain.model.Kudo;
 import com.sofkianos.producer.domain.valueobject.KudoCategory;

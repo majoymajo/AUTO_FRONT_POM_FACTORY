@@ -8,15 +8,13 @@ import com.sofkianos.producer.application.dto.KudoListItemDTO;
 import com.sofkianos.producer.application.dto.KudoRequest;
 import com.sofkianos.producer.application.dto.KudoResponse;
 import com.sofkianos.producer.application.dto.KudoSearchCriteria;
-import com.sofkianos.producer.infrastructure.exception.KudoPublishingException;
-import com.sofkianos.producer.infrastructure.exception.ResourceNotFoundException;
+import com.sofkianos.producer.domain.exception.KudoNotFoundException;
+import com.sofkianos.producer.application.exception.KudoMessagingException;
+import com.sofkianos.producer.domain.model.PagedResult;
 import com.sofkianos.producer.application.ports.in.KudoService;
-import com.sofkianos.producer.util.EmailMaskingUtil;
+import com.sofkianos.producer.application.util.EmailMaskingUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -47,48 +45,45 @@ public class KudoServiceImpl implements KudoService {
         public KudoResponse sendKudo(KudoRequest kudoRequest) {
                 log.info("Processing Kudo: from={}, to={}", kudoRequest.getFrom(), kudoRequest.getTo());
                 Kudo kudo = Kudo.create(
-                        kudoRequest.getFrom(),
-                        kudoRequest.getTo(),
-                        KudoCategory.valueOf(kudoRequest.getCategory()),
-                        kudoRequest.getMessage()
-                );
+                                kudoRequest.getFrom(),
+                                kudoRequest.getTo(),
+                                KudoCategory.valueOf(kudoRequest.getCategory()),
+                                kudoRequest.getMessage());
                 Optional.of(kudo)
-                        .map(e -> {
-                                kudoEventPublisher.publish(e);
-                                return e;
-                        })
-                        .orElseThrow(() -> new KudoPublishingException("Kudo was null"));
+                                .map(e -> {
+                                        kudoEventPublisher.publish(e);
+                                        return e;
+                                })
+                                .orElseThrow(() -> new KudoMessagingException("Kudo was null"));
 
                 String trackingId = UUID.randomUUID().toString();
                 log.info("Kudo published successfully: from={}, to={}, trackingId={}",
-                        kudo.fromUser(), kudo.toUser(), trackingId);
+                                kudo.fromUser(), kudo.toUser(), trackingId);
 
                 return KudoResponse.builder()
-                        .id(trackingId)
-                        .message("Kudo queued successfully")
-                        .status("ACCEPTED")
-                        .timestamp(LocalDateTime.now())
-                        .build();
+                                .id(trackingId)
+                                .message("Kudo queued successfully")
+                                .status("ACCEPTED")
+                                .timestamp(LocalDateTime.now())
+                                .build();
         }
 
         @Transactional(readOnly = true)
         @Override
-        public Page<KudoListItemDTO> searchKudos(KudoSearchCriteria criteria) {
-                Sort.Direction direction = "ASC".equalsIgnoreCase(criteria.getSortDirection())
-                        ? Sort.Direction.ASC
-                        : Sort.Direction.DESC;
-                PageRequest pageable = PageRequest.of(
-                        criteria.getPage(),
-                        criteria.getEffectiveSize(),
-                        Sort.by(direction, "createdAt"));
-                // Usar el puerto de salida, no JPA directo
-                Page<Kudo> result = kudoRepository.search(criteria);
+        public PagedResult<KudoListItemDTO> searchKudos(KudoSearchCriteria criteria) {
+                // Usar el puerto de salida con parámetros primitivos
+                PagedResult<Kudo> result = kudoRepository.search(
+                                criteria.getCategory(),
+                                criteria.getSearchText(),
+                                criteria.getPage(),
+                                criteria.getEffectiveSize(),
+                                criteria.getSortDirection());
 
-                return Optional.of(result)
-                        .filter(page -> !page.isEmpty())
-                        .orElseThrow(() -> new ResourceNotFoundException(
-                                "No kudos found for the given criteria"))
-                        .map(kudo -> KudoListItemDTO.builder()
+                if (result.content().isEmpty()) {
+                        throw new KudoNotFoundException("No kudos found for the given criteria");
+                }
+
+                return result.map(kudo -> KudoListItemDTO.builder()
                                 .receptor(EmailMaskingUtil.toDisplayName(kudo.toUser()))
                                 .emisor(EmailMaskingUtil.toDisplayName(kudo.fromUser()))
                                 .mensaje(kudo.message())

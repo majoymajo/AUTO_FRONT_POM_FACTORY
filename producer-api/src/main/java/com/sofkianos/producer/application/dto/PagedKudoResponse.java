@@ -1,33 +1,31 @@
 package com.sofkianos.producer.application.dto;
 
-import org.springframework.data.domain.Page;
+import com.sofkianos.producer.domain.model.PagedResult;
 
 import java.util.List;
 
 /**
- * Paginated response wrapper for Kudo list items.
+ * Respuesta envuelta para ítems de Kudo.
  */
 public record PagedKudoResponse(
         List<KudoListItemDTO> content,
         long totalElements,
         int totalPages,
         int number,
-        int size
-) {
+        int size) {
 
     /**
-     * Creates a {@link PagedKudoResponse} from a Spring Data {@link Page}.
+     * Crea un {@link PagedKudoResponse} a partir de un {@link PagedResult}.
      *
-     * @param page the page result from the repository
-     * @return a paginated response DTO
+     * @param pagedResult el resultado paginado del dominio/aplicación
+     * @return un DTO de respuesta paginada
      */
-    public static PagedKudoResponse from(Page<KudoListItemDTO> page) {
+    public static PagedKudoResponse from(PagedResult<KudoListItemDTO> pagedResult) {
         return new PagedKudoResponse(
-                page.getContent(),
-                page.getTotalElements(),
-                page.getTotalPages(),
-                page.getNumber(),
-                page.getSize()
-        );
+                pagedResult.content(),
+                pagedResult.totalElements(),
+                pagedResult.totalPages(),
+                pagedResult.pageNumber(),
+                pagedResult.pageSize());
     }
 }

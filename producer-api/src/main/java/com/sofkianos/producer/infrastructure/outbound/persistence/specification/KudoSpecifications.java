@@ -1,8 +1,8 @@
-package com.sofkianos.producer.specification;
+package com.sofkianos.producer.infrastructure.outbound.persistence.specification;
 
 import com.sofkianos.producer.application.dto.KudoSearchCriteria;
-import com.sofkianos.producer.infrastructure.outbound.persistence.KudoEntity;
 import com.sofkianos.producer.domain.valueobject.KudoCategory;
+import com.sofkianos.producer.infrastructure.outbound.persistence.entity.KudoEntity;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
 
@@ -13,7 +13,6 @@ import java.util.List;
  * JPA Specifications for dynamic Kudo query building.
  */
 public final class KudoSpecifications {
-
     private KudoSpecifications() {
         // utility class
     }

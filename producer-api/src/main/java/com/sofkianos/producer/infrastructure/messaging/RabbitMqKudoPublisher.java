@@ -1,9 +1,9 @@
 package com.sofkianos.producer.infrastructure.messaging;
 
 import com.sofkianos.producer.domain.model.Kudo;
-import com.sofkianos.producer.infrastructure.events.KudoEvent;
+import com.sofkianos.producer.infrastructure.messaging.events.KudoEvent;
 import com.sofkianos.producer.domain.ports.out.KudoEventPublisher;
-import com.sofkianos.producer.infrastructure.exception.KudoPublishingException;
+import com.sofkianos.producer.application.exception.KudoMessagingException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.AmqpException;
@@ -33,9 +33,9 @@ public class RabbitMqKudoPublisher implements KudoEventPublisher {
     public void publish(Kudo kudo) {
         try {
             KudoEvent event = KudoEvent.builder()
-                    .from(kudo.fromUser()) .to(kudo.toUser())
+                    .from(kudo.fromUser()).to(kudo.toUser())
                     .category(kudo.category() != null ? kudo.category().name() : null)
-                    .message(kudo.message()) .timestamp(kudo.createdAt())
+                    .message(kudo.message()).timestamp(kudo.createdAt())
                     .build();
 
             log.info("Publishing KudoEvent to RabbitMQ: from={}, to={}, category={}",
@@ -46,7 +46,7 @@ public class RabbitMqKudoPublisher implements KudoEventPublisher {
             log.debug("KudoEvent published successfully");
         } catch (AmqpException e) {
             log.error("Failed to publish KudoEvent to RabbitMQ", e);
-            throw new KudoPublishingException("Error publishing KudoEvent to message broker", e);
+            throw new KudoMessagingException("Error publishing KudoEvent to message broker", e);
         }
     }
 }

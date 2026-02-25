@@ -16,7 +16,6 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class KudoListItemDTO {
-
     private String receptor;
     private String emisor;
     private String mensaje;

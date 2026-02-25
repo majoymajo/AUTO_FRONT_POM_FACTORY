@@ -1,4 +1,4 @@
-package com.sofkianos.producer.config;
+package com.sofkianos.producer.infrastructure.config;
 
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;

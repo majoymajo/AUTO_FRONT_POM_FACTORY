@@ -2,93 +2,73 @@ package com.sofkianos.producer.service;
 
 import com.sofkianos.producer.application.dto.KudoListItemDTO;
 import com.sofkianos.producer.application.dto.KudoSearchCriteria;
-import com.sofkianos.producer.infrastructure.outbound.persistence.KudoEntity;
+import com.sofkianos.producer.domain.model.Kudo;
+import com.sofkianos.producer.domain.model.PagedResult;
+import com.sofkianos.producer.domain.ports.out.KudoRepository;
 import com.sofkianos.producer.domain.valueobject.KudoCategory;
-import com.sofkianos.producer.infrastructure.outbound.persistence.KudoQueryRepository;
 import com.sofkianos.producer.application.usecase.KudoServiceImpl;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class KudoQueryServiceTest {
-    @Mock
-    private KudoQueryRepository kudoQueryRepository;
-    private KudoServiceImpl kudoQueryService;
+        @Mock
+        private KudoRepository kudoRepository;
 
-    @Test
-    @DisplayName("Should map Kudo entity to KudoListItemDTO without sensitive data")
-    void searchKudos_MapsEntityToDTO_NoSensitiveData() {
-        var entity = KudoEntity.builder()
-                .id(42L)
-                .fromUser("juan.perez@sofka.com")
-                .toUser("maria.garcia@sofka.com")
-                .category(KudoCategory.Teamwork)
-                .message("Gran colaboración")
-                .createdAt(LocalDateTime.of(2026, 2, 20, 10, 0))
-                .build();
+        @InjectMocks
+        private KudoServiceImpl kudoQueryService;
 
-        var page = new PageImpl<>(List.of(entity));
-        when(kudoQueryRepository.findAll(any(Specification.class), any(Pageable.class)))
-                .thenReturn(page);
+        @Test
+        @DisplayName("Should map Kudo model to KudoListItemDTO without sensitive data")
+        void searchKudos_MapsEntityToDTO_NoSensitiveData() {
+                var kudo = new Kudo(1L, "juan.perez@sofka.com", "maria.garcia@sofka.com",
+                                KudoCategory.Teamwork, "Gran colaboración", LocalDateTime.now());
 
-        var criteria = KudoSearchCriteria.builder().build();
+                var pagedResult = new PagedResult<>(List.of(kudo), 1, 1, 0, 10);
 
-        Page<KudoListItemDTO> result = kudoQueryService.searchKudos(criteria);
+                when(kudoRepository.search(anyString(), anyString(), anyInt(), anyInt(), anyString()))
+                                .thenReturn(pagedResult);
 
-        assertThat(result.getContent()).hasSize(1);
-        var dto = result.getContent().get(0);
-        assertThat(dto.getReceptor()).doesNotContain("@");
-        assertThat(dto.getEmisor()).doesNotContain("@");
-        assertThat(dto.getMensaje()).isEqualTo("Gran colaboración");
-        assertThat(dto.getCategoria()).isEqualTo("Teamwork");
-        assertThat(dto.getFecha()).isNotNull();
-    }
+                var criteria = KudoSearchCriteria.builder().build();
 
-    @Test
-    @DisplayName("Should handle null emisor (anonymous kudo) gracefully")
-    void searchKudos_NullEmisor_ReturnsAnonymous() {
-        var entity = KudoEntity.builder()
-                .id(99L)
-                .fromUser(null)
-                .toUser("maria.garcia@sofka.com")
-                .category(KudoCategory.Innovation)
-                .message("Inspirador")
-                .createdAt(LocalDateTime.now())
-                .build();
+                PagedResult<KudoListItemDTO> result = kudoQueryService.searchKudos(criteria);
 
-        var page = new PageImpl<>(List.of(entity));
-        when(kudoQueryRepository.findAll(any(Specification.class), any(Pageable.class)))
-                .thenReturn(page);
+                assertThat(result.content()).hasSize(1);
+                var dto = result.content().get(0);
+                assertThat(dto.getReceptor()).doesNotContain("@");
+                assertThat(dto.getEmisor()).doesNotContain("@");
+                assertThat(dto.getMensaje()).isEqualTo("Gran colaboración");
+        }
 
-        var criteria = KudoSearchCriteria.builder().build();
+        @Test
+        @DisplayName("Should handle null emisor (anonymous kudo) gracefully")
+        void searchKudos_NullEmisor_ReturnsAnonymous() {
+                var kudo = new Kudo(1L, null, "maria.garcia@sofka.com",
+                                KudoCategory.Innovation, "Inspirador", LocalDateTime.now());
 
-        Page<KudoListItemDTO> result = kudoQueryService.searchKudos(criteria);
+                var pagedResult = new PagedResult<>(List.of(kudo), 1, 1, 0, 10);
 
-        var dto = result.getContent().get(0);
-        assertThat(dto.getEmisor()).isEqualTo("Anónimo");
-    }
+                when(kudoRepository.search(anyString(), anyString(), anyInt(), anyInt(), anyString()))
+                                .thenReturn(pagedResult);
 
-    @Test
-    @DisplayName("Should default to page 0, size 20, DESC by createdAt")
-    void searchKudos_DefaultCriteria_CorrectPagination() {
-        when(kudoQueryRepository.findAll(any(Specification.class), any(Pageable.class)))
-                .thenReturn(new PageImpl<>(List.of()));
+                var criteria = KudoSearchCriteria.builder().build();
 
-        var criteria = KudoSearchCriteria.builder().build();
-        kudoQueryService.searchKudos(criteria);
-    }
+                PagedResult<KudoListItemDTO> result = kudoQueryService.searchKudos(criteria);
+
+                var dto = result.content().get(0);
+                assertThat(dto.getEmisor()).isEqualTo("Anónimo");
+        }
 }

@@ -3,7 +3,7 @@ package com.sofkianos.producer.infrastructure.messaging;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sofkianos.producer.domain.model.Kudo;
 import com.sofkianos.producer.domain.valueobject.KudoCategory;
-import com.sofkianos.producer.infrastructure.events.KudoEvent;
+import com.sofkianos.producer.infrastructure.messaging.events.KudoEvent;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;

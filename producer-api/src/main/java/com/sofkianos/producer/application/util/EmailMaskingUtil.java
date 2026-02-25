@@ -1,4 +1,4 @@
-package com.sofkianos.producer.util;
+package com.sofkianos.producer.application.util;
 
 /**
  * Utility class for masking email addresses into display-safe names.

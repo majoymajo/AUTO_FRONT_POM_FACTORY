@@ -1,4 +1,4 @@
-package com.sofkianos.producer.config;
+package com.sofkianos.producer.infrastructure.config;
 
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;

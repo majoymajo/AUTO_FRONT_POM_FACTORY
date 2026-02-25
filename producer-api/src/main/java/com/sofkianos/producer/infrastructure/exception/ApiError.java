@@ -63,7 +63,7 @@ public class ApiError {
     private String path;
 
     /**
-     * Método de fábrica estático para construir un {@code ApiError} de forma
+     * Méthod de fábrica estático para construir un {@code ApiError} de forma
      * conveniente.
      *
      * @param status  el {@link HttpStatus} que representa el tipo de error
