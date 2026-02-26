@@ -82,3 +82,275 @@ Mientras el modelo actual de **Monolito Distribuido** acumula deuda técnica con
 La transición permitirá que **SofkianOS** pase de ser un sistema frágil a una **plataforma robusta**, preparada para integrarse a un ecosistema de APIs escalable.
 
 ---
+
+# 2. Documentacion Producer API
+
+**Versión**: 1.0.0  
+**Última Actualización**: 2026-02-25  
+**Estado**: Validado y Documentado  
+
+---
+
+## 2.1. Introducción Estratégica
+
+La **Producer API** es el componente responsable de recibir solicitudes de creación de kudos desde clientes, validarlas, persistirlas e integrarlas al sistema de mensajería asincrónica.
+
+Este documento formaliza el contrato del API, incluyendo:
+- Semántica HTTP y códigos de estado
+- Especificación formal de endpoints
+- Esquemas de request/response
+- Validaciones de entrada
+
+---
+
+## 2.2. Códigos de Estado HTTP
+
+| Código | Significado | Escenario |
+|--------|-------------|----------|
+| **200** | OK | GET exitoso, resultados encontrados o no |
+| **202** | Accepted | POST aceptado para procesamiento asincrónico |
+| **400** | Bad Request | Validación fallida, parámetro inválido |
+| **404** | Not Found | Recurso no encontrado |
+| **503** | Service Unavailable | Broker de mensajes no disponible |
+| **500** | Internal Server Error | Error interno no esperado |
+
+---
+
+## 2.3. Manejo de Errores
+
+Todas las respuestas de error siguen la estructura `ApiError` estandarizada:
+
+```json
+{
+  "timestamp": "2026-02-25T14:35:22.123Z",
+  "status": 400,
+  "reason": "Bad Request",
+  "message": "Validation failed: from: must be a valid email, category: Invalid category",
+  "path": "/api/v1/kudos"
+}
+```
+
+### Mapeo de Excepciones → HTTP Status
+
+| Excepción | HTTP Status | Escenario |
+|-----------|-------------|----------|
+| `MethodArgumentNotValidException` | **400** | Campo faltante, email inválido, mensaje muy corto |
+| `MethodArgumentTypeMismatchException` | **400** | Query param `page=abc` cuando debe ser int |
+| `MissingServletRequestParameterException` | **400** | Parámetro requerido no enviado |
+| `ResourceNotFoundException` | **404** | Búsqueda sin resultados |
+| `KudoPublishingException` | **503** | AMQP Exception, RabbitMQ caído |
+| `Exception` (genérica) | **500** | Error no capturado |
+
+---
+
+## 2.4. Contrato REST Formal
+
+### 2.4.1 Endpoint: Crear Kudo
+
+| Propiedad | Valor |
+|-----------|-------|
+| **Método** | `POST` |
+| **Ruta** | `/api/v1/kudos` |
+| **Autenticación** | Ninguna (MVP) |
+| **Content-Type** | `application/json` |
+
+#### Headers de Solicitud
+
+```http
+POST /api/v1/kudos HTTP/1.1
+Host: producer-api:8080
+Content-Type: application/json
+Accept: application/json
+```
+
+#### Body de Solicitud
+
+```json
+{
+  "from": "alice@sofkianos.com",
+  "to": "bob@sofkianos.com",
+  "category": "Innovation",
+  "message": "Excelente trabajo en la refactorización de la API, mejoraste mucho la legibilidad"
+}
+```
+
+**Esquema (JSON Schema)**:
+
+```json
+{
+  "type": "object",
+  "required": ["from", "to", "category", "message"],
+  "properties": {
+    "from": {
+      "type": "string",
+      "format": "email",
+      "description": "Email del emisor"
+    },
+    "to": {
+      "type": "string",
+      "format": "email",
+      "description": "Email del receptor"
+    },
+    "category": {
+      "type": "string",
+      "enum": ["Innovation", "Teamwork", "Passion", "Mastery"],
+      "description": "Categoría del kudo"
+    },
+    "message": {
+      "type": "string",
+      "minLength": 10,
+      "maxLength": 500,
+      "description": "Mensaje del kudo"
+    }
+  }
+}
+```
+
+#### Respuestas
+
+**202 Accepted** (Exitoso)
+
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "message": "Kudo queued successfully",
+  "status": "ACCEPTED",
+  "timestamp": "2026-02-25T14:30:00Z"
+}
+```
+
+**400 Bad Request** (Validación fallida)
+
+```json
+{
+  "timestamp": "2026-02-25T14:31:00Z",
+  "status": 400,
+  "reason": "Bad Request",
+  "message": "Validation failed: from: must be a valid email address, message: must be between 10 and 500 characters",
+  "path": "/api/v1/kudos"
+}
+```
+
+**503 Service Unavailable** (Broker caído)
+
+```json
+{
+  "timestamp": "2026-02-25T14:32:00Z",
+  "status": 503,
+  "reason": "Service Unavailable",
+  "message": "Error publishing KudoEvent to message broker",
+  "path": "/api/v1/kudos"
+}
+```
+
+---
+
+### 2.4.2 Endpoint: Listar Kudos
+
+| Propiedad | Valor |
+|-----------|-------|
+| **Método** | `GET` |
+| **Ruta** | `/api/v1/kudos` |
+| **Autenticación** | Ninguna (MVP) |
+| **Accept** | `application/json` |
+
+#### Query Parameters
+
+| Parámetro | Tipo | Requerido | Default | Descripción |
+|-----------|------|-----------|---------|-------------|
+| `page` | integer | No | 0 | Número de página (0-based) |
+| `size` | integer | No | 20 | Elementos por página, máx 50 |
+| `sortDirection` | string | No | DESC | ASC o DESC |
+| `category` | string | No | — | Filtrar por categoría |
+| `searchText` | string | No | — | Búsqueda libre en mensaje/emisor/receptor |
+
+#### Solicitud Ejemplo
+
+```http
+GET /api/v1/kudos?page=0&size=10&sortDirection=DESC&category=Innovation&searchText=API HTTP/1.1
+Host: producer-api:8080
+Accept: application/json
+```
+
+#### Respuesta Exitosa: 200 OK
+
+```json
+{
+  "content": [
+    {
+      "receptor": "B***",
+      "emisor": "A***",
+      "mensaje": "Great work on the API refactor, much cleaner now",
+      "fecha": "2026-02-25T13:45:00Z",
+      "categoria": "Innovation"
+    },
+    {
+      "receptor": "C***",
+      "emisor": "D***",
+      "mensaje": "Amazing teamwork during the sprint review",
+      "fecha": "2026-02-25T11:20:00Z",
+      "categoria": "Teamwork"
+    }
+  ],
+  "totalElements": 127,
+  "totalPages": 13,
+  "number": 0,
+  "size": 10
+}
+```
+
+#### Respuestas de Error
+
+**400 Bad Request** (Parámetro inválido)
+
+```json
+{
+  "timestamp": "2026-02-25T14:33:00Z",
+  "status": 400,
+  "reason": "Bad Request",
+  "message": "Invalid value for parameter 'page': abc",
+  "path": "/api/v1/kudos"
+}
+```
+
+---
+
+### 2.4.3 Endpoints de Health Check
+
+#### GET /
+
+```http
+GET / HTTP/1.1
+
+HTTP/1.1 200 OK
+{
+  "service": "producer-api",
+  "status": "UP"
+}
+```
+
+#### GET /health
+
+```http
+GET /health HTTP/1.1
+
+HTTP/1.1 200 OK
+{
+  "service": "producer-api",
+  "status": "UP"
+}
+```
+
+---
+
+## 2.5. Protección de Datos Sensibles
+
+Los emails en respuestas de búsqueda están enmascarados por privacidad:
+
+- `alice@sofkianos.com` → `A***`
+- `bob@sofkianos.com` → `B***`
+
+---
+
+**Autor**: Technical Team  
+**Última Actualización**: 2026-02-25
