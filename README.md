@@ -264,16 +264,12 @@ Inspecting both containers in Dozzle is the recommended way to confirm that a Ku
 
 SofkianOS provides three Docker Compose configurations for different environments:
 
-#### Development Configuration with Local DB (`docker-compose.yml` &`docker-compose.dev.yml`)
+#### Development Configuration (`docker-compose.yml`)
 
 **Use for local development.** Includes all services with Frontend running locally.
 
 ```bash
 docker compose up -d
-
-OR
-
-docker compose -f ./Docker/docker-compose.dev.yml up -d
 ```
 
 **Services:**
@@ -283,6 +279,16 @@ docker compose -f ./Docker/docker-compose.dev.yml up -d
 - Consumer Worker — http://localhost:8081
 - RabbitMQ — http://localhost:15672
 - Dozzle (Log Viewer) — http://localhost:8888
+
+#### Test Configuration (`docker-compose.test.yml`)
+
+**Use for test environment.** Includes all services with Frontend running locally.
+
+**Requires** .env file configuration inside the Docker directory
+
+```bash
+docker compose -f ./Docker/docker-compose.test.yml up -d
+```
 
 #### Production Configuration (`docker-compose.prod.yml`)
 
@@ -348,7 +354,16 @@ docker compose -f ./Docker/docker-compose.prod.yml up -d
 
 The orchestration ensures the correct startup order:
 
-**Development** (`docker-compose.yml` &`docker-compose.dev.yml`):
+**Development** (`docker-compose.yml`):
+
+- RabbitMQ starts first with health checks
+- PostgreSQL database follows with health checks
+- Producer API and Consumer Worker wait for RabbitMQ to be healthy
+- Consumer Worker wait for PostgreSQL to be healthy too
+- Frontend waits for Producer API to be available
+- All services communicate via the `sofkian-net` bridge network
+
+**Testing** (`docker-compose.test.yml`):
 
 - RabbitMQ starts first with health checks
 - PostgreSQL database follows with health checks
@@ -366,7 +381,7 @@ The orchestration ensures the correct startup order:
 
 ### Testing the Flow (Development)
 
-When using `docker-compose.dev.yml`:
+When using `docker-compose.yml`:
 
 1. Open http://localhost:5173
 2. Navigate to the Kudo form
