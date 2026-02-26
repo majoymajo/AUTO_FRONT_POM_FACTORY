@@ -302,6 +302,8 @@ jobs:
       #   - Long-term vulnerability trend analysis
       # This step always runs (even if the previous scan found issues)
       # so the report is available for review.
+      # exit-code: '0' ensures this step NEVER fails — its only purpose
+      # is to generate the report artifact, not to gate the pipeline.
       - name: Generate Trivy SARIF Report
         uses: aquasecurity/trivy-action@0.28.0
         if: always()
@@ -309,6 +311,7 @@ jobs:
           image-ref: ${{ env.FRONTEND_IMAGE }}:${{ steps.short-sha.outputs.sha_short }}
           format: 'sarif'
           output: 'trivy-frontend-results.sarif'
+          exit-code: '0'
           severity: 'CRITICAL,HIGH,MEDIUM'
           ignore-unfixed: true
 
