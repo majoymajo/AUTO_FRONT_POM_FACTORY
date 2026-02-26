@@ -1,5 +1,7 @@
 package com.sofkianos.producer.infrastructure.exception;
 
+import com.sofkianos.producer.domain.exception.KudoNotFoundException;
+import com.sofkianos.producer.application.exception.KudoMessagingException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -125,26 +127,32 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Maneja el caso en que se solicita un recurso (Kudo, empleado, etc.)
-     * que no existe en el sistema.
+     * Maneja el caso en que se solicita un recurso del dominio que no existe.
      *
-     * <p>
-     * Ejemplo de log esperado:
-     * </p>
-     * 
-     * <pre>
-     * [WARN] Resource not found: Kudo with id 42 does not exist
-     * </pre>
-     *
-     * @param ex      excepción lanzada cuando un recurso no se encuentra
+     * @param ex      excepción lanzada cuando un recurso de dominio no se encuentra
      * @param request solicitud HTTP que originó el error
-     * @return {@code 404 Not Found} con el mensaje descriptivo del recurso buscado
+     * @return {@code 404 Not Found}
      */
-    @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<ApiError> handleResourceNotFound(ResourceNotFoundException ex, HttpServletRequest request) {
-        log.debug("Resource not found: {}", ex.getMessage());
+    @ExceptionHandler(KudoNotFoundException.class)
+    public ResponseEntity<ApiError> handleKudoNotFound(KudoNotFoundException ex, HttpServletRequest request) {
+        log.warn("Domain resource not found: {}", ex.getMessage());
         ApiError apiError = ApiError.of(HttpStatus.NOT_FOUND, ex.getMessage(), request.getRequestURI());
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(apiError);
+    }
+
+    /**
+     * Maneja los fallos en la capa de mensajería/aplicación.
+     *
+     * @param ex      excepción lanzada durante la orquestación del caso de uso
+     * @param request solicitud HTTP que originó el error
+     * @return {@code 503 Service Unavailable}
+     */
+    @ExceptionHandler(KudoMessagingException.class)
+    public ResponseEntity<ApiError> handleKudoMessaging(KudoMessagingException ex, HttpServletRequest request) {
+        log.error("Application messaging failure: {}", ex.getMessage());
+        ApiError apiError = ApiError.of(HttpStatus.SERVICE_UNAVAILABLE, "Communication error: " + ex.getMessage(),
+                request.getRequestURI());
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(apiError);
     }
 
     /**
