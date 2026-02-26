@@ -127,13 +127,14 @@ jobs:
 
       # -- Install Octokit for Issue Creation (reuse frontend logic) ---------
       - name: Install Octokit for Issue Creation
-        if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+        if: github.event_name == 'push' 
+        # && github.ref == 'refs/heads/develop'
         run: npm install @octokit/rest
 
       # -- Create GitHub Issues from SpotBugs violations ---------------------
       # Assumes create-eslint-issues.js can parse SpotBugs XML or is adapted
       - name: Generate SpotBugs Issues
-        if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+        if: github.event_name == 'push' #&& github.ref == 'refs/heads/develop'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
