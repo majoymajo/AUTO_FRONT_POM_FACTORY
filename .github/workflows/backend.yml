@@ -97,6 +97,51 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      # -- Run SpotBugs linter for Java code quality -------------------------
+      # Generates XML report for both backend services
+      - name: Lint Producer API (SpotBugs)
+        working-directory: ./producer-api
+        run: ./mvnw spotbugs:spotbugs
+
+      - name: Lint Consumer Worker (SpotBugs)
+        working-directory: ./consumer-worker
+        run: ./mvnw spotbugs:spotbugs
+
+      # -- Upload SpotBugs reports as artifacts ------------------------------
+      # Saves the XML reports for 7 days for debugging and automation
+      - name: Upload SpotBugs Reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: spotbugs-report
+          path: |
+            producer-api/target/spotbugsXml.xml
+            consumer-worker/target/spotbugsXml.xml
+          retention-days: 7
+
+      # -- Install Node.js for automation script (if needed) -----------------
+      - name: Set up Node.js 20 for Issue Creation
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # -- Install Octokit for Issue Creation (reuse frontend logic) ---------
+      - name: Install Octokit for Issue Creation
+        if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+        run: npm install @octokit/rest
+
+      # -- Create GitHub Issues from SpotBugs violations ---------------------
+      # Assumes create-eslint-issues.js can parse SpotBugs XML or is adapted
+      - name: Generate SpotBugs Issues
+        if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_SHA: ${{ github.sha }}
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
+        run: node .github/scripts/create-eslint-issues.js
       # -- Install JDK 17 with Maven dependency caching -----------------------
       # The `cache: 'maven'` option caches ~/.m2/repository between runs,
       # significantly speeding up dependency resolution.
