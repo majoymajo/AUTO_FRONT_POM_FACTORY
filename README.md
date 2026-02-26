@@ -16,6 +16,18 @@
 
 ---
 
+## Documentation & Resources
+
+- **Documentación Oficial:** [https://sofkianos-docs.vercel.app/](https://sofkianos-docs.vercel.app/)
+
+### Tracking del Proyecto
+
+> _Nota: Markdown no soporta la incrustación directa de iframes por motivos de seguridad. Haz clic en el siguiente botón para acceder al documento._
+
+[![Google Sheets - Tracking del Proyecto](https://img.shields.io/badge/Google%20Sheets-Tracking%20del%20Proyecto-34A853?style=for-the-badge&logo=google-sheets&logoColor=white)](https://docs.google.com/spreadsheets/d/1B9BNs2P8Uc9wHLLaO9lWZXL5TQA7hflkfwGPXLah0is/edit?gid=0#gid=0)
+
+---
+
 ## Reason for Being
 
 SofkianOS transforms the Sofkian identity into tangible **Kudos**. The term **Kudos** comes from the Greek _kŷdos_, meaning honor, recognition, and prestige for an achievement. This system represents how we celebrate the real contributions of each person, creating a **Rewards Culture** that strengthens bonds between geographically distributed teams.
