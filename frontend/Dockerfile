@@ -6,7 +6,11 @@ RUN npm install
 COPY . .
 RUN npm run build
 
-FROM nginx:1.27.4-alpine3.21 AS runner
+FROM nginx:alpine AS runner
+
+# Patch all OS-level vulnerabilities detected by Trivy (US-004)
+RUN apk upgrade --no-cache
+
 COPY --from=builder /app/dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 EXPOSE 5173
