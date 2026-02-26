@@ -147,7 +147,7 @@ jobs:
           GITHUB_ACTOR: ${{ github.actor }}
           GITHUB_RUN_ID: ${{ github.run_id }}
         run: node .github/scripts/create-eslint-issues.js
-        
+
       # -- Install JDK 17 with Maven dependency caching -----------------------
       # The `cache: 'maven'` option caches ~/.m2/repository between runs,
       # significantly speeding up dependency resolution.
@@ -171,6 +171,7 @@ jobs:
         run: |
           echo "🔍 Running OWASP Dependency-Check — Producer API..."
           ./mvnw org.owasp:dependency-check-maven:check \
+            -DnvdApiKey=${{ secrets.NVD_API_KEY }} \
             -DfailBuildOnCVSS=7 \
             -Dformats=HTML,JSON \
             -DprettyPrint=true || {
@@ -184,6 +185,7 @@ jobs:
         run: |
           echo "🔍 Running OWASP Dependency-Check — Consumer Worker..."
           ./mvnw org.owasp:dependency-check-maven:check \
+            -DnvdApiKey=${{ secrets.NVD_API_KEY }} \
             -DfailBuildOnCVSS=7 \
             -Dformats=HTML,JSON \
             -DprettyPrint=true || {
