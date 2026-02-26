@@ -25,5 +25,5 @@ public interface KudoService {
    * @return a paged result of {@link KudoListItemDTO} with safe, non-sensitive
    *         fields
    */
-  PagedResult<KudoListItemDTO> searchKudos(KudoSearchCriteria criteria);
+//  PagedResult<KudoListItemDTO> searchKudos(KudoSearchCriteria criteria);
 }

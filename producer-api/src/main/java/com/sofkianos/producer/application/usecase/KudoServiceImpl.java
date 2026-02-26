@@ -39,7 +39,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class KudoServiceImpl implements KudoService {
         private final KudoEventPublisher kudoEventPublisher;
-        private final KudoRepository kudoRepository;
+//        private final KudoRepository kudoRepository;
 
         @Override
         public KudoResponse sendKudo(KudoRequest kudoRequest) {
@@ -68,27 +68,27 @@ public class KudoServiceImpl implements KudoService {
                                 .build();
         }
 
-        @Transactional(readOnly = true)
-        @Override
-        public PagedResult<KudoListItemDTO> searchKudos(KudoSearchCriteria criteria) {
-                // Usar el puerto de salida con parámetros primitivos
-                PagedResult<Kudo> result = kudoRepository.search(
-                                criteria.getCategory(),
-                                criteria.getSearchText(),
-                                criteria.getPage(),
-                                criteria.getEffectiveSize(),
-                                criteria.getSortDirection());
-
-                if (result.content().isEmpty()) {
-                        throw new KudoNotFoundException("No kudos found for the given criteria");
-                }
-
-                return result.map(kudo -> KudoListItemDTO.builder()
-                                .receptor(EmailMaskingUtil.toDisplayName(kudo.toUser()))
-                                .emisor(EmailMaskingUtil.toDisplayName(kudo.fromUser()))
-                                .mensaje(kudo.message())
-                                .fecha(kudo.createdAt())
-                                .categoria(kudo.category() != null ? kudo.category().name() : null)
-                                .build());
-        }
+//        @Transactional(readOnly = true)
+//        @Override
+//        public PagedResult<KudoListItemDTO> searchKudos(KudoSearchCriteria criteria) {
+//                // Usar el puerto de salida con parámetros primitivos
+//                PagedResult<Kudo> result = kudoRepository.search(
+//                                criteria.getCategory(),
+//                                criteria.getSearchText(),
+//                                criteria.getPage(),
+//                                criteria.getEffectiveSize(),
+//                                criteria.getSortDirection());
+//
+//                if (result.content().isEmpty()) {
+//                        throw new KudoNotFoundException("No kudos found for the given criteria");
+//                }
+//
+//                return result.map(kudo -> KudoListItemDTO.builder()
+//                                .receptor(EmailMaskingUtil.toDisplayName(kudo.toUser()))
+//                                .emisor(EmailMaskingUtil.toDisplayName(kudo.fromUser()))
+//                                .mensaje(kudo.message())
+//                                .fecha(kudo.createdAt())
+//                                .categoria(kudo.category() != null ? kudo.category().name() : null)
+//                                .build());
+//        }
 }

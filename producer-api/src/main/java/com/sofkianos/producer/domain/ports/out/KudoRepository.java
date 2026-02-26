@@ -11,8 +11,6 @@ import java.util.Optional;
  */
 public interface KudoRepository {
     Kudo save(Kudo kudo);
-
     Optional<Kudo> findById(Long id);
-
     PagedResult<Kudo> search(String category, String searchText, int page, int size, String sortDirection);
 }

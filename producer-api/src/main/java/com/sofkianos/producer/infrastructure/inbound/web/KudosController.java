@@ -36,23 +36,23 @@ public class KudosController {
    * @param searchText     optional free-text search
    * @return paginated kudos response
    */
-  @GetMapping
-  public ResponseEntity<PagedKudoResponse> getKudos(
-          @RequestParam(defaultValue = "0") int page,
-          @RequestParam(defaultValue = "20") int size,
-          @RequestParam(defaultValue = "DESC") String sortDirection,
-          @RequestParam(required = false) String category,
-          @RequestParam(required = false) String searchText) {
-
-      KudoSearchCriteria criteria = KudoSearchCriteria.builder()
-              .page(page)
-              .size(size)
-              .sortDirection(sortDirection)
-              .category(category)
-              .searchText(searchText)
-              .build();
-
-      var result = kudoService.searchKudos(criteria);
-      return ResponseEntity.ok(PagedKudoResponse.from(result));
-  }
+//  @GetMapping
+//  public ResponseEntity<PagedKudoResponse> getKudos(
+//          @RequestParam(defaultValue = "0") int page,
+//          @RequestParam(defaultValue = "20") int size,
+//          @RequestParam(defaultValue = "DESC") String sortDirection,
+//          @RequestParam(required = false) String category,
+//          @RequestParam(required = false) String searchText) {
+//
+//      KudoSearchCriteria criteria = KudoSearchCriteria.builder()
+//              .page(page)
+//              .size(size)
+//              .sortDirection(sortDirection)
+//              .category(category)
+//              .searchText(searchText)
+//              .build();
+//
+//      var result = kudoService.searchKudos(criteria);
+//      return ResponseEntity.ok(PagedKudoResponse.from(result));
+//  }
 }
