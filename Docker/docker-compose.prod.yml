@@ -18,7 +18,7 @@ services:
       start_period: 30s
 
   producer-api:
-    build: ./producer-api
+    image: elyriven/sofkianos-producer:latest
     container_name: sofkianos-producer
     ports:
       - "8082:8082"
@@ -31,7 +31,7 @@ services:
       - sofkian-net
 
   consumer-worker:
-    build: ./consumer-worker
+    image: elyriven/sofkianos-consumer:latest
     container_name: sofkianos-consumer
     ports:
       - "8081:8081"
