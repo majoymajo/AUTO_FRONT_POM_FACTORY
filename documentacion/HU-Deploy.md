@@ -67,10 +67,10 @@
   - **Entonces** los servicios se despliegan correctamente en cada ambiente sin errores de configuración
 
 ### 5. Definición de Hecho (DoD)
-- [ ] Instalada en entornos de pre-producción.
-- [ ] Pruebas de humo (Smoke Tests) superadas.
-- [ ] Pruebas de regresión completadas.
-- [ ] Versionado y documentación de los archivos docker-compose.
+- [x] Instalada en entornos de pre-producción.
+- [x] Pruebas de humo (Smoke Tests) superadas.
+- [x] Pruebas de regresión completadas.
+- [x] Versionado y documentación de los archivos docker-compose.
 
 ---
 
