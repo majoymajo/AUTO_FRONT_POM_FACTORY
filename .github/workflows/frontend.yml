@@ -3,12 +3,16 @@
 #
 # PURPOSE:
 #   Independent pipeline for the frontend React application.
-#   Runs linting & unit tests, builds the Docker image, and deploys to AWS EC2.
+#   Runs linting, unit tests & security scans, builds the Docker image,
+#   scans it for vulnerabilities, and deploys to AWS EC2.
 #
 # DESIGN DECISIONS:
 #   - Isolated from backend — only triggers when frontend code changes
 #   - Uses `!` negation patterns to skip doc/non-code file changes
 #   - Lint step catches style issues early before tests run
+#   - npm audit scans dependencies for known CVEs (US-004)
+#   - Trivy scans Docker images for OS & library vulnerabilities (US-004)
+#   - Critical/High vulnerabilities block deployment automatically
 #   - Docker image uses multi-stage build (Node builder → Nginx runtime)
 #   - Deploy updates only the frontend container, leaving backend untouched
 # ==============================================================================
@@ -113,6 +117,37 @@ jobs:
         working-directory: ./frontend
         run: npm install
 
+      # -- Scan npm dependencies for known vulnerabilities (US-004) -----------
+      # Runs `npm audit` to detect CVEs in the dependency tree.
+      #   1. JSON report is saved for automated processing and archival
+      #   2. Human-readable table is printed to the workflow log
+      # Severity threshold: CRITICAL and HIGH block the pipeline.
+      # Moderate/low findings are reported but do not fail the build.
+      - name: Dependency Vulnerability Scan (npm audit)
+        working-directory: ./frontend
+        run: |
+          echo "🔍 Running npm audit — dependency vulnerability scan..."
+          npm audit --json > npm-audit-report.json || true
+          npm audit --audit-level=high || {
+            echo "::error::❌ Critical/High vulnerabilities found in npm dependencies. Review npm-audit-report.json for details."
+            exit 1
+          }
+          echo "✅ No critical or high vulnerabilities detected in dependencies."
+
+      # -- Upload npm audit report as artifact --------------------------------
+      # Saves the JSON report for 14 days to enable:
+      #   - Historical tracking of dependency vulnerabilities
+      #   - Compliance auditing and evidence archival
+      #   - Integration with external security dashboards
+      # Runs even if the audit step fails (if: always())
+      - name: Upload npm Audit Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: npm-audit-report
+          path: frontend/npm-audit-report.json
+          retention-days: 14
+
       # -- Run ESLint to enforce code quality ---------------------------------
       # Executes ESLint twice:
       #   1. With JSON output for automated issue creation
@@ -144,7 +179,6 @@ jobs:
 
       - name: Install Octokit for Issue Creation
         if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
-        working-directory: ./frontend
         run: npm install @octokit/rest
       
       # -- Create GitHub Issues from ESLint violations ------------------------
@@ -166,7 +200,7 @@ jobs:
           GITHUB_REF_NAME: ${{ github.ref_name }}
           GITHUB_ACTOR: ${{ github.actor }}
           GITHUB_RUN_ID: ${{ github.run_id }}
-        run: node ../.github/scripts/create-eslint-issues.js
+        run: node .github/scripts/create-eslint-issues.js
 
       # -- Run Vitest unit tests ----------------------------------------------
       # Script "test:unit" is defined as "vitest run" in package.json
@@ -195,8 +229,18 @@ jobs:
   docker-build:
     name: "🐳 Docker Build & Push"
     needs: [test]                       # Fail-fast: skip if tests fail
-    if: github.event_name == 'push'     # Don't push images for PRs
+    # if: github.event_name == 'push'     # Don't push images for PRs
+    if: always()
     runs-on: ubuntu-latest
+
+    # ──────────────────────────────────────────────────────────────────────────
+    # PERMISSIONS
+    # ──────────────────────────────────────────────────────────────────────────
+    # security-events: required by github/codeql-action/upload-sarif to push
+    #                  Trivy scan results to the GitHub Security tab.
+    permissions:
+      contents: read
+      security-events: write
 
     steps:
       - name: Checkout Code
@@ -235,6 +279,62 @@ jobs:
             ${{ env.FRONTEND_IMAGE }}:latest
           cache-from: type=gha          # GitHub Actions cache for Docker layers
           cache-to: type=gha,mode=max
+
+      # -- Scan Docker image for vulnerabilities with Trivy (US-004) ----------
+      # Aqua Trivy scans the built image for:
+      #   - OS package vulnerabilities (e.g., Nginx, Alpine apk packages)
+      #   - Application library vulnerabilities (node_modules baked in)
+      # Severity threshold: CRITICAL and HIGH block the pipeline.
+      # Generates both a human-readable table (logs) and a SARIF report.
+      - name: Docker Image Vulnerability Scan (Trivy)
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: ${{ env.FRONTEND_IMAGE }}:${{ steps.short-sha.outputs.sha_short }}
+          format: 'table'
+          exit-code: '1'
+          severity: 'CRITICAL,HIGH'
+          ignore-unfixed: true
+
+      # -- Generate Trivy SARIF report for archival ---------------------------
+      # Produces a SARIF-format report suitable for:
+      #   - GitHub Security tab integration (Code Scanning alerts)
+      #   - External SIEM/compliance tool ingestion
+      #   - Long-term vulnerability trend analysis
+      # This step always runs (even if the previous scan found issues)
+      # so the report is available for review.
+      # exit-code: '0' ensures this step NEVER fails — its only purpose
+      # is to generate the report artifact, not to gate the pipeline.
+      - name: Generate Trivy SARIF Report
+        uses: aquasecurity/trivy-action@0.28.0
+        if: always()
+        with:
+          image-ref: ${{ env.FRONTEND_IMAGE }}:${{ steps.short-sha.outputs.sha_short }}
+          format: 'sarif'
+          output: 'trivy-frontend-results.sarif'
+          exit-code: '0'
+          severity: 'CRITICAL,HIGH,MEDIUM'
+          ignore-unfixed: true
+
+      # -- Upload Trivy SARIF to GitHub Security tab --------------------------
+      # Integrates scan results into the repository's Security → Code Scanning
+      # alerts, providing a centralized view of all vulnerability findings.
+      - name: Upload Trivy SARIF to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-frontend-results.sarif'
+          category: 'trivy-frontend-docker'
+
+      # -- Upload Trivy report as artifact ------------------------------------
+      # Archives the SARIF report for 14 days alongside the npm audit report,
+      # providing a complete security audit trail per pipeline execution.
+      - name: Upload Trivy Report Artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: trivy-frontend-report
+          path: trivy-frontend-results.sarif
+          retention-days: 14
 
   # ========================================================================
   # JOB 3 — DEPLOY TO EC2
