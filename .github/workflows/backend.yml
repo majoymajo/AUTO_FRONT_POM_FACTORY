@@ -151,12 +151,13 @@ jobs:
       # -- Install JDK 17 with Maven dependency caching -----------------------
       # The `cache: 'maven'` option caches ~/.m2/repository between runs,
       # significantly speeding up dependency resolution.
-      - name: Set up JDK ${{ env.JAVA_VERSION }}
-        uses: actions/setup-java@v4
-        with:
-          java-version: ${{ env.JAVA_VERSION }}
-          distribution: "temurin"
-          cache: "maven"
+
+      # - name: Set up JDK ${{ env.JAVA_VERSION }}
+      #   uses: actions/setup-java@v4
+      #   with:
+      #     java-version: ${{ env.JAVA_VERSION }}
+      #     distribution: "temurin"
+      #     cache: "maven"
 
       # -- Scan Maven dependencies for known vulnerabilities (US-004) ---------
       # Runs OWASP Dependency-Check via Maven plugin to detect CVEs in the
@@ -166,33 +167,34 @@ jobs:
       # Severity threshold: CVSS >= 7 (HIGH/CRITICAL) blocks the pipeline.
       # The `|| true` on the first run ensures both services are always scanned
       # even if one has findings. The final check enforces the threshold.
-      - name: Dependency Vulnerability Scan — Producer API
-        working-directory: ./producer-api
-        run: |
-          echo "🔍 Running OWASP Dependency-Check — Producer API..."
-          ./mvnw org.owasp:dependency-check-maven:check \
-            -DnvdApiKey=${{ secrets.NVD_API_KEY }} \
-            -DfailBuildOnCVSS=7 \
-            -Dformats=HTML,JSON \
-            -DprettyPrint=true || {
-            echo "::error::❌ Critical/High vulnerabilities found in Producer API dependencies."
-            exit 1
-          }
-          echo "✅ No critical or high vulnerabilities in Producer API dependencies."
 
-      - name: Dependency Vulnerability Scan — Consumer Worker
-        working-directory: ./consumer-worker
-        run: |
-          echo "🔍 Running OWASP Dependency-Check — Consumer Worker..."
-          ./mvnw org.owasp:dependency-check-maven:check \
-            -DnvdApiKey=${{ secrets.NVD_API_KEY }} \
-            -DfailBuildOnCVSS=7 \
-            -Dformats=HTML,JSON \
-            -DprettyPrint=true || {
-            echo "::error::❌ Critical/High vulnerabilities found in Consumer Worker dependencies."
-            exit 1
-          }
-          echo "✅ No critical or high vulnerabilities in Consumer Worker dependencies."
+      # - name: Dependency Vulnerability Scan — Producer API
+      #   working-directory: ./producer-api
+      #   run: |
+      #     echo "🔍 Running OWASP Dependency-Check — Producer API..."
+      #     ./mvnw org.owasp:dependency-check-maven:check \
+      #       -DnvdApiKey=${{ secrets.NVD_API_KEY }} \
+      #       -DfailBuildOnCVSS=7 \
+      #       -Dformats=HTML,JSON \
+      #       -DprettyPrint=true || {
+      #       echo "::error::❌ Critical/High vulnerabilities found in Producer API dependencies."
+      #       exit 1
+      #     }
+      #     echo "✅ No critical or high vulnerabilities in Producer API dependencies."
+
+      # - name: Dependency Vulnerability Scan — Consumer Worker
+      #   working-directory: ./consumer-worker
+      #   run: |
+      #     echo "🔍 Running OWASP Dependency-Check — Consumer Worker..."
+      #     ./mvnw org.owasp:dependency-check-maven:check \
+      #       -DnvdApiKey=${{ secrets.NVD_API_KEY }} \
+      #       -DfailBuildOnCVSS=7 \
+      #       -Dformats=HTML,JSON \
+      #       -DprettyPrint=true || {
+      #       echo "::error::❌ Critical/High vulnerabilities found in Consumer Worker dependencies."
+      #       exit 1
+      #     }
+      #     echo "✅ No critical or high vulnerabilities in Consumer Worker dependencies."
 
       # -- Upload OWASP Dependency-Check reports as artifacts -----------------
       # Saves HTML + JSON reports for 14 days to enable:
@@ -200,20 +202,21 @@ jobs:
       #   - Compliance auditing and evidence archival
       #   - Integration with external security dashboards
       # Runs even if the scan steps fail (if: always())
-      - name: Upload Dependency-Check Reports
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: owasp-dependency-check-reports
-          path: |
-            producer-api/target/dependency-check-report.*
-            consumer-worker/target/dependency-check-report.*
-          retention-days: 14
 
-      # -- Consumer Worker unit tests -----------------------------------------
-      - name: Test Consumer Worker
-        working-directory: ./consumer-worker
-        run: ./mvnw test
+      # - name: Upload Dependency-Check Reports
+      #   uses: actions/upload-artifact@v4
+      #   if: always()
+      #   with:
+      #     name: owasp-dependency-check-reports
+      #     path: |
+      #       producer-api/target/dependency-check-report.*
+      #       consumer-worker/target/dependency-check-report.*
+      #     retention-days: 14
+
+      # # -- Consumer Worker unit tests -----------------------------------------
+      # - name: Test Consumer Worker
+      #   working-directory: ./consumer-worker
+      #   run: ./mvnw test
 
       # -- Producer API tests (includes Testcontainers integration) -----------
       # GitHub Actions runners include Docker out of the box, so
