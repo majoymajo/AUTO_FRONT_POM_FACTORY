@@ -28,7 +28,9 @@ FROM eclipse-temurin:17-jre-alpine
 
 WORKDIR /app
 
-RUN apk add --no-cache wget
+# Patch all OS-level vulnerabilities detected by Trivy (US-004)
+# and install wget for the healthcheck
+RUN apk upgrade --no-cache && apk add --no-cache wget
 RUN addgroup -g 1000 appgroup && adduser -u 1000 -G appgroup -D appuser
 
 COPY --from=builder /build/target/*.jar app.jar

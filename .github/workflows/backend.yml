@@ -2,11 +2,15 @@
 #
 # PURPOSE:
 #   Independent pipeline for the backend services (producer-api & consumer-worker).
-#   Builds, tests, creates Docker images, and deploys to AWS EC2.
+#   Builds, tests, scans dependencies & Docker images for vulnerabilities,
+#   and deploys to AWS EC2.
 #
 # DESIGN DECISIONS:
 #   - Separated from frontend to avoid unnecessary runs on unrelated changes
 #   - Uses `paths` filter with `!` negations so doc files are EXCLUDED
+#   - OWASP Dependency-Check scans Maven dependencies for known CVEs (US-004)
+#   - Trivy scans Docker images for OS & library vulnerabilities (US-004)
+#   - Critical/High vulnerabilities block deployment automatically
 #   - Deploy job restricted to `main` branch only (test & build run on all)
 #   - Docker layer caching via GitHub Actions cache to speed up builds
 #   - Each image tagged with both `latest` and the commit SHA for traceability
@@ -165,6 +169,56 @@ jobs:
         working-directory: ./producer-api
         run: ./mvnw test
 
+      # -- Scan Maven dependencies for known vulnerabilities (US-004) ---------
+      # Runs OWASP Dependency-Check via Maven plugin to detect CVEs in the
+      # dependency tree of both backend services.
+      #   1. JSON reports are saved for automated processing and archival
+      #   2. Human-readable HTML reports are generated for manual review
+      # Severity threshold: CVSS >= 7 (HIGH/CRITICAL) blocks the pipeline.
+      # The `|| true` on the first run ensures both services are always scanned
+      # even if one has findings. The final check enforces the threshold.
+      - name: Dependency Vulnerability Scan — Producer API
+        working-directory: ./producer-api
+        run: |
+          echo "🔍 Running OWASP Dependency-Check — Producer API..."
+          ./mvnw org.owasp:dependency-check-maven:check \
+            -DfailBuildOnCVSS=7 \
+            -Dformats=HTML,JSON \
+            -DprettyPrint=true || {
+            echo "::error::❌ Critical/High vulnerabilities found in Producer API dependencies."
+            exit 1
+          }
+          echo "✅ No critical or high vulnerabilities in Producer API dependencies."
+
+      - name: Dependency Vulnerability Scan — Consumer Worker
+        working-directory: ./consumer-worker
+        run: |
+          echo "🔍 Running OWASP Dependency-Check — Consumer Worker..."
+          ./mvnw org.owasp:dependency-check-maven:check \
+            -DfailBuildOnCVSS=7 \
+            -Dformats=HTML,JSON \
+            -DprettyPrint=true || {
+            echo "::error::❌ Critical/High vulnerabilities found in Consumer Worker dependencies."
+            exit 1
+          }
+          echo "✅ No critical or high vulnerabilities in Consumer Worker dependencies."
+
+      # -- Upload OWASP Dependency-Check reports as artifacts -----------------
+      # Saves HTML + JSON reports for 14 days to enable:
+      #   - Historical tracking of dependency vulnerabilities
+      #   - Compliance auditing and evidence archival
+      #   - Integration with external security dashboards
+      # Runs even if the scan steps fail (if: always())
+      - name: Upload Dependency-Check Reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: owasp-dependency-check-reports
+          path: |
+            producer-api/target/dependency-check-report.*
+            consumer-worker/target/dependency-check-report.*
+          retention-days: 14
+
       # -- Upload test reports even on failure for debugging ------------------
       # `if: always()` ensures reports are uploaded regardless of test outcome.
       - name: Upload Test Reports
@@ -193,9 +247,24 @@ jobs:
     if: always()
     runs-on: ubuntu-latest
 
+    # ──────────────────────────────────────────────────────────────────────────
+    # PERMISSIONS
+    # ──────────────────────────────────────────────────────────────────────────
+    # security-events: required by github/codeql-action/upload-sarif to push
+    #                  Trivy scan results to the GitHub Security tab.
+    permissions:
+      contents: read
+      security-events: write
+
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4      
+
+      # -- Extract short SHA for tagging --------------------------------------
+      # Generates a 7-character short SHA from the commit hash
+      - name: Generate Short SHA
+        id: short-sha
+        run: echo "sha_short=$(git rev-parse --short=7 HEAD)" >> $GITHUB_OUTPUT
 
       # -- Login to Docker Hub ------------------------------------------------
       # Requires repository secrets: DOCKER_USER and DOCKER_PASSWORD
@@ -213,7 +282,7 @@ jobs:
       # Uses the multi-stage Dockerfile (JDK builder → JRE runtime)
       # Tags:
       #   - latest       → always points to the most recent build
-      #   - <commit-sha> → immutable tag for traceability / rollback
+      #   - <short-sha>  → immutable 7-char tag tied to the commit for rollback
       - name: Build & Push Producer API
         uses: docker/build-push-action@v6
         with:
@@ -222,7 +291,7 @@ jobs:
           push: true
           tags: |
             ${{ env.PRODUCER_IMAGE }}:latest
-            ${{ env.PRODUCER_IMAGE }}:${{ github.sha }}
+            ${{ env.PRODUCER_IMAGE }}:${{ steps.short-sha.outputs.sha_short }}
           cache-from: type=gha # GitHub Actions cache for Docker layers
           cache-to: type=gha,mode=max
 
@@ -234,10 +303,98 @@ jobs:
           file: ./consumer-worker/Dockerfile
           push: true
           tags: |
-            ${{ env.CONSUMER_IMAGE }}:${{ github.sha }}
+            ${{ env.CONSUMER_IMAGE }}:${{ steps.short-sha.outputs.sha_short }}
             ${{ env.CONSUMER_IMAGE }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      # ════════════════════════════════════════════════════════════════════════
+      # DOCKER IMAGE VULNERABILITY SCANNING (US-004)
+      # ════════════════════════════════════════════════════════════════════════
+      # Aqua Trivy scans both built images for:
+      #   - OS package vulnerabilities (Alpine apk packages)
+      #   - Application library vulnerabilities (JARs baked in)
+      # Severity threshold: CRITICAL and HIGH block the pipeline.
+      # ════════════════════════════════════════════════════════════════════════
+
+      # -- Scan Producer API image for vulnerabilities ------------------------
+      - name: Docker Image Vulnerability Scan — Producer API (Trivy)
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: ${{ env.PRODUCER_IMAGE }}:${{ steps.short-sha.outputs.sha_short }}
+          format: 'table'
+          exit-code: '1'
+          severity: 'CRITICAL,HIGH'
+          ignore-unfixed: true
+
+      # -- Scan Consumer Worker image for vulnerabilities ---------------------
+      - name: Docker Image Vulnerability Scan — Consumer Worker (Trivy)
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: ${{ env.CONSUMER_IMAGE }}:${{ steps.short-sha.outputs.sha_short }}
+          format: 'table'
+          exit-code: '1'
+          severity: 'CRITICAL,HIGH'
+          ignore-unfixed: true
+
+      # -- Generate Trivy SARIF reports for archival --------------------------
+      # Produces SARIF-format reports suitable for:
+      #   - GitHub Security tab integration (Code Scanning alerts)
+      #   - External SIEM/compliance tool ingestion
+      #   - Long-term vulnerability trend analysis
+      # exit-code: '0' ensures these steps NEVER fail — their only purpose
+      # is to generate report artifacts, not to gate the pipeline.
+      - name: Generate Trivy SARIF Report — Producer API
+        uses: aquasecurity/trivy-action@0.28.0
+        if: always()
+        with:
+          image-ref: ${{ env.PRODUCER_IMAGE }}:${{ steps.short-sha.outputs.sha_short }}
+          format: 'sarif'
+          output: 'trivy-producer-results.sarif'
+          exit-code: '0'
+          severity: 'CRITICAL,HIGH,MEDIUM'
+          ignore-unfixed: true
+
+      - name: Generate Trivy SARIF Report — Consumer Worker
+        uses: aquasecurity/trivy-action@0.28.0
+        if: always()
+        with:
+          image-ref: ${{ env.CONSUMER_IMAGE }}:${{ steps.short-sha.outputs.sha_short }}
+          format: 'sarif'
+          output: 'trivy-consumer-results.sarif'
+          exit-code: '0'
+          severity: 'CRITICAL,HIGH,MEDIUM'
+          ignore-unfixed: true
+
+      # -- Upload Trivy SARIF to GitHub Security tab --------------------------
+      # Integrates scan results into the repository's Security → Code Scanning
+      # alerts, providing a centralized view of all vulnerability findings.
+      - name: Upload Trivy SARIF to GitHub Security — Producer API
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-producer-results.sarif'
+          category: 'trivy-producer-docker'
+
+      - name: Upload Trivy SARIF to GitHub Security — Consumer Worker
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-consumer-results.sarif'
+          category: 'trivy-consumer-docker'
+
+      # -- Upload Trivy reports as artifacts ----------------------------------
+      # Archives SARIF reports for 14 days alongside the OWASP reports,
+      # providing a complete security audit trail per pipeline execution.
+      - name: Upload Trivy Report Artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: trivy-backend-reports
+          path: |
+            trivy-producer-results.sarif
+            trivy-consumer-results.sarif
+          retention-days: 14
 
   # ========================================================================
   # JOB 3 — DEPLOY TO EC2
