@@ -77,8 +77,8 @@ env:
   SPRING_PROFILES_ACTIVE: test
 
   # Docker Hub image names — prefixed with the Docker Hub username
-  PRODUCER_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/sofkianos-producer
-  CONSUMER_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/sofkianos-consumer
+  PRODUCER_IMAGE: ${{ secrets.DOCKER_USER }}/sofkianos-producer
+  CONSUMER_IMAGE: ${{ secrets.DOCKER_USER }}/sofkianos-consumer
 
 jobs:
   # ========================================================================
@@ -199,7 +199,7 @@ jobs:
 
       # -- Login to Docker Hub ------------------------------------------------
       # Requires repository secrets: DOCKER_USER and DOCKER_PASSWORD
-      - name: Login to Docker Hub
+      - name: Login to Docker
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USER }}
