@@ -143,8 +143,7 @@ jobs:
       # Installs @octokit/rest library needed to interact with GitHub API.
 
       - name: Install Octokit for Issue Creation
-        if: github.event_name == 'push'
-        # && github.ref == 'refs/heads/develop'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
         run: npm install @octokit/rest
       
       # -- Create GitHub Issues from ESLint violations ------------------------
@@ -158,8 +157,7 @@ jobs:
       # Environment variables provide context for issue descriptions.
 
       - name: Generate ESLint Issues
-        if: github.event_name == 'push' 
-        # && github.ref == 'refs/heads/develop'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
