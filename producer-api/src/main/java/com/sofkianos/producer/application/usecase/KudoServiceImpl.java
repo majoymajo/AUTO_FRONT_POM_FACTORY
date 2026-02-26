@@ -1,18 +1,13 @@
 package com.sofkianos.producer.application.usecase;
 
 import com.sofkianos.producer.domain.model.Kudo;
-import com.sofkianos.producer.domain.ports.out.KudoRepository;
 import com.sofkianos.producer.domain.valueobject.KudoCategory;
 import com.sofkianos.producer.domain.ports.out.KudoEventPublisher;
-import com.sofkianos.producer.application.dto.KudoListItemDTO;
 import com.sofkianos.producer.application.dto.KudoRequest;
 import com.sofkianos.producer.application.dto.KudoResponse;
-import com.sofkianos.producer.application.dto.KudoSearchCriteria;
 import com.sofkianos.producer.domain.exception.KudoNotFoundException;
 import com.sofkianos.producer.application.exception.KudoMessagingException;
-import com.sofkianos.producer.domain.model.PagedResult;
 import com.sofkianos.producer.application.ports.in.KudoService;
-import com.sofkianos.producer.application.util.EmailMaskingUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -39,7 +34,6 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class KudoServiceImpl implements KudoService {
         private final KudoEventPublisher kudoEventPublisher;
-//        private final KudoRepository kudoRepository;
 
         @Override
         public KudoResponse sendKudo(KudoRequest kudoRequest) {
@@ -67,28 +61,4 @@ public class KudoServiceImpl implements KudoService {
                                 .timestamp(LocalDateTime.now())
                                 .build();
         }
-
-//        @Transactional(readOnly = true)
-//        @Override
-//        public PagedResult<KudoListItemDTO> searchKudos(KudoSearchCriteria criteria) {
-//                // Usar el puerto de salida con parámetros primitivos
-//                PagedResult<Kudo> result = kudoRepository.search(
-//                                criteria.getCategory(),
-//                                criteria.getSearchText(),
-//                                criteria.getPage(),
-//                                criteria.getEffectiveSize(),
-//                                criteria.getSortDirection());
-//
-//                if (result.content().isEmpty()) {
-//                        throw new KudoNotFoundException("No kudos found for the given criteria");
-//                }
-//
-//                return result.map(kudo -> KudoListItemDTO.builder()
-//                                .receptor(EmailMaskingUtil.toDisplayName(kudo.toUser()))
-//                                .emisor(EmailMaskingUtil.toDisplayName(kudo.fromUser()))
-//                                .mensaje(kudo.message())
-//                                .fecha(kudo.createdAt())
-//                                .categoria(kudo.category() != null ? kudo.category().name() : null)
-//                                .build());
-//        }
 }
