@@ -147,6 +147,7 @@ jobs:
           GITHUB_ACTOR: ${{ github.actor }}
           GITHUB_RUN_ID: ${{ github.run_id }}
         run: node .github/scripts/create-eslint-issues.js
+        
       # -- Install JDK 17 with Maven dependency caching -----------------------
       # The `cache: 'maven'` option caches ~/.m2/repository between runs,
       # significantly speeding up dependency resolution.
@@ -156,18 +157,6 @@ jobs:
           java-version: ${{ env.JAVA_VERSION }}
           distribution: "temurin"
           cache: "maven"
-
-      # -- Consumer Worker unit tests -----------------------------------------
-      - name: Test Consumer Worker
-        working-directory: ./consumer-worker
-        run: ./mvnw test
-
-      # -- Producer API tests (includes Testcontainers integration) -----------
-      # GitHub Actions runners include Docker out of the box, so
-      # Testcontainers work without extra configuration.
-      - name: Test Producer API
-        working-directory: ./producer-api
-        run: ./mvnw test
 
       # -- Scan Maven dependencies for known vulnerabilities (US-004) ---------
       # Runs OWASP Dependency-Check via Maven plugin to detect CVEs in the
@@ -218,6 +207,18 @@ jobs:
             producer-api/target/dependency-check-report.*
             consumer-worker/target/dependency-check-report.*
           retention-days: 14
+
+      # -- Consumer Worker unit tests -----------------------------------------
+      - name: Test Consumer Worker
+        working-directory: ./consumer-worker
+        run: ./mvnw test
+
+      # -- Producer API tests (includes Testcontainers integration) -----------
+      # GitHub Actions runners include Docker out of the box, so
+      # Testcontainers work without extra configuration.
+      - name: Test Producer API
+        working-directory: ./producer-api
+        run: ./mvnw test
 
       # -- Upload test reports even on failure for debugging ------------------
       # `if: always()` ensures reports are uploaded regardless of test outcome.
