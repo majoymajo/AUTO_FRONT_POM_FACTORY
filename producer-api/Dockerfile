@@ -5,23 +5,13 @@ FROM eclipse-temurin:17-jdk-alpine AS builder
 
 WORKDIR /build
 
-RUN apk add --no-cache wget dos2unix
+RUN apk add --no-cache maven
 
-COPY mvnw .
-COPY .mvn .mvn
 COPY pom.xml .
-RUN chmod +x mvnw
-RUN dos2unix mvnw
+RUN mvn dependency:go-offline -B
 
-# Asegurar que el wrapper esté disponible dentro del contenedor
-RUN ./mvnw -N wrapper:wrapper
-
-# Descargar dependencias
-RUN ./mvnw dependency:go-offline -B
-
-# Compilar
 COPY src src
-RUN ./mvnw package -Dmaven.test.skip=true -B
+RUN mvn package -Dmaven.test.skip=true -B
 
 # ---------------------------------------------------------------------------
 # Stage 2: Runtime
