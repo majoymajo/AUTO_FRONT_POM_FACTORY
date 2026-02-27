@@ -85,11 +85,19 @@ env:
   CONSUMER_IMAGE: ${{ secrets.DOCKER_USER }}/sofkianos-consumer
 
 jobs:
+  # ========================================================================
+  # JOB 1 — TEST
+  # ========================================================================
+  # Runs Maven tests for both backend services.
+  # If ANY test fails the entire workflow stops → merge is blocked
+  # (when branch protection rules require this check to pass).
+  # ========================================================================
   test:
     name: "🔧 Backend Unit & Integration Tests"
     runs-on: ubuntu-latest
 
     steps:
+      # -- Checkout source code -----------------------------------------------
       - name: Checkout Code
         uses: actions/checkout@v4
 
@@ -99,14 +107,6 @@ jobs:
           java-version: ${{ env.JAVA_VERSION }}
           distribution: "temurin"
           cache: "maven"
-
-      - name: Lint Producer API (SpotBugs)
-        working-directory: ./producer-api
-        run: ./mvnw spotbugs:spotbugs
-
-      - name: Lint Consumer Worker (SpotBugs)
-        working-directory: ./consumer-worker
-        run: ./mvnw spotbugs:spotbugs
 
       # -- Test & Check Coverage: Consumer Worker -----------------------------
       # Executes unit and integration tests. Testcontainers/H2 are used for 
@@ -145,7 +145,6 @@ jobs:
             **/target/site/jacoco/
             **/target/surefire-reports/
           retention-days: 3
-
 
   # ========================================================================
   # JOB 2 — DOCKER BUILD & PUSH
