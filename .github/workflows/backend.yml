@@ -114,7 +114,7 @@ jobs:
       - name: Test & Check Coverage Consumer Worker (70% Minimum)
         working-directory: ./consumer-worker
         run: |
-          ./mvnw clean test jacoco:report
+          ./mvnw clean test
           COVERAGE=$(awk -F, 'NR>1 { instructions += $4 + $5; covered += $5 } END { if (instructions > 0) print (covered/instructions)*100; else print 0 }' target/site/jacoco/jacoco.csv)
           echo "Consumer Worker Coverage: $COVERAGE%"
           if awk "BEGIN {exit !($COVERAGE < 70.0)}"; then
@@ -127,7 +127,7 @@ jobs:
       - name: Test & Check Coverage Producer API (70% Minimum)
         working-directory: ./producer-api
         run: |
-          ./mvnw clean test jacoco:report
+          ./mvnw clean test
           COVERAGE=$(awk -F, 'NR>1 { instructions += $4 + $5; covered += $5 } END { if (instructions > 0) print (covered/instructions)*100; else print 0 }' target/site/jacoco/jacoco.csv)
           echo "Producer API Coverage: $COVERAGE%"
           if awk "BEGIN {exit !($COVERAGE < 70.0)}"; then
