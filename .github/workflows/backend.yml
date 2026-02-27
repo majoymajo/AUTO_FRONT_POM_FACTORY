@@ -88,13 +88,23 @@ jobs:
   # ========================================================================
   # JOB 1 — TEST
   # ========================================================================
-  # Runs Maven tests for both backend services.
-  # If ANY test fails the entire workflow stops → merge is blocked
-  # (when branch protection rules require this check to pass).
+  # Runs Maven tests for both backend services IN PARALLEL using a matrix.
+  # Each service runs as an independent job so one failure does not block
+  # the other. If ANY test job fails → merge is blocked (when branch
+  # protection rules require this check to pass).
   # ========================================================================
   test:
-    name: "🔧 Backend Unit & Integration Tests"
+    name: "🔧 Test — ${{ matrix.service }}"
     runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false # Run ALL matrix jobs even if one fails
+      matrix:
+        include:
+          - service: consumer-worker
+            directory: ./consumer-worker
+          - service: producer-api
+            directory: ./producer-api
 
     steps:
       # -- Checkout source code -----------------------------------------------
@@ -108,42 +118,29 @@ jobs:
           distribution: "temurin"
           cache: "maven"
 
-      # -- Test & Check Coverage: Consumer Worker -----------------------------
-      # Executes unit and integration tests. Testcontainers/H2 are used for 
-      # integration context. JaCoCo generates the coverage report.
-      - name: Test & Check Coverage Consumer Worker (70% Minimum)
-        working-directory: ./consumer-worker
+      # -- Test & Check Coverage (70% Minimum) --------------------------------
+      # Executes unit and integration tests. JaCoCo generates the coverage
+      # report automatically (bound to the test phase via pom.xml).
+      - name: Test & Check Coverage (70% Minimum)
+        working-directory: ${{ matrix.directory }}
         run: |
           ./mvnw clean test
           COVERAGE=$(awk -F, 'NR>1 { instructions += $4 + $5; covered += $5 } END { if (instructions > 0) print (covered/instructions)*100; else print 0 }' target/site/jacoco/jacoco.csv)
-          echo "Consumer Worker Coverage: $COVERAGE%"
+          echo "${{ matrix.service }} Coverage: $COVERAGE%"
           if awk "BEGIN {exit !($COVERAGE < 70.0)}"; then
-            echo "::error::❌ Consumer Worker coverage ($COVERAGE%) is below the 70% threshold."
+            echo "::error::❌ ${{ matrix.service }} coverage ($COVERAGE%) is below the 70% threshold."
             exit 1
           fi
-          echo "✅ Consumer Worker coverage meets the threshold."
-
-      # -- Test & Check Coverage: Producer API --------------------------------
-      - name: Test & Check Coverage Producer API (70% Minimum)
-        working-directory: ./producer-api
-        run: |
-          ./mvnw clean test
-          COVERAGE=$(awk -F, 'NR>1 { instructions += $4 + $5; covered += $5 } END { if (instructions > 0) print (covered/instructions)*100; else print 0 }' target/site/jacoco/jacoco.csv)
-          echo "Producer API Coverage: $COVERAGE%"
-          if awk "BEGIN {exit !($COVERAGE < 70.0)}"; then
-            echo "::error::❌ Producer API coverage ($COVERAGE%) is below the 70% threshold."
-            exit 1
-          fi
-          echo "✅ Producer API coverage meets the threshold."
+          echo "✅ ${{ matrix.service }} coverage meets the threshold."
 
       - name: Upload Test Reports
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: backend-test-reports
+          name: test-reports-${{ matrix.service }}
           path: |
-            **/target/site/jacoco/
-            **/target/surefire-reports/
+            ${{ matrix.directory }}/target/site/jacoco/
+            ${{ matrix.directory }}/target/surefire-reports/
           retention-days: 3
 
   # ========================================================================
@@ -158,8 +155,7 @@ jobs:
   docker-build:
     name: "🐳 Docker Build & Push"
     needs: [test] # Fail-fast: skip if tests fail
-    #if: github.event_name == 'push' # Don't push images for PRs
-    if: always()
+    if: github.event_name == 'push' # Don't push images for PRs
     runs-on: ubuntu-latest
 
     # ──────────────────────────────────────────────────────────────────────────
