@@ -59,7 +59,7 @@ class KudosControllerIntegrationTest {
                 .param("searchText", "proyecto"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].category").value("TEAMWORK"))
-                .andExpect(jsonPath("$.content[0].message").containsString("proyecto"))
+                .andExpect(jsonPath("$.content[0].message", org.hamcrest.Matchers.containsString("proyecto")))
                 .andExpect(jsonPath("$.content[0].createdAt").value(org.hamcrest.Matchers.startsWith("2026-02")));
 
         // Validar que todos los resultados cumplen los tres criterios
