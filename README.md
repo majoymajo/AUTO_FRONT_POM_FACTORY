@@ -16,6 +16,18 @@
 
 ---
 
+## Documentation & Resources
+
+- **Documentación Oficial:** [https://sofkianos-docs.vercel.app/](https://sofkianos-docs.vercel.app/)
+
+### Tracking del Proyecto
+
+> _Nota: Markdown no soporta la incrustación directa de iframes por motivos de seguridad. Haz clic en el siguiente botón para acceder al documento._
+
+[![Google Sheets - Tracking del Proyecto](https://img.shields.io/badge/Google%20Sheets-Tracking%20del%20Proyecto-34A853?style=for-the-badge&logo=google-sheets&logoColor=white)](https://docs.google.com/spreadsheets/d/1B9BNs2P8Uc9wHLLaO9lWZXL5TQA7hflkfwGPXLah0is/edit?gid=0#gid=0)
+
+---
+
 ## Reason for Being
 
 SofkianOS transforms the Sofkian identity into tangible **Kudos**. The term **Kudos** comes from the Greek _kŷdos_, meaning honor, recognition, and prestige for an achievement. This system represents how we celebrate the real contributions of each person, creating a **Rewards Culture** that strengthens bonds between geographically distributed teams.
@@ -264,12 +276,12 @@ Inspecting both containers in Dozzle is the recommended way to confirm that a Ku
 
 SofkianOS provides three Docker Compose configurations for different environments:
 
-#### Development Configuration with Local DB (`docker-compose.yml`)
+#### Development Configuration (`docker-compose.yml`)
 
 **Use for local development.** Includes all services with Frontend running locally.
 
 ```bash
-docker compose -f docker-compose.yml up -d --build
+docker compose up -d
 ```
 
 **Services:**
@@ -280,28 +292,22 @@ docker compose -f docker-compose.yml up -d --build
 - RabbitMQ — http://localhost:15672
 - Dozzle (Log Viewer) — http://localhost:8888
 
-#### Development Configuration without DB (`docker-compose.dev.yml`)
+#### Test Configuration (`docker-compose.test.yml`)
 
-**Use for local development.** Includes all services with Frontend running locally.
+**Use for test environment.** Includes all services with Frontend running locally.
+
+**Requires** .env file configuration inside the Docker directory
 
 ```bash
-docker compose -f docker-compose.dev.yml up -d --build
+docker compose -f ./Docker/docker-compose.test.yml up -d
 ```
-
-**Services:**
-
-- Frontend (React) — http://localhost:5173
-- Producer API — http://localhost:8082
-- Consumer Worker — http://localhost:8081
-- RabbitMQ — http://localhost:15672
-- Dozzle (Log Viewer) — http://localhost:8888
 
 #### Production Configuration (`docker-compose.prod.yml`)
 
 **Use for AWS deployment.** Backend services only; Frontend is hosted on Vercel.
 
 ```bash
-docker compose -f docker-compose.prod.yml up -d --build
+docker compose -f ./Docker/docker-compose.prod.yml up -d
 ```
 
 **Services:**
@@ -326,18 +332,14 @@ docker compose -f docker-compose.prod.yml up -d --build
 2. **Start the development stack**:
 
    ```bash
-   docker compose -f docker-compose.yml up -d --build
-
-   OR
-
-   docker compose -f docker-compose.dev.yml up -d --build
+   docker compose up -d
    ```
 
    This command:
-   - Builds all service images (Frontend, Producer API, Consumer Worker)
+   - Download the service images (Frontend, Producer API, Consumer Worker) from Docker Hub
    - Starts RabbitMQ with health checks
    - Starts Producer API (waits for RabbitMQ to be healthy)
-   - Starts Consumer Worker (waits for RabbitMQ to be healthy)
+   - Starts Consumer Worker (waits for RabbitMQ and DB to be healthy)
    - Starts Frontend (waits for Producer API to be available)
    - Starts Dozzle log viewer
 
@@ -351,31 +353,34 @@ docker compose -f docker-compose.prod.yml up -d --build
 4. **Stop the stack**:
 
    ```bash
-   docker compose -f docker-compose.yml down
-
-   OR
-
-   docker compose -f docker-compose.dev.yml down
+   docker compose down
    ```
 
    To remove volumes (including RabbitMQ data):
 
    ```bash
-   docker compose -f docker-compose.yml down -v
-
-   OR
-
-   docker compose -f docker-compose.dev.yml down -v
+   docker compose down -v
    ```
 
 ### Service Dependencies & Startup Order
 
 The orchestration ensures the correct startup order:
 
-**Development** (`docker-compose.dev.yml`):
+**Development** (`docker-compose.yml`):
 
 - RabbitMQ starts first with health checks
+- PostgreSQL database follows with health checks
 - Producer API and Consumer Worker wait for RabbitMQ to be healthy
+- Consumer Worker wait for PostgreSQL to be healthy too
+- Frontend waits for Producer API to be available
+- All services communicate via the `sofkian-net` bridge network
+
+**Testing** (`docker-compose.test.yml`):
+
+- RabbitMQ starts first with health checks
+- PostgreSQL database follows with health checks
+- Producer API and Consumer Worker wait for RabbitMQ to be healthy
+- Consumer Worker wait for PostgreSQL to be healthy too
 - Frontend waits for Producer API to be available
 - All services communicate via the `sofkian-net` bridge network
 
@@ -388,7 +393,7 @@ The orchestration ensures the correct startup order:
 
 ### Testing the Flow (Development)
 
-When using `docker-compose.dev.yml`:
+When using `docker-compose.yml`:
 
 1. Open http://localhost:5173
 2. Navigate to the Kudo form
