@@ -85,36 +85,57 @@ env:
   CONSUMER_IMAGE: ${{ secrets.DOCKER_USER }}/sofkianos-consumer
 
 jobs:
-  # ========================================================================
-  # JOB 1 — TEST
-  # ========================================================================
-  # Runs Maven tests for both backend services.
-  # If ANY test fails the entire workflow stops → merge is blocked
-  # (when branch protection rules require this check to pass).
-  # ========================================================================
   test:
-    name: "🔧 Backend Tests"
+    name: "🔧 Backend Unit & Integration Tests"
     runs-on: ubuntu-latest
 
     steps:
-      # -- Checkout source code -----------------------------------------------
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # # -- Consumer Worker unit tests -----------------------------------------
-      - name: Test Consumer Worker
-        working-directory: ./consumer-worker
-        run: ./mvnw test
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: "temurin"
+          cache: "maven"
 
-      # -- Producer API tests (includes Testcontainers integration) -----------
-      # GitHub Actions runners include Docker out of the box, so
-      # Testcontainers work without extra configuration.
-      - name: Test Producer API
+      - name: Lint Producer API (SpotBugs)
         working-directory: ./producer-api
-        run: ./mvnw test
+        run: ./mvnw spotbugs:spotbugs
 
-      # -- Upload test reports even on failure for debugging ------------------
-      # `if: always()` ensures reports are uploaded regardless of test outcome.
+      - name: Lint Consumer Worker (SpotBugs)
+        working-directory: ./consumer-worker
+        run: ./mvnw spotbugs:spotbugs
+
+      # -- Test & Check Coverage: Consumer Worker -----------------------------
+      # Executes unit and integration tests. Testcontainers/H2 are used for 
+      # integration context. JaCoCo generates the coverage report.
+      - name: Test & Check Coverage Consumer Worker (70% Minimum)
+        working-directory: ./consumer-worker
+        run: |
+          ./mvnw clean test jacoco:report
+          COVERAGE=$(awk -F, 'NR>1 { instructions += $4 + $5; covered += $5 } END { if (instructions > 0) print (covered/instructions)*100; else print 0 }' target/site/jacoco/jacoco.csv)
+          echo "Consumer Worker Coverage: $COVERAGE%"
+          if awk "BEGIN {exit !($COVERAGE < 70.0)}"; then
+            echo "::error::❌ Consumer Worker coverage ($COVERAGE%) is below the 70% threshold."
+            exit 1
+          fi
+          echo "✅ Consumer Worker coverage meets the threshold."
+
+      # -- Test & Check Coverage: Producer API --------------------------------
+      - name: Test & Check Coverage Producer API (70% Minimum)
+        working-directory: ./producer-api
+        run: |
+          ./mvnw clean test jacoco:report
+          COVERAGE=$(awk -F, 'NR>1 { instructions += $4 + $5; covered += $5 } END { if (instructions > 0) print (covered/instructions)*100; else print 0 }' target/site/jacoco/jacoco.csv)
+          echo "Producer API Coverage: $COVERAGE%"
+          if awk "BEGIN {exit !($COVERAGE < 70.0)}"; then
+            echo "::error::❌ Producer API coverage ($COVERAGE%) is below the 70% threshold."
+            exit 1
+          fi
+          echo "✅ Producer API coverage meets the threshold."
+
       - name: Upload Test Reports
         uses: actions/upload-artifact@v4
         if: always()
@@ -124,6 +145,7 @@ jobs:
             **/target/site/jacoco/
             **/target/surefire-reports/
           retention-days: 3
+
 
   # ========================================================================
   # JOB 2 — DOCKER BUILD & PUSH
