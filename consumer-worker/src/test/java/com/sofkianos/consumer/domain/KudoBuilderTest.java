@@ -53,4 +53,55 @@ class KudoBuilderTest {
                 .isInstanceOf(InvalidKudoException.class)
                 .hasMessage("'message' must not be null or empty");
     }
+
+    @Test
+    @DisplayName("Should throw exception when category is null")
+    void shouldThrowException_WhenCategoryIsNull() {
+        assertThatThrownBy(() -> Kudo.builder()
+                .fromUser("Alice")
+                .toUser("Bob")
+                .category((KudoCategory) null)
+                .message("Great job!")
+                .build())
+                .isInstanceOf(InvalidKudoException.class)
+                .hasMessage("'category' must not be null");
+    }
+
+    @Test
+    @DisplayName("Should throw exception when fromUser is blank")
+    void shouldThrowException_WhenFromUserIsBlank() {
+        assertThatThrownBy(() -> Kudo.builder()
+                .fromUser("")
+                .toUser("Bob")
+                .category(KudoCategory.TEAMWORK)
+                .message("Great job!")
+                .build())
+                .isInstanceOf(InvalidKudoException.class)
+                .hasMessage("'fromUser' must not be null or empty");
+    }
+
+    @Test
+    @DisplayName("Should throw exception when toUser is blank")
+    void shouldThrowException_WhenToUserIsBlank() {
+        assertThatThrownBy(() -> Kudo.builder()
+                .fromUser("Alice")
+                .toUser("  ")
+                .category(KudoCategory.TEAMWORK)
+                .message("Great job!")
+                .build())
+                .isInstanceOf(InvalidKudoException.class)
+                .hasMessage("'toUser' must not be null or empty");
+    }
+
+    @Test
+    @DisplayName("Should build valid Kudo using raw string category")
+    void shouldBuildWithRawStringCategory() {
+        Kudo kudo = Kudo.builder()
+                .fromUser("Alice")
+                .toUser("Bob")
+                .category("INNOVATION")
+                .message("Great job!")
+                .build();
+        assertThat(kudo.getCategory()).isEqualTo(KudoCategory.INNOVATION);
+    }
 }
