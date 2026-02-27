@@ -27,7 +27,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 class KudosControllerIntegrationTest {
-    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:15-alpine");
+
 
         @DynamicPropertySource
         static void postgresProperties(DynamicPropertyRegistry registry) {
