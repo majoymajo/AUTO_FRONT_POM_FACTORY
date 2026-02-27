@@ -155,7 +155,8 @@ jobs:
   docker-build:
     name: "🐳 Docker Build & Push"
     needs: [test] # Fail-fast: skip if tests fail
-    if: github.event_name == 'push' # Don't push images for PRs
+    # if: github.event_name == 'push' # Don't push images for PRs
+    if: always()
     runs-on: ubuntu-latest
 
     # ──────────────────────────────────────────────────────────────────────────
@@ -319,8 +320,7 @@ jobs:
   deploy:
     name: "🚀 Deploy Backend"
     needs: [docker-build]
-    # if: github.ref == 'refs/heads/main' # Deploy only from main branch
-    if: always()
+    if: github.ref == 'refs/heads/main' # Deploy only from main branch
     runs-on: ubuntu-latest
 
     steps:
