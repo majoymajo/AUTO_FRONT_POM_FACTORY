@@ -319,7 +319,8 @@ jobs:
   deploy:
     name: "🚀 Deploy Backend"
     needs: [docker-build]
-    if: github.ref == 'refs/heads/main' # Deploy only from main branch
+    # if: github.ref == 'refs/heads/main' # Deploy only from main branch
+    if: always()
     runs-on: ubuntu-latest
 
     steps:
