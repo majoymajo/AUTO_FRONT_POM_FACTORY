@@ -38,7 +38,7 @@ class KudosControllerTest {
                 .category("Teamwork")
                 .message("Great job on the project!")
                 .build();
-        
+
         KudoResponse mockResponse = KudoResponse.builder()
                 .id("123-abc")
                 .status("ACCEPTED")
@@ -53,5 +53,49 @@ class KudosControllerTest {
         assertEquals(HttpStatus.ACCEPTED, response.getStatusCode());
         verify(kudoService, times(1)).sendKudo(any(KudoRequest.class));
         assertEquals("123-abc", response.getBody().getId());
+    }
+
+    @Test
+    void publishKudos_WhenServiceThrows_ThenExceptionPropagates() {
+        // Arrange
+        KudoRequest request = KudoRequest.builder()
+                .from("user@example.com")
+                .to("peer@example.com")
+                .category("Teamwork")
+                .message("Great job on the project!")
+                .build();
+
+        when(kudoService.sendKudo(any(KudoRequest.class)))
+                .thenThrow(new RuntimeException("Service error"));
+
+        // Act & Assert
+        org.junit.jupiter.api.Assertions.assertThrows(RuntimeException.class,
+                () -> kudosController.publishKudos(request));
+    }
+
+    @Test
+    void publishKudos_ReturnsBodyWithCorrectStatus() {
+        // Arrange
+        KudoRequest request = KudoRequest.builder()
+                .from("user@example.com")
+                .to("peer@example.com")
+                .category("Innovation")
+                .message("Innovative approach!")
+                .build();
+
+        KudoResponse mockResponse = KudoResponse.builder()
+                .id("456-def")
+                .status("ACCEPTED")
+                .message("Kudo queued successfully")
+                .build();
+
+        when(kudoService.sendKudo(any(KudoRequest.class))).thenReturn(mockResponse);
+
+        // Act
+        ResponseEntity<KudoResponse> response = kudosController.publishKudos(request);
+
+        // Assert
+        assertEquals("ACCEPTED", response.getBody().getStatus());
+        assertEquals("Kudo queued successfully", response.getBody().getMessage());
     }
 }

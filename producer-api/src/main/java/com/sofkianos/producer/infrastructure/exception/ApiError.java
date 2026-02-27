@@ -77,8 +77,8 @@ public class ApiError {
                 .timestamp(OffsetDateTime.now())
                 .status(status.value())
                 .error(status.getReasonPhrase())
-                .message(message)
-                .path(path)
+                .message(message != null ? message : "No message provided")
+                .path(path != null ? path : "")
                 .build();
     }
 }
