@@ -9,8 +9,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.*;
 
 /**
  * Unit tests for {@link KudosConsumer}.
@@ -34,5 +33,22 @@ class KudosConsumerTest {
 
     assertDoesNotThrow(() -> consumer.handleKudo(event));
     verify(kudoService, times(1)).saveKudo(event);
+  }
+
+  @Test
+  @DisplayName("handleKudo propagates exceptions when service fails (for DLQ processing)")
+  void handleKudo_propagatesExceptionOnServiceFailure() {
+    KudosConsumer consumer = new KudosConsumer(kudoService);
+    KudoEvent event = KudoEvent.builder()
+        .from("alice@sofkianos.com")
+        .to("bob@sofkianos.com")
+        .category("INNOVATION")
+        .message("Trigger failure")
+        .build();
+
+    doThrow(new RuntimeException("Service failed")).when(kudoService).saveKudo(event);
+
+    org.junit.jupiter.api.Assertions.assertThrows(RuntimeException.class,
+        () -> consumer.handleKudo(event));
   }
 }
