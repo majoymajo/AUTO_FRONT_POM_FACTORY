@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
-import { kudosService } from '../../services/api/kudosService';
-import type { PagedKudoResponse } from '../../models/kudoPublic';
+import { useState, useEffect } from "react";
+import { kudosService } from "../../services/api/kudosService";
+import type { PagedKudoResponse } from "../../types/kudos.types";
 
 /**
  * Hook personalizado para gestionar la obtención y paginación de kudos públicos.
@@ -26,7 +26,7 @@ import type { PagedKudoResponse } from '../../models/kudoPublic';
  *   error: string | null,
  *   goToPage: (page: number) => void
  * }} Estado y funciones de control.
- * 
+ *
  */
 export const useKudosPublic = () => {
   const [data, setData] = useState<PagedKudoResponse | null>(null);
@@ -46,11 +46,11 @@ export const useKudosPublic = () => {
         const response = await kudosService.list({
           page: currentPage,
           size: 20,
-          sortDirection: 'DESC',
+          sortDirection: "DESC",
         });
         setData(response);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Error desconocido');
+        setError(err instanceof Error ? err.message : "Error desconocido");
       } finally {
         setIsLoading(false);
       }

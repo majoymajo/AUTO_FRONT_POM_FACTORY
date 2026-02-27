@@ -26,7 +26,12 @@ public class JpaKudoPersistenceAdapter implements KudoPersistencePort {
     }
 
     @Override
-    public org.springframework.data.domain.Page<Kudo> findKudos(java.util.Optional<String> category, java.util.Optional<String> searchText, org.springframework.data.domain.Pageable pageable) {
-        return kudoRepository.findKudos(category.orElse(null), searchText.orElse(null), pageable);
+    public org.springframework.data.domain.Page<Kudo> findKudos(java.util.Optional<String> category,
+            java.util.Optional<String> searchText, org.springframework.data.domain.Pageable pageable) {
+        return kudoRepository.findAll(
+                com.sofkianos.consumer.repository.specification.KudoSpecification.buildSearchSpec(
+                        category.orElse(null),
+                        searchText.orElse(null)),
+                pageable);
     }
 }
