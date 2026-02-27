@@ -1,6 +1,9 @@
 import { apiClient } from "./client";
 import type { KudoFormData } from "../../schemas/kudoFormSchema";
-import type { KudoListParams, PagedKudoResponse } from "../../models/kudoPublic";
+import type {
+  KudoListParams,
+  PagedKudoResponse,
+} from "../../types/kudos.types";
 
 /**
  * Servicio que encapsula todas las operaciones relacionadas con Kudos.
@@ -13,7 +16,8 @@ import type { KudoListParams, PagedKudoResponse } from "../../models/kudoPublic"
  * - **list**: Obtiene la lista paginada de kudos públicos (GET /v1/kudos)
  *
  * Características:
- * - Validación de status code esperado (202 Accepted)
+ * - Validación de status code esperado (202 Accepted para send)
+ * - Construcción dinámica de query params para filtros
  * - Manejo de errores mediante excepciones
  * - Tipado fuerte con TypeScript
  * - Integración con esquemas de validación
@@ -84,7 +88,7 @@ export const kudosService = {
    * const { content, totalElements } = await kudosService.list({ page: 0, size: 20 });
    */
   list: async (params: KudoListParams = {}): Promise<PagedKudoResponse> => {
-    const { page = 0, size = 20, sortDirection = 'DESC', ...rest } = params;
+    const { page = 0, size = 20, sortDirection = "DESC", ...rest } = params;
     const response = await apiClient.get("/v1/kudos", {
       params: { page, size, sortDirection, ...rest },
     });

@@ -1,6 +1,6 @@
-import React from 'react';
-import { useKudosPublic } from '../hooks/data/useKudosPublic';
-import type { KudoPublicItem } from '../models/kudoPublic';
+import React from "react";
+import { useKudosPublic } from "../hooks/data/useKudosPublic";
+import type { KudoListItem } from "../types/kudos.types";
 
 /**
  * Formats a date string to a localized display string.
@@ -10,10 +10,10 @@ import type { KudoPublicItem } from '../models/kudoPublic';
  */
 function formatDate(fecha: string): string {
   try {
-    return new Date(fecha).toLocaleDateString('es-CO', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
+    return new Date(fecha).toLocaleDateString("es-CO", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
     });
   } catch {
     return fecha;
@@ -42,7 +42,7 @@ const KudosPublicPage: React.FC = () => {
       <div className="mx-auto w-full max-w-4xl px-4 py-28 sm:px-6">
         <div className="mb-12 text-center">
           <h1 className="text-3xl font-bold tracking-tight text-white sm:text-5xl">
-            Kudos{' '}
+            Kudos{" "}
             <span className="text-[#FF5F00] drop-shadow-[0_0_15px_rgba(255,95,0,0.5)]">
               Públicos
             </span>
@@ -52,9 +52,7 @@ const KudosPublicPage: React.FC = () => {
           </p>
         </div>
 
-        {isLoading && (
-          <p className="text-center text-zinc-400">Cargando...</p>
-        )}
+        {isLoading && <p className="text-center text-zinc-400">Cargando...</p>}
 
         {error && !isLoading && (
           <p className="text-center text-red-400">
@@ -63,7 +61,9 @@ const KudosPublicPage: React.FC = () => {
         )}
 
         {!isLoading && !error && data && data.content.length === 0 && (
-          <p className="text-center text-zinc-400">No hay kudos registrados aún</p>
+          <p className="text-center text-zinc-400">
+            No hay kudos registrados aún
+          </p>
         )}
 
         {!isLoading && !error && data && data.content.length > 0 && (
@@ -72,25 +72,33 @@ const KudosPublicPage: React.FC = () => {
               data-testid="kudos-public-list"
               className="grid gap-6 sm:grid-cols-2"
             >
-              {data.content.map((kudo: KudoPublicItem, index: number) => (
+              {data.content.map((kudo: KudoListItem, index: number) => (
                 <div
-                  key={`${kudo.receptor}-${kudo.emisor}-${kudo.fecha}-${index}`}
+                  key={`${kudo.toUser}-${kudo.fromUser}-${kudo.createdAt}-${index}`}
                   data-testid="kudo-card"
                   className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6 shadow-lg"
                 >
                   <div className="mb-3 flex items-center justify-between">
                     <span className="rounded-full bg-[#FF5F00]/10 px-3 py-1 text-xs font-semibold text-[#FF5F00]">
-                      {kudo.categoria}
+                      {kudo.category}
                     </span>
-                    <span className="text-xs text-zinc-500">{formatDate(kudo.fecha)}</span>
+                    <span className="text-xs text-zinc-500">
+                      {formatDate(kudo.createdAt)}
+                    </span>
                   </div>
-                  <p className="mb-4 text-zinc-100">{kudo.mensaje}</p>
+                  <p className="mb-4 text-zinc-100">{kudo.message}</p>
                   <div className="flex items-center justify-between text-sm text-zinc-400">
                     <span>
-                      Para: <span className="font-semibold text-zinc-200">{kudo.receptor}</span>
+                      Para:{" "}
+                      <span className="font-semibold text-zinc-200">
+                        {kudo.toUser}
+                      </span>
                     </span>
                     <span>
-                      De: <span className="font-semibold text-zinc-200">{kudo.emisor}</span>
+                      De:{" "}
+                      <span className="font-semibold text-zinc-200">
+                        {kudo.fromUser}
+                      </span>
                     </span>
                   </div>
                 </div>
@@ -104,18 +112,18 @@ const KudosPublicPage: React.FC = () => {
                 aria-label="Paginación de kudos"
               >
                 <button
-                  onClick={() => goToPage(data.number - 1)}
-                  disabled={data.number === 0}
+                  onClick={() => goToPage(data.page - 1)}
+                  disabled={data.page === 0}
                   className="rounded-lg border border-zinc-700 bg-zinc-800 px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-700 disabled:opacity-40"
                 >
                   Anterior
                 </button>
                 <span className="text-sm text-zinc-400">
-                  Página {data.number + 1} de {data.totalPages}
+                  Página {data.page + 1} de {data.totalPages}
                 </span>
                 <button
-                  onClick={() => goToPage(data.number + 1)}
-                  disabled={data.number + 1 >= data.totalPages}
+                  onClick={() => goToPage(data.page + 1)}
+                  disabled={data.page + 1 >= data.totalPages}
                   className="rounded-lg border border-zinc-700 bg-zinc-800 px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-700 disabled:opacity-40"
                 >
                   Siguiente

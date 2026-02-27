@@ -1,9 +1,9 @@
-import { renderHook } from '@testing-library/react';
-import { useKudoFormLogic } from './useKudoFormLogic';
-import { vi, describe, it, expect, beforeEach } from 'vitest';
+import { renderHook } from "@testing-library/react";
+import { useKudoFormLogic } from "./useKudoFormLogic";
+import { vi, describe, it, expect, beforeEach } from "vitest";
 
 // Mock sonner
-vi.mock('sonner', () => ({
+vi.mock("sonner", () => ({
   toast: {
     success: vi.fn(),
     error: vi.fn(),
@@ -13,48 +13,47 @@ vi.mock('sonner', () => ({
 }));
 
 // Mock services
-vi.mock('../../services', () => ({
+vi.mock("../../services", () => ({
   kudosService: {
     send: vi.fn(),
   },
 }));
 
-import { kudosService } from '../../services';
-import { toast } from 'sonner';
+import { kudosService } from "../../services";
+import { toast } from "sonner";
 
-
-describe('useKudoFormLogic', () => {
+describe("useKudoFormLogic", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('should initialize with default values', () => {
+  it("should initialize with default values", () => {
     const { result } = renderHook(() => useKudoFormLogic());
-    
+
     expect(result.current.formData).toEqual({
-      from: '',
-      to: '',
+      from: "",
+      to: "",
       category: undefined,
-      message: '',
+      message: "",
     });
   });
 
-  it('should call kudosService.send and toast.success on success', async () => {
+  it("should call kudosService.send and toast.success on success", async () => {
     const mockSend = vi.mocked(kudosService.send);
     mockSend.mockResolvedValueOnce({ status: 201 });
-    
+
     const { result } = renderHook(() => useKudoFormLogic());
 
     await result.current.handleSend();
 
     expect(kudosService.send).toHaveBeenCalled();
-    expect(toast.success).toHaveBeenCalledWith('¡Kudo enviado! ');
+    expect(toast.success).toHaveBeenCalledWith("¡Kudo enviado! ");
   });
 
-  it('should call toast.error on failure', async () => {
+  it("should call toast.error on failure", async () => {
     const mockSend = vi.mocked(kudosService.send);
-    mockSend.mockRejectedValueOnce(new Error('Network error'));
-    
+    mockSend.mockRejectedValueOnce(new Error("Network error"));
+
     const { result } = renderHook(() => useKudoFormLogic());
 
     try {
@@ -63,6 +62,8 @@ describe('useKudoFormLogic', () => {
       // expected
     }
 
-    expect(toast.error).toHaveBeenCalledWith('Error enviando kudo');
+    expect(toast.error).toHaveBeenCalledWith(
+      "Error enviando kudo. Por favor intenta de nuevo.",
+    );
   });
 });
