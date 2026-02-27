@@ -52,11 +52,11 @@ class RabbitMqKudoPublisherTest {
         publisherAdapter.publish(event);
 
         // Assert: Consume raw JSON from queue and verify contract
-        Object rawMessage = rabbitTemplate.receive("kudos.queue", 5000);
-        assertThat(rawMessage).isNotNull();
+        org.springframework.amqp.core.Message message = rabbitTemplate.receive("kudos.queue", 5000);
+        assertThat(message).isNotNull();
 
-        // Convert to String
-        String json = new String((byte[]) rawMessage);
+        // Convert body to String
+        String json = new String(message.getBody());
         assertThat(json).contains("timestamp");
 
         // Parse JSON and check timestamp field
