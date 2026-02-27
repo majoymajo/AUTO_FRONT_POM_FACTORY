@@ -36,26 +36,35 @@ class RabbitMqKudoPublisherTest {
     private ObjectMapper objectMapper;
 
     @Test
-    @DisplayName("Should publish event with correct ISO-8601 date format (Contract Test)")
-    void shouldPublishJsonWithIsoDates() {
+    @DisplayName("INT-001: KudoEvent timestamp is ISO-8601 string in JSON (not array)")
+    void shouldPublishJsonWithIsoDates() throws Exception {
         // Arrange
         LocalDateTime now = LocalDateTime.of(2026, 2, 11, 12, 0, 0);
-        Kudo event = Kudo.create(
+        Kudo event = new Kudo(
+                null,
                 "Alice",
                 "Bob",
                 KudoCategory.Teamwork,
-                "Integration Test");
+                "Integration Test",
+                now);
 
         // Act
         publisherAdapter.publish(event);
 
-        // Assert: Consume message manually to verify payload contract
-        // Since we configured Jackson2JsonMessageConverter, receiveAndConvert should return the object
-        Object message = rabbitTemplate.receiveAndConvert("kudos.queue", 5000);
+        // Assert: Consume raw JSON from queue and verify contract
+        org.springframework.amqp.core.Message message = rabbitTemplate.receive("kudos.queue", 5000);
         assertThat(message).isNotNull();
-        assertThat(message).isInstanceOf(KudoEvent.class);
-        
-        KudoEvent receivedEvent = (KudoEvent) message;
-        assertThat(receivedEvent.getTimestamp()).isEqualTo(now);
+
+        // Convert body to String
+        String json = new String(message.getBody());
+        assertThat(json).contains("timestamp");
+
+        // Parse JSON and check timestamp field
+        com.fasterxml.jackson.databind.JsonNode node = objectMapper.readTree(json);
+        String timestampValue = node.get("timestamp").asText();
+        assertThat(timestampValue).isEqualTo("2026-02-11T12:00:00");
+
+        // Ensure timestamp is not an array
+        assertThat(node.get("timestamp").isArray()).isFalse();
     }
 }

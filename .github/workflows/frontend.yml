@@ -76,6 +76,7 @@ env:
   FRONTEND_IMAGE: ${{ secrets.DOCKER_USER }}/sofkianos-frontend
 
 jobs:
+  
 
   # ========================================================================
   # JOB 1 — TEST & LINT
@@ -85,7 +86,7 @@ jobs:
   # (when branch protection rules require this check to pass).
   # ========================================================================
   test:
-    name: "🧪 Frontend Tests & Lint"
+    name: "🧪 Frontend Unit & Integration Tests"
     runs-on: ubuntu-latest
     
     # ──────────────────────────────────────────────────────────────────────────────
@@ -202,11 +203,13 @@ jobs:
           GITHUB_RUN_ID: ${{ github.run_id }}
         run: node .github/scripts/create-eslint-issues.js
 
-      # -- Run Vitest unit tests ----------------------------------------------
-      # Script "test:unit" is defined as "vitest run" in package.json
-      - name: Run Unit Tests
+      # -- Run Unit & Integration Tests + Enforce 70% Coverage ----------------
+      # Uses Vitest and React Testing Library (via jsdom) to run both logic
+      # unit tests and component integration tests.
+      # Exits with a non-zero code if coverage drops below 70%.
+      - name: Run Tests & Check Coverage
         working-directory: ./frontend
-        run: npm run test:unit
+        run: npx vitest run --coverage --coverage.lines=70 --coverage.functions=70 --coverage.branches=70 --coverage.statements=70
 
       # -- Upload coverage report even on failure for debugging ---------------
       - name: Upload Coverage Report
@@ -229,8 +232,7 @@ jobs:
   docker-build:
     name: "🐳 Docker Build & Push"
     needs: [test]                       # Fail-fast: skip if tests fail
-    # if: github.event_name == 'push'     # Don't push images for PRs
-    if: always()
+    if: github.event_name == 'push'     # Don't push images for PRs
     runs-on: ubuntu-latest
 
     # ──────────────────────────────────────────────────────────────────────────
