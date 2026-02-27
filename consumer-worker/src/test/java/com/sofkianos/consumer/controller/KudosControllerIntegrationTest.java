@@ -1,8 +1,8 @@
-package com.sofkianos.producer.controller;
+package com.sofkianos.consumer.controller;
 
-import com.sofkianos.producer.domain.model.Kudo;
-import com.sofkianos.producer.domain.valueobject.KudoCategory;
-import com.sofkianos.producer.infrastructure.repository.KudoRepository;
+import com.sofkianos.consumer.entity.Kudo;
+import com.sofkianos.consumer.domain.model.KudoCategory;
+import com.sofkianos.consumer.repository.KudoRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,7 +46,13 @@ class KudosControllerIntegrationTest {
             KudoCategory category = KudoCategory.values()[i % 4];
             LocalDateTime date = LocalDateTime.of(2026, 2, (i % 10) + 1, 10, 0);
             String message = (i % 3 == 0) ? "Gran proyecto realizado" : "Otro mensaje";
-            Kudo kudo = new Kudo(null, "UserA", "UserB", category, message, date);
+            Kudo kudo = Kudo.builder()
+                .fromUser("UserA")
+                .toUser("UserB")
+                .category(category)
+                .message(message)
+                .createdAt(date)
+                .build();
             kudoRepository.save(kudo);
         });
 
@@ -57,17 +63,17 @@ class KudosControllerIntegrationTest {
                 .param("endDate", "2026-02-10")
                 .param("searchText", "proyecto"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].category").value("TEAMWORK"))
-                .andExpect(jsonPath("$[0].message").containsString("proyecto"))
-                .andExpect(jsonPath("$[0].timestamp").value(org.hamcrest.Matchers.startsWith("2026-02")));
+                .andExpect(jsonPath("$.content[0].category").value("TEAMWORK"))
+                .andExpect(jsonPath("$.content[0].message").containsString("proyecto"))
+                .andExpect(jsonPath("$.content[0].createdAt").value(org.hamcrest.Matchers.startsWith("2026-02")));
 
         // Validar que todos los resultados cumplen los tres criterios
         var results = kudoRepository.findAll();
         results.stream()
-                .filter(k -> k.getCategory() == KudoCategory.Teamwork
+                .filter(k -> k.getCategory() == KudoCategory.TEAMWORK
                         && k.getMessage().contains("proyecto")
                         && !k.getCreatedAt().isBefore(LocalDateTime.of(2026, 2, 1, 0, 0))
                         && !k.getCreatedAt().isAfter(LocalDateTime.of(2026, 2, 10, 23, 59)))
-                .forEach(k -> assertThat(k.getCategory()).isEqualTo(KudoCategory.Teamwork));
+                .forEach(k -> assertThat(k.getCategory()).isEqualTo(KudoCategory.TEAMWORK));
     }
 }
