@@ -101,6 +101,11 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      # # -- Consumer Worker unit tests -----------------------------------------
+      - name: Test Consumer Worker
+        working-directory: ./consumer-worker
+        run: ./mvnw test
+
       # -- Producer API tests (includes Testcontainers integration) -----------
       # GitHub Actions runners include Docker out of the box, so
       # Testcontainers work without extra configuration.

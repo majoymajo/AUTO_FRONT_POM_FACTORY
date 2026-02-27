@@ -15,7 +15,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 30s
+      start_period: 60s
 
   db:
     image: postgres:14.3
@@ -35,10 +35,10 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 30s
+      start_period: 60s
 
   producer-api:
-    image: elyriven/sofkianos-producer:stable
+    image: elyriven/sofkianos-producer:dc5ddd3
     container_name: sofkianos-producer
     ports:
       - "8082:8082"
@@ -51,7 +51,7 @@ services:
       - sofkian-net
 
   consumer-worker:
-    image: elyriven/sofkianos-consumer:stable
+    image: elyriven/sofkianos-consumer:dc5ddd3
     container_name: sofkianos-consumer
     ports:
       - "8081:8081"
@@ -70,7 +70,7 @@ services:
       - sofkian-net
 
   frontend:
-    image: elyriven/sofkianos-frontend:stable
+    image: elyriven/sofkianos-frontend:7f29bb3
     container_name: sofkianos-frontend
     ports:
       - "5173:5173"
