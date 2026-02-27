@@ -1,8 +1,7 @@
 package com.sofkianos.producer.controller;
 
-import com.sofkianos.producer.application.dto.KudoListItemDTO;
+import com.sofkianos.producer.application.dto.KudoResponse;
 import com.sofkianos.producer.application.ports.in.KudoService;
-import com.sofkianos.producer.domain.model.PagedResult;
 import com.sofkianos.producer.infrastructure.inbound.web.KudosController;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -24,41 +23,33 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(KudosController.class)
 class KudosControllerGetTest {
 
-        @Autowired
-        private MockMvc mockMvc;
+    @Autowired
+    private MockMvc mockMvc;
 
-        @MockBean
-        private KudoService kudoService;
+    @MockBean
+    private KudoService kudoService;
 
-        @Test
-        @DisplayName("GET /api/v1/kudos should return 200 OK with content")
-        void getKudos_ReturnsOkWithContent() throws Exception {
-                var kudo = KudoListItemDTO.builder()
-                                .receptor("Maria G.")
-                                .emisor("Juan P.")
-                                .mensaje("Gracias!")
-                                .fecha(LocalDateTime.now())
-                                .categoria("Teamwork")
-                                .build();
+    @Test
+    @DisplayName("GET /api/v1/kudos should return 200 OK with content")
+    void getKudos_ReturnsOkWithContent() throws Exception {
+        var kudoResponse = KudoResponse.builder()
+            .id("1")
+            .message("Gracias!")
+            .status("OK")
+            .timestamp(LocalDateTime.now())
+            .build();
+        when(kudoService.getKudos(any())).thenReturn(List.of(kudoResponse));
+        mockMvc.perform(get("/api/v1/kudos"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$[0].message").value("Gracias!"));
+    }
 
-                var pagedResult = new PagedResult<>(List.of(kudo), 1, 1, 0, 10);
-
-                when(kudoService.searchKudos(any())).thenReturn(pagedResult);
-
-                mockMvc.perform(get("/api/v1/kudos"))
-                                .andExpect(status().isOk())
-                                .andExpect(jsonPath("$.content").isArray())
-                                .andExpect(jsonPath("$.content[0].receptor").value("Maria G."));
-        }
-
-        @Test
-        @DisplayName("GET /api/v1/kudos with empty results should return 200 OK")
-        void getKudos_Empty_ReturnsOk() throws Exception {
-                var emptyResult = new PagedResult<KudoListItemDTO>(Collections.emptyList(), 0, 0, 0, 10);
-                when(kudoService.searchKudos(any())).thenReturn(emptyResult);
-
-                mockMvc.perform(get("/api/v1/kudos"))
-                                .andExpect(status().isOk())
-                                .andExpect(jsonPath("$.content").isEmpty());
-        }
+    @Test
+    @DisplayName("GET /api/v1/kudos with empty results should return 200 OK")
+    void getKudos_Empty_ReturnsOk() throws Exception {
+        when(kudoService.getKudos(any())).thenReturn(Collections.emptyList());
+        mockMvc.perform(get("/api/v1/kudos"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$").isEmpty());
+    }
 }
