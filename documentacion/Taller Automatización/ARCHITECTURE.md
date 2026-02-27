@@ -12,32 +12,38 @@ El objetivo de esta fase de re-arquitectura es documentar estos *dolores* y cont
 Basado en el inventario de deuda técnica, los principales obstáculos identificados son:
 
 ### 🔴 Acoplamiento de Datos y Lógica
+
 - Credenciales de base de datos *hardcoded* en `application.properties`.
 - Duplicación manual de la entidad `KudoEvent` entre el Producer y el Consumer.
 - Ausencia de versionamiento de contratos: un cambio en el Producer **rompe inmediatamente** al Consumer.
 
 ### 🔴 Lógica Mezclada en la Infraestructura
+
 - La lógica de negocio está dispersa y mezclada dentro de:
-    - Controllers de la API.
-    - Métodos de escucha de RabbitMQ.
+  - Controllers de la API.
+  - Métodos de escucha de RabbitMQ.
 - Esto dificulta extraer o evolucionar reglas de negocio sin afectar el transporte de datos.
 
 ### 🔴 Falta de Testabilidad Real
+
 - Cobertura limitada (~25%), enfocada mayormente en controllers.
 - Imposibilidad de testear la lógica de asignación de Kudos sin levantar toda la infraestructura (PostgreSQL / RabbitMQ).
 - Causa raíz: ausencia de **Inversión de Dependencias**.
 
 ### 🔴 Inseguridad y Fragilidad
+
 - API pública sin:
-    - Gateways.
-    - Políticas de autenticación/autorización.
+  - Gateways.
+  - Políticas de autenticación/autorización.
 - Falta de idempotencia en el procesamiento de mensajes, generando duplicados que comprometen la integridad de los datos.
 
 ### 🔴 Código Muerto y Duplicidad en Frontend
+
 - ~55% de código inaccesible.
 - Capas de API paralelas que confunden el flujo de datos y aumentan el costo de mantenimiento.
 
 ### 🔴 Observabilidad Nula
+
 - Dependencia exclusiva de logs de consola.
 - Ausencia de *tracing distribuido*, haciendo imposible rastrear un Kudo desde el Producer hasta su persistencia en la base de datos.
 
@@ -48,29 +54,34 @@ Basado en el inventario de deuda técnica, los principales obstáculos identific
 La implementación de **Clean Architecture** (basada en los principios de Robert C. Martin) permitirá desacoplar el *Core* del negocio de los detalles técnicos (Frameworks, UI, DB):
 
 ### 🟢 Independencia de Frameworks y API
+
 - La API REST deja de ser el centro del sistema y pasa a ser un **Interface Adapter**.
 - La lógica de Kudos puede sobrevivir incluso a un cambio de framework (ej. reemplazar Spring Boot).
 
 ### 🟢 Centralización en Casos de Uso (Use Cases)
+
 - Toda la regla de negocio (ej. *“Cómo se valida un Kudo”*) reside en una capa central protegida.
 - Se elimina la duplicidad de lógica entre Producer y Consumer.
 
 ### 🟢 Testabilidad Superior (Mocking de Infraestructura)
+
 - Dependencias inyectadas mediante interfaces.
 - Tests unitarios del Core sin bases de datos ni brokers reales.
 - Objetivo: elevar la cobertura a **>80%**.
 
 ### 🟢 Mantenibilidad y Evolución
+
 - Separación clara en capas:
-    - Entities
-    - Use Cases
-    - Adapters
+  - Entities
+  - Use Cases
+  - Adapters
 - Frontend y Backend trabajan sobre **contratos explícitos**, reduciendo la deuda técnica exponencial.
 
 ### 🟢 Resiliencia Mediante Capas de Adaptación
+
 - Implementación de:
-    - Circuit Breakers.
-    - Validaciones de invariantes en los Use Cases.
+  - Circuit Breakers.
+  - Validaciones de invariantes en los Use Cases.
 - Garantiza que solo datos válidos alcancen la capa de persistencia.
 
 ---
@@ -96,6 +107,7 @@ La transición permitirá que **SofkianOS** pase de ser un sistema frágil a una
 La **Producer API** es el componente responsable de recibir solicitudes de creación de kudos desde clientes, validarlas, persistirlas e integrarlas al sistema de mensajería asincrónica.
 
 Este documento formaliza el contrato del API, incluyendo:
+
 - Semántica HTTP y códigos de estado
 - Especificación formal de endpoints
 - Esquemas de request/response
@@ -158,7 +170,7 @@ Todas las respuestas de error siguen la estructura `ApiError` estandarizada:
 
 ```http
 POST /api/v1/kudos HTTP/1.1
-Host: producer-api:8080
+Host: producer-api:8082
 Content-Type: application/json
 Accept: application/json
 ```
@@ -247,6 +259,8 @@ Accept: application/json
 
 ### 2.4.2 Endpoint: Listar Kudos
 
+#### Headers de Solicitud
+
 | Propiedad | Valor |
 |-----------|-------|
 | **Método** | `GET` |
@@ -268,7 +282,7 @@ Accept: application/json
 
 ```http
 GET /api/v1/kudos?page=0&size=10&sortDirection=DESC&category=Innovation&searchText=API HTTP/1.1
-Host: producer-api:8080
+Host: consumer-worker:8081
 Accept: application/json
 ```
 
