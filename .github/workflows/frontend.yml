@@ -232,8 +232,7 @@ jobs:
   docker-build:
     name: "🐳 Docker Build & Push"
     needs: [test]                       # Fail-fast: skip if tests fail
-    # if: github.event_name == 'push'     # Don't push images for PRs
-    if: always()
+    if: github.event_name == 'push'     # Don't push images for PRs
     runs-on: ubuntu-latest
 
     # ──────────────────────────────────────────────────────────────────────────
