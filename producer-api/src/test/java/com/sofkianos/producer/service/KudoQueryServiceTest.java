@@ -1,6 +1,7 @@
 package com.sofkianos.producer.service;
 
 import com.sofkianos.producer.domain.ports.out.KudoRepository;
+import com.sofkianos.producer.domain.ports.out.KudoEventPublisher;
 import com.sofkianos.producer.application.usecase.KudoServiceImpl;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,6 +17,9 @@ class KudoQueryServiceTest {
 
     @Mock
     private KudoRepository kudoRepository;
+
+    @Mock
+    private KudoEventPublisher kudoEventPublisher;
 
     @InjectMocks
     private KudoServiceImpl kudoQueryService;

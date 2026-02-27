@@ -40,21 +40,22 @@ class RabbitMqKudoPublisherTest {
     void shouldPublishJsonWithIsoDates() {
         // Arrange
         LocalDateTime now = LocalDateTime.of(2026, 2, 11, 12, 0, 0);
-        Kudo event = Kudo.create(
+        Kudo event = new Kudo(
+                null,
                 "Alice",
                 "Bob",
                 KudoCategory.Teamwork,
-                "Integration Test");
+                "Integration Test",
+                now);
 
         // Act
         publisherAdapter.publish(event);
 
         // Assert: Consume message manually to verify payload contract
-        // Since we configured Jackson2JsonMessageConverter, receiveAndConvert should return the object
         Object message = rabbitTemplate.receiveAndConvert("kudos.queue", 5000);
         assertThat(message).isNotNull();
         assertThat(message).isInstanceOf(KudoEvent.class);
-        
+
         KudoEvent receivedEvent = (KudoEvent) message;
         assertThat(receivedEvent.getTimestamp()).isEqualTo(now);
     }
