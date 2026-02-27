@@ -7,12 +7,12 @@ export default defineConfig({
   server: {
     proxy: {
       "/api": {
-        target: "http://localhost:8082/",
+        target: "http://localhost:8082",
         changeOrigin: true,
         // En desarrollo, re-enrutar peticiones GET al consumer en el puerto 8081
         bypass(req, _res, options) {
           if (req.method === "GET") {
-            options.target = "http://localhost:8081/";
+            options.target = "http://localhost:8081";
           }
         },
       },
