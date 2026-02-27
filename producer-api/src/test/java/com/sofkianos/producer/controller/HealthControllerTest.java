@@ -1,5 +1,5 @@
 package com.sofkianos.producer.controller;
-
+import java.util.Map;
 import com.sofkianos.producer.infrastructure.inbound.web.HealthController;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
@@ -14,10 +14,11 @@ class HealthControllerTest {
     @Test
     void health_ReturnsOkWithStatusMessage() {
         // Act
-        ResponseEntity<String> response = healthController.health();
+        ResponseEntity<Map<String, String>> response = healthController.health();
 
         // Assert
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals("Producer API is up and running!", response.getBody());
+        assertEquals("producer-api", response.getBody().get("service"));
+        assertEquals("UP", response.getBody().get("status"));
     }
 }
