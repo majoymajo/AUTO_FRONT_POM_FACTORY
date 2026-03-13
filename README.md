@@ -301,25 +301,9 @@ start build/reports/cucumber-report.html
 | **Sin comentarios innecesarios** | Los nombres de métodos son auto-explicativos: `isEmptyStateDisplayed()`, `getDateValidationErrorText()` |
 | **Naming semántico** | Métodos en inglés orientados al negocio, no a la implementación: `enterEmail()` vs `type1()` |
 | **Constantes centralizadas** | `TestConstants.BASE_URL` en un solo lugar — no hardcoded en cada step |
-| **Driver thread-safe** | `ThreadLocal<WebDriver>` permite ejecución paralela sin estado compartido |
 | **Hooks para lifecycle** | `@Before`/`@After` garantizan un navegador limpio por escenario — sin ventanas huérfanas |
 
-### Anti-patrón vs. Patrón Correcto
 
-```
-❌ IMPERATIVO (anti-patrón):
-  Given el usuario abre el navegador
-  And navega a "http://localhost:5173/kudos/list"
-  And hace click en el select con aria-label "Filtrar por categoría"
-  And selecciona la opción "Teamwork"
-  And hace click en el botón "Aplicar Filtros"
-  Then la tercera columna de cada fila contiene "Teamwork"
-
-✅ DECLARATIVO (este proyecto):
-  Given el usuario se encuentra en la página de exploración de kudos
-  When filtra los kudos por la categoría "Teamwork"
-  Then todos los kudos visibles pertenecen a la categoría "Teamwork"
-```
 
 ---
 
