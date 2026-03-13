@@ -38,7 +38,7 @@ services:
       start_period: 60s
 
   producer-api:
-    image: elyriven/sofkianos-producer:d43b074
+    image: elyriven/sofkianos-producer:latest
     container_name: sofkianos-producer
     ports:
       - "8082:8082"
@@ -51,7 +51,7 @@ services:
       - sofkian-net
 
   consumer-worker:
-    image: elyriven/sofkianos-consumer:d43b074
+    image: elyriven/sofkianos-consumer:latest
     container_name: sofkianos-consumer
     ports:
       - "8081:8081"
@@ -70,7 +70,7 @@ services:
       - sofkian-net
 
   frontend:
-    image: elyriven/sofkianos-frontend:c37d3af
+    image: elyriven/sofkianos-frontend:latest
     container_name: sofkianos-frontend
     ports:
       - "5173:5173"
