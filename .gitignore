@@ -23,3 +23,12 @@ Thumbs.db
 
 # Test output
 test-output/
+
+# Folders to hide in main branch
+consumer-worker/
+producer-api/
+frontend/
+aws/
+Docker/
+documentacion/
+assets/
