@@ -112,27 +112,13 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          cache-dependency-path: 'frontend/package.json'
+          cache-dependency-path: frontend/package.json
 
       # -- Install exact dependency versions from lockfile --------------------
-      # Clean install using npm ci ensures all transitive dependencies are installed.
-      # If package-lock.json doesn't exist, falls back to npm install.
+      # `npm ci` is faster than `npm install` and guarantees reproducibility.
       - name: Install Dependencies
         working-directory: ./frontend
-        run: |
-          # Check if lock file exists, if not create it
-          if [ ! -f "package-lock.json" ]; then
-            echo "📝 No package-lock.json found, creating from package.json..."
-            npm install --package-lock-only --legacy-peer-deps
-          fi
-          
-          # Clean install with CI mode
-          npm ci --legacy-peer-deps || npm install --legacy-peer-deps
-          
-          # Ensure tinyexec is installed (transitive dep of vitest)
-          npm install tinyexec --legacy-peer-deps --no-save || true
-        env:
-          CI: true
+        run: npm install
 
       # -- Scan npm dependencies for known vulnerabilities (US-004) -----------
       # Runs `npm audit` to detect CVEs in the dependency tree.
@@ -225,8 +211,7 @@ jobs:
       # Exits with a non-zero code if coverage drops below 70%.
       - name: Run Tests & Check Coverage
         working-directory: ./frontend
-        run: |
-          npm run test:unit -- --coverage --coverage.lines=70 --coverage.functions=70 --coverage.branches=70 --coverage.statements=70
+        run: npx vitest run --coverage --coverage.lines=70 --coverage.functions=70 --coverage.branches=70 --coverage.statements=70
 
       # -- Upload coverage report even on failure for debugging ---------------
       - name: Upload Coverage Report

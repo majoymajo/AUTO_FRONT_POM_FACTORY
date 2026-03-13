@@ -1,0 +1,754 @@
+# Estrategia de Calidad: Diseño de Pruebas
+
+## Teoría Aplicada: Principio Fundamental
+
+Tras auditar el sistema distribuido (RabbitMQ + Arquitectura Hexagonal), se ha determinado el principio rector para el diseño de pruebas.
+
+### Principio Seleccionado: Las pruebas dependen del contexto
+
+### Justificación
+
+En un entorno asíncrono y desacoplado, la calidad no se limita a la lógica funcional, sino a la **integridad de los datos** a lo largo de su ciclo de vida.
+
+El incidente del **“Kudo Fantasma”** (fallo de serialización) demuestra que el riesgo real reside en los *bordes del sistema* y en cómo los datos sobreviven al transporte entre microservicios.
+
+---
+
+## Definición de Niveles de Prueba
+
+### Diseño del Nivel Unitario
+
+El enfoque principal estará en el componente **`Kudo.Builder`** dentro del *Core Domain*.
+
+Este componente actúa como el **“portero” del sistema**:
+- Si una regla de negocio falla aquí, el proceso se detiene inmediatamente
+- Se evita que datos inválidos contaminen la infraestructura
+- Se protege la consistencia del dominio, independientemente del origen del mensaje
+
+Al validar primero este nivel, garantizamos que el sistema falle **rápido, barato y de forma explícita**, alineado con los principios de TDD y Arquitectura Hexagonal.
+
+# 🧪 Plan de Pruebas — Endpoint de Listado Público de Kudos
+
+**Fecha de creación**: 20 de febrero de 2026  
+**Historia(s) base**: US-001, US-002, US-004, US-006, US-007, US-012, US-013
+
+---
+
+## 📋 Índice de Tests
+
+| Completado | ID Test | Capa | Prioridad | Historia | Descripción |
+|------------|---------|------|------------|----------|-------------|
+| ☐ | TC-001 | Backend | CRÍTICA | US-001 | Endpoint GET retorna estructura paginada correcta |
+| ☐ | TC-002 | Backend | CRÍTICA | US-001 | Validación de límites en parámetros size y sortDirection |
+| ☐ | TC-003 | Backend | CRÍTICA | US-002 | Conexión read-only a PostgreSQL sin escrituras |
+| ☐ | TC-004 | Backend | CRÍTICA | US-006 | Enmascaramiento de emails en fromUser y toUser |
+| ☐ | TC-005 | Backend | CRÍTICA | US-007 | Manejo de errores y mapeo de estados HTTP |
+| ☐ | TC-006 | Backend | CRÍTICA | US-004 | Filtros dinámicos construyen queries correctas |
+| ☐ | TC-007 | Backend | ALTA | US-001, US-004 | Paginación y ordenamiento respetan límites |
+| ☐ | TC-008 | Frontend | CRÍTICA | US-013 | Renderizado de KudosListPage con datos reales |
+| ☐ | TC-009 | Frontend | CRÍTICA | US-013 | Manejo de estados loading, error y empty |
+| ☐ | TC-010 | Frontend | CRÍTICA | US-012, US-013 | Integración con backend y mapeo de errores HTTP |
+| ☐ | TC-011 | Frontend | ALTA | US-013 | Filtros invocan servicio con query params correctos |
+| ☐ | TC-012 | Frontend | ALTA | US-013, US-016 | Navegación de paginación preserva filtros activos |
+
+---
+
+## 🔵 Pruebas Backend
+
+### TC-001 — Endpoint GET retorna estructura paginada correcta
+
+- **ID del Test**: TC-001
+- **Capa**: Backend
+- **Prioridad**: CRÍTICA
+- **Historia asociada**: US-001
+- **Descripción**: Validar que el endpoint GET /api/v1/kudos retorna 200 OK con estructura de respuesta correcta y todos los campos obligatorios presentes.
+- **Riesgo cubierto**: Exponer datos incompletos o estructura inválida que rompa el contrato API con frontend.
+- **Precondiciones**: 
+  - Base de datos contiene al menos 25 kudos registrados
+  - Producer API está corriendo en puerto 8082
+  - Conexión a PostgreSQL establecida
+- **Postcondiciones**: Respuesta retorna datos sin modificar estado de base de datos.
+
+#### Escenario (Gherkin)
+
+```gherkin
+Given la base de datos contiene 25 kudos activos
+When ejecuto GET /api/v1/kudos sin parámetros
+Then el status code es 200 OK
+And la respuesta contiene fields: content, totalElements, totalPages, currentPage, size
+And content es un array con 20 items (default page size)
+And cada item contiene: id, fromUser, toUser, category, message, createdAt
+And createdAt está en formato ISO 8601 UTC
+And los items están ordenados DESC por createdAt
+```
+
+#### Partición de Equivalencia
+
+| Grupo | Valores | Tipo |
+|-------|---------|------|
+| Sin parámetros | GET /api/v1/kudos | Válido |
+| Parámetros default | page=0, size=20, sortDirection=DESC | Válido |
+| Base de datos vacía | 0 kudos registrados | Válido - retorna content vacío |
+| Base de datos poblada | 1-50 kudos | Válido |
+| Base de datos grande | >1000 kudos | Válido - valida performance |
+
+#### Valores Límite
+
+| Valor | Contexto | Resultado Esperado |
+|-------|----------|-------------------|
+| 0 kudos | Base de datos vacía | content=[], totalElements=0, totalPages=0 |
+| 1 kudo | Base de datos con 1 registro | content=[1 item], totalElements=1, totalPages=1 |
+| 20 kudos | Justo 1 página completa | content=[20 items], totalPages=1 |
+| 21 kudos | Más de 1 página | content=[20 items], totalPages=2 |
+| 1000 kudos | Dataset grande | content=[20 items], totalPages=50, query <200ms |
+
+#### Tabla de Decisión
+
+| BD vacía | Solicitud válida | content | totalElements | Status |
+|----------|------------------|---------|---------------|--------|
+| Sí | Sí | [] | 0 | 200 |
+| No | Sí | [20 items] | N | 200 |
+
+---
+
+### TC-002 — Validación de límites en parámetros size y sortDirection
+
+- **ID del Test**: TC-002
+- **Capa**: Backend
+- **Prioridad**: CRÍTICA
+- **Historia asociada**: US-001, US-007
+- **Descripción**: Validar que parámetros size y sortDirection cumplen reglas de negocio (size max 50, sortDirection solo ASC/DESC) y rechazan valores inválidos con 400 Bad Request.
+- **Riesgo cubierto**: Permitir queries masivas (size=10000) que generen problemas de memoria o permitir SQL injection via sortDirection inválido.
+- **Precondiciones**: 
+  - Endpoint configurado con validaciones Jakarta Validation
+  - Base de datos contiene al menos 100 kudos
+
+#### Escenario (Gherkin)
+
+```gherkin
+Given el endpoint tiene validación @Min(1) @Max(50) en size
+When ejecuto GET /api/v1/kudos?size=0
+Then el status code es 400 Bad Request
+And el mensaje de error indica "size debe estar entre 1 y 50"
+
+Given el endpoint valida sortDirection con pattern ASC|DESC
+When ejecuto GET /api/v1/kudos?sortDirection=INVALID
+Then el status code es 400 Bad Request
+And el mensaje indica "sortDirection debe ser ASC o DESC"
+
+When ejecuto GET /api/v1/kudos?size=25&sortDirection=ASC
+Then el status code es 200 OK
+And retorna 25 items ordenados ASC por createdAt
+```
+
+#### Partición de Equivalencia
+
+| Grupo | Valores | Tipo |
+|-------|---------|------|
+| size válido | 1-50 | Válido |
+| size = 0 | 0 | Inválido - menor que mínimo |
+| size < 0 | -1, -10 | Inválido - negativo |
+| size > 50 | 51, 100, 1000 | Inválido - excede máximo |
+| sortDirection válido | ASC, DESC | Válido |
+| sortDirection inválido | INVALID, asc, desc, null | Inválido - no coincide pattern |
+
+#### Valores Límite
+
+| Valor | Contexto | Resultado Esperado |
+|-------|----------|-------------------|
+| size=1 | Límite inferior válido | 200 OK, retorna 1 item |
+| size=50 | Límite superior válido | 200 OK, retorna 50 items |
+| size=0 | Justo debajo del mínimo | 400 Bad Request |
+| size=51 | Justo arriba del máximo | 400 Bad Request |
+| sortDirection=ASC | Valor válido 1 | 200 OK, orden ascendente |
+| sortDirection=DESC | Valor válido 2 | 200 OK, orden descendente |
+| sortDirection="" | String vacío | 400 Bad Request |
+
+---
+
+### TC-003 — Conexión read-only a PostgreSQL sin escrituras
+
+- **ID del Test**: TC-003
+- **Capa**: Backend
+- **Prioridad**: CRÍTICA
+- **Historia asociada**: US-002
+- **Descripción**: Validar que Producer API conecta a PostgreSQL en modo read-only y rechaza cualquier operación de escritura (INSERT, UPDATE, DELETE).
+- **Riesgo cubierto**: Producer API modifica accidentalmente datos que deberían ser gestionados únicamente por Consumer Worker, generando inconsistencias.
+- **Precondiciones**: 
+  - DataSource configurada con read-only=true en application.properties
+  - spring.jpa.hibernate.ddl-auto=none
+  - Base de datos contiene datos de prueba
+
+#### Escenario (Gherkin)
+
+```gherkin
+Given Producer API está configurada con DataSource read-only=true
+When la aplicación Spring Boot inicia
+Then los logs confirman "Database connection successful"
+And el connection pool HikariCP se inicializa con maxPoolSize=10
+
+Given intento ejecutar kudoRepository.save(newKudo)
+When el método de escritura es invocado
+Then lanza exception org.springframework.dao.DataAccessException
+And el mensaje indica "connection is read-only"
+And la base de datos no tiene cambios
+
+When ejecuto kudoRepository.findAll()
+Then la operación de lectura es exitosa
+And retorna datos sin errores
+```
+
+#### Partición de Equivalencia
+
+| Grupo | Operación | Tipo |
+|-------|-----------|------|
+| Lectura SELECT | findAll(), findById() | Válido - permitido |
+| Escritura INSERT | save(newEntity) | Inválido - debe fallar |
+| Escritura UPDATE | save(existingEntity) | Inválido - debe fallar |
+| Escritura DELETE | delete(entity) | Inválido - debe fallar |
+
+#### Valores Límite
+
+| Valor | Contexto | Resultado Esperado |
+|-------|----------|-------------------|
+| findAll() primera ejecución | Lectura inicial | Conexión exitosa, retorna datos |
+| save() en read-only | Intento de escritura | DataAccessException lanzada |
+| Conexión con credenciales incorrectas | Configuración inválida | Falla al iniciar aplicación |
+
+---
+
+### TC-004 — Enmascaramiento de emails en fromUser y toUser
+
+- **ID del Test**: TC-004
+- **Capa**: Backend
+- **Prioridad**: CRÍTICA
+- **Historia asociada**: US-006
+- **Descripción**: Validar que EmailMaskingUtil.mask() enmascara correctamente emails en respuestas API, protegiendo información personal mientras mantiene contexto.
+- **Riesgo cubierto**: Exponer emails completos de usuarios, violando privacidad y potencialmente GDPR/LOPD.
+- **Precondiciones**: 
+  - EmailMaskingUtil implementado
+  - KudoQueryService aplica enmascaramiento en mapeo a DTOs
+
+#### Escenario (Gherkin)
+
+```gherkin
+Given un kudo con fromUser="juan.perez@sofkianos.com"
+When el servicio mapea entity a KudoListItemDTO
+Then el DTO contiene fromUser="j***z@sofkianos.com"
+
+Given un kudo con toUser="a@domain.com"
+When se aplica enmascaramiento
+Then el resultado es "a***a@domain.com"
+
+Given un kudo con email inválido "notanemail"
+When se aplica enmascaramiento
+Then el resultado es "***@***.com" (fallback seguro)
+
+Given un kudo con toUser=null
+When se aplica enmascaramiento
+Then el resultado es null (no modifica null)
+```
+
+#### Partición de Equivalencia
+
+| Grupo | Valores | Tipo |
+|-------|---------|------|
+| Email normal | juan.perez@domain.com | Válido - enmascara correctamente |
+| Email corto (1-2 chars) | a@d.com, ab@d.com | Válido - caso especial |
+| Email largo (50+ chars) | verylongemailaddress@domain.com | Válido - enmascara igual |
+| Email sin @ | notanemail | Inválido - fallback seguro |
+| Null | null | Válido - retorna null |
+| String vacío | "" | Inválido - fallback seguro |
+
+#### Valores Límite
+
+| Valor | Contexto | Resultado Esperado |
+|-------|----------|-------------------|
+| a@d.com | Email mínimo válido | a***a@d.com |
+| juan.perez@sofkianos.com | Email típico empresarial | j***z@sofkianos.com |
+| verylonglocalpart123456789@domain.com | Email muy largo | v***9@domain.com |
+| @domain.com | Sin local-part | ***@***.com |
+| user@ | Sin dominio | ***@***.com |
+| null | Null explícito | null |
+
+---
+
+### TC-005 — Manejo de errores y mapeo de estados HTTP
+
+- **ID del Test**: TC-005
+- **Capa**: Backend
+- **Prioridad**: CRÍTICA
+- **Historia asociada**: US-007
+- **Descripción**: Validar que el controller NO maneja excepciones localmente y que @RestControllerAdvice mapea correctamente excepciones a estados HTTP apropiados.
+- **Riesgo cubierto**: Controller expone stack traces completos, devuelve 500 genéricos sin información útil, o suprime errores silenciosamente.
+- **Precondiciones**: 
+  - @RestControllerAdvice global configurado
+  - Controller delega completamente a service sin try-catch
+
+#### Escenario (Gherkin)
+
+```gherkin
+Given el controller no contiene bloques try-catch
+When el servicio lanza IllegalArgumentException("Invalid category")
+Then el @RestControllerAdvice captura la excepción
+And retorna 400 Bad Request
+And el body contiene mensaje de error estructurado sin stack trace
+
+Given la base de datos está inaccesible
+When se ejecuta GET /api/v1/kudos
+Then el servicio lanza DataAccessException
+And el @RestControllerAdvice mapea a 503 Service Unavailable
+And el mensaje indica "Servicio temporalmente no disponible"
+
+When se ejecuta GET /api/v1/kudos con parámetros válidos
+Then el flujo es exitoso sin excepciones
+And retorna 200 OK con datos
+```
+
+#### Partición de Equivalencia
+
+| Grupo | Excepción | Estado HTTP esperado |
+|-------|-----------|---------------------|
+| Validación fallida | IllegalArgumentException | 400 Bad Request |
+| Recurso no encontrado | ResourceNotFoundException | 404 Not Found |
+| Error de BD | DataAccessException | 503 Service Unavailable |
+| Violación de regla | BusinessRuleViolationException | 422 Unprocessable Entity |
+| Sin error | Flujo normal | 200 OK |
+
+#### Valores Límite
+
+| Valor | Contexto | Resultado Esperado |
+|-------|----------|-------------------|
+| BD desconectada | DataAccessException al query | 503 Service Unavailable |
+| Parámetro inválido | IllegalArgumentException | 400 Bad Request |
+| Solicitud válida | Sin excepciones | 200 OK |
+
+#### Tabla de Decisión
+
+| Controller try-catch | Service lanza excepción | Advice captura | Status HTTP | Stack trace visible |
+|---------------------|------------------------|----------------|-------------|---------------------|
+| No | Sí | Sí | 4xx/5xx apropiado | No |
+| Sí | Sí | No | Genérico 500 | Sí (MAL) |
+| No | No | N/A | 200 OK | N/A |
+
+---
+
+### TC-006 — Filtros dinámicos construyen queries correctas
+
+- **ID del Test**: TC-006
+- **Capa**: Backend
+- **Prioridad**: CRÍTICA
+- **Historia asociada**: US-004, US-008
+- **Descripción**: Validar que KudoSpecifications construye predicates JPA correctos basados en criterios opcionales sin generar queries incorrectas.
+- **Riesgo cubierto**: Filtros ignorados (retorna todos los datos siempre), queries con SQL incorrecto que fallan, o filtros que generan resultados erróneos.
+- **Precondiciones**: 
+  - Base de datos contiene kudos con categorías: Innovation (10), Teamwork (15), Passion (8), Mastery (12)
+  - Kudos con fechas variadas entre 2025-01-01 y 2026-02-20
+
+#### Escenario (Gherkin)
+
+```gherkin
+Given la base de datos contiene 45 kudos distribuidos en 4 categorías
+When ejecuto GET /api/v1/kudos?category=TEAMWORK
+Then el query SQL incluye WHERE category = 'TEAMWORK'
+And retorna solo 15 kudos con category=TEAMWORK
+And no incluye kudos de otras categorías
+
+Given kudos con fechas entre 2026-01-01 y 2026-02-20
+When ejecuto GET /api/v1/kudos?startDate=2026-02-01&endDate=2026-02-10
+Then el query incluye WHERE created_at BETWEEN '2026-02-01' AND '2026-02-10'
+And retorna solo kudos en ese rango (inclusive)
+
+Given kudos con message conteniendo "proyecto"
+When ejecuto GET /api/v1/kudos?searchText=proyecto
+Then el query aplica ILIKE '%proyecto%'
+And retorna kudos cuyo message contiene "proyecto" (case insensitive)
+
+When ejecuto GET /api/v1/kudos sin filtros
+Then el query es SELECT * FROM kudos ORDER BY created_at DESC
+And retorna todos los 45 kudos
+```
+
+#### Partición de Equivalencia
+
+| Grupo | Filtros aplicados | Tipo |
+|-------|------------------|------|
+| Sin filtros | Ninguno | Válido - retorna todos |
+| Solo categoría | category=TEAMWORK | Válido - filtra por categoría |
+| Solo fechas | startDate + endDate | Válido - filtra rango |
+| Solo texto | searchText=proyecto | Válido - full-text search |
+| Múltiples filtros | category + startDate + endDate + searchText | Válido - AND lógico |
+| Categoría inválida | category=INVALID | Inválido - 400 Bad Request |
+
+#### Valores Límite
+
+| Valor | Contexto | Resultado Esperado |
+|-------|----------|-------------------|
+| category=null | Sin filtro categoría | Ignora filtro, retorna todos |
+| startDate sin endDate | Solo fecha inicio | Ignora filtro (requiere ambas) |
+| searchText="" | String vacío | Ignora filtro |
+| searchText con acentos | "reconócimiento" | Normaliza y busca correctamente |
+
+---
+
+### TC-007 — Paginación y ordenamiento respetan límites
+
+- **ID del Test**: TC-007
+- **Capa**: Backend
+- **Prioridad**: ALTA
+- **Historia asociada**: US-001, US-004
+- **Descripción**: Validar que paginación retorna exactamente el número de items solicitado, respeta el ordenamiento por fecha, y calcula correctamente totalPages.
+- **Riesgo cubierto**: Paginación incorrecta que omite o duplica registros, ordenamiento inconsistente, o cálculos erróneos de totalPages.
+- **Precondiciones**: 
+  - Base de datos contiene exactamente 47 kudos con fechas incrementales
+
+#### Escenario (Gherkin)
+
+```gherkin
+Given la base de datos contiene 47 kudos
+When ejecuto GET /api/v1/kudos?page=0&size=20
+Then retorna content con 20 items
+And totalElements es 47
+And totalPages es 3
+And currentPage es 0
+
+When ejecuto GET /api/v1/kudos?page=2&size=20
+Then retorna content con 7 items (última página)
+And totalPages es 3
+And currentPage es 2
+
+When ejecuto GET /api/v1/kudos?page=0&size=20&sortDirection=DESC
+Then el primer item tiene la fecha más reciente
+And el último item (position 19) tiene fecha anterior al primero
+
+When ejecuto GET /api/v1/kudos?page=0&size=20&sortDirection=ASC
+Then el primer item tiene la fecha más antigua
+And los items están en orden cronológico ascendente
+```
+
+#### Partición de Equivalencia
+
+| Grupo | Valores | Tipo |
+|-------|---------|------|
+| Primera página completa | page=0, size=20 | Válido |
+| Última página parcial | page=2, size=20 (7 items) | Válido |
+| Página fuera de rango | page=99 | Válido - retorna content vacío |
+| Ordenamiento ASC | sortDirection=ASC | Válido |
+| Ordenamiento DESC | sortDirection=DESC | Válido |
+
+#### Valores Límite
+
+| Valor | Contexto | Resultado Esperado |
+|-------|----------|-------------------|
+| page=0, 47 kudos | Primera página | 20 items, totalPages=3 |
+| page=2, 47 kudos | Última página | 7 items, totalPages=3 |
+| page=3, 47 kudos | Página inexistente | content=[], totalElements=47 |
+| size=1 | Paginación mínima | 1 item por página, totalPages=47 |
+| size=50 | Paginación máxima | Todos los 47 items en 1 página |
+
+---
+
+## 🟢 Pruebas Frontend
+
+### TC-008 — Renderizado de KudosListPage con datos reales
+
+- **ID del Test**: TC-008
+- **Capa**: Frontend
+- **Prioridad**: CRÍTICA
+- **Historia asociada**: US-013
+- **Descripción**: Validar que KudosListPage renderiza correctamente la tabla con datos obtenidos del backend, mostrando todos los campos esperados.
+- **Riesgo cubierto**: Componente no renderiza, muestra datos incorrectos, o estructura HTML rota que impide uso.
+- **Precondiciones**: 
+  - Backend retorna 200 OK con 20 kudos
+  - MSW mock configurado para tests
+  - Vitest + React Testing Library configurado
+
+#### Escenario (Gherkin)
+
+```gherkin
+Given el backend retorna PagedKudoResponse con 20 kudos
+When el componente KudosListPage se monta
+Then se ejecuta fetch a /api/v1/kudos
+And se renderiza tabla con 20 filas
+And cada fila muestra: fromUser, toUser, category, message, createdAt
+And emails están enmascarados (j***z@domain.com)
+And fechas están formateadas ("20 feb 2026, 10:30")
+And categorías muestran badges con colores correctos
+
+When verifico badges de categoría
+Then Innovation tiene color azul
+And Teamwork tiene color verde
+And Passion tiene color rojo
+And Mastery tiene color amarillo
+```
+
+#### Partición de Equivalencia
+
+| Grupo | Datos del backend | Tipo |
+|-------|------------------|------|
+| 20 items | Response completa | Válido - renderiza tabla |
+| 1 item | Response mínima | Válido - renderiza 1 fila |
+| 0 items | content=[] | Válido - muestra EmptyState |
+| Error 500 | Backend falla | Válido - muestra ErrorState |
+
+#### Valores Límite
+
+| Valor | Contexto | Resultado Esperado |
+|-------|----------|-------------------|
+| 0 kudos | Base datos vacía | EmptyState renderizado |
+| 1 kudo | Mínimo dataset | 1 fila en tabla |
+| 20 kudos | Página completa | 20 filas renderizadas |
+| Message > 100 chars | Mensaje largo | Texto truncado con "..." |
+
+---
+
+### TC-009 — Manejo de estados loading, error y empty
+
+- **ID del Test**: TC-009
+- **Capa**: Frontend
+- **Prioridad**: CRÍTICA
+- **Historia asociada**: US-013
+- **Descripción**: Validar que KudosListPage maneja correctamente estados de carga, error y respuesta vacía mostrando feedback visual apropiado.
+- **Riesgo cubierto**: Usuario ve pantalla en blanco sin feedback, no sabe si hay error o está cargando, o no puede reintentar después de error.
+- **Precondiciones**: 
+  - MSW configurado para simular loading delay, error 500, y response vacía
+
+#### Escenario (Gherkin)
+
+```gherkin
+Given el componente se monta
+When el fetch está en progreso (loading=true)
+Then se muestra SkeletonLoaders (shimmer effect)
+And no se muestra tabla ni error
+
+Given el backend retorna error 500
+When el estado error se actualiza
+Then se oculta SkeletonLoaders
+And se muestra ErrorMessage component
+And el mensaje incluye botón "Reintentar"
+
+When el usuario hace click en "Reintentar"
+Then se ejecuta nuevo fetch
+And loading state se activa nuevamente
+
+Given el backend retorna content=[]
+When loading=false y data.content.length === 0
+Then se muestra EmptyState component
+And el mensaje es "No se encontraron kudos"
+And no se muestra ErrorMessage
+```
+
+#### Partición de Equivalencia
+
+| Grupo | Estado | Tipo |
+|-------|--------|------|
+| Cargando | loading=true | Válido - muestra skeleton |
+| Error | error !== null | Válido - muestra error message |
+| Vacío | data.content=[] | Válido - muestra empty state |
+| Exitoso | data.content.length > 0 | Válido - muestra tabla |
+
+#### Valores Límite
+
+| Valor | Contexto | Resultado Esperado |
+|-------|----------|-------------------|
+| loading=true | Fetch en progreso | SkeletonLoaders visible |
+| error="Network error" | Backend inaccesible | ErrorMessage con texto del error |
+| content=[] | Sin resultados | EmptyState visible |
+| content=[1 item] | Mínimo exitoso | Tabla con 1 fila |
+
+#### Tabla de Decisión
+
+| loading | error | content.length | Componente visible |
+|---------|-------|----------------|-------------------|
+| true | null | 0 | SkeletonLoaders |
+| false | "Error" | 0 | ErrorMessage |
+| false | null | 0 | EmptyState |
+| false | null | >0 | KudoTable |
+
+---
+
+### TC-010 — Integración con backend y mapeo de errores HTTP
+
+- **ID del Test**: TC-010
+- **Capa**: Frontend
+- **Prioridad**: CRÍTICA
+- **Historia asociada**: US-012, US-013
+- **Descripción**: Validar que kudosService.list() realiza petición HTTP correcta, maneja errores del backend apropiadamente, y retorna datos tipados.
+- **Riesgo cubierto**: Errores HTTP no manejados que rompen aplicación, datos mal tipados que causan runtime errors, o requests con query params incorrectos.
+- **Precondiciones**: 
+  - kudosService implementado en services/api/
+  - apiClient configurado con interceptores
+
+#### Escenario (Gherkin)
+
+```gherkin
+Given el usuario solicita lista con filtros {category: 'TEAMWORK'}
+When se ejecuta kudosService.list({category: 'TEAMWORK'}, 0, 20, 'DESC')
+Then la petición es GET /api/v1/kudos?page=0&size=20&sortDirection=DESC&category=TEAMWORK
+And el header Content-Type es application/json
+
+Given el backend retorna 200 OK con PagedKudoResponse
+When la promesa se resuelve
+Then el resultado es tipo PagedKudoResponse
+And contiene fields: content, totalElements, totalPages, currentPage, size
+And content[0] es tipo KudoListItem
+
+Given el backend retorna 400 Bad Request
+When la promesa se rechaza
+Then el error es capturado por interceptor
+And el error.message contiene descripción legible
+And no se muestra stack trace al usuario
+
+Given el backend retorna 503 Service Unavailable
+When el servicio falla
+Then el error.message indica "Servicio no disponible, intenta más tarde"
+```
+
+#### Partición de Equivalencia
+
+| Grupo | Status HTTP | Tipo |
+|-------|-------------|------|
+| Éxito | 200 OK | Válido - retorna datos |
+| Error cliente | 400, 404 | Inválido - error mapeable |
+| Error servidor | 500, 503 | Inválido - error de servicio |
+| Error red | Network timeout | Inválido - error de conexión |
+
+#### Valores Límite
+
+| Valor | Contexto | Resultado Esperado |
+|-------|----------|-------------------|
+| 200 OK | Response exitosa | Promise.resolve(PagedKudoResponse) |
+| 400 Bad Request | Validación fallida | Promise.reject con mensaje descriptivo |
+| 503 Service Unavailable | BD desconectada | Promise.reject con mensaje de servicio |
+| Network Error | Sin conexión | Promise.reject con mensaje de red |
+
+---
+
+### TC-011 — Filtros invocan servicio con query params correctos
+
+- **ID del Test**: TC-011
+- **Capa**: Frontend
+- **Prioridad**: ALTA
+- **Historia asociada**: US-013, US-015
+- **Descripción**: Validar que KudoFilters construye correctamente query params y kudosService.list() es invocado con los valores correctos al aplicar filtros.
+- **Riesgo cubierto**: Filtros no se aplican, se envían parámetros incorrectos al backend, o debounce no funciona generando peticiones excesivas.
+- **Precondiciones**: 
+  - KudoFilters renderizado con callbacks
+  - Debounce de 500ms configurado en searchText
+
+#### Escenario (Gherkin)
+
+```gherkin
+Given el usuario selecciona category="TEAMWORK"
+And escribe searchText="proyecto"
+And selecciona startDate="2026-02-01"
+And selecciona endDate="2026-02-10"
+When el usuario hace click en "Aplicar Filtros"
+Then kudosService.list es invocado con:
+  filters: {category: 'TEAMWORK', searchText: 'proyecto', startDate: '2026-02-01', endDate: '2026-02-10'}
+  page: 0
+  size: 20
+  sortDirection: 'DESC'
+And la petición incluye todos los query params
+
+Given el usuario escribe "pro", "proj", "proye" rápidamente en searchText
+When pasan <500ms entre keystrokes
+Then NO se ejecutan peticiones intermedias
+When pasan 500ms después del último keystroke
+Then se ejecuta 1 sola petición con searchText="proye"
+
+When el usuario hace click en "Limpiar"
+Then todos los campos se resetean
+And kudosService.list es invocado con filters={}
+And retorna todos los kudos sin filtros
+```
+
+#### Partición de Equivalencia
+
+| Grupo | Filtros aplicados | Tipo |
+|-------|------------------|------|
+| Sin filtros | {} | Válido - retorna todos |
+| Solo categoría | {category: 'TEAMWORK'} | Válido |
+| Solo texto | {searchText: 'proyecto'} | Válido |
+| Solo fechas | {startDate, endDate} | Válido |
+| Todos los filtros | {category, searchText, startDate, endDate} | Válido |
+
+#### Valores Límite
+
+| Valor | Contexto | Resultado Esperado |
+|-------|----------|-------------------|
+| searchText="" | Campo vacío | Filtro ignorado (no envía param) |
+| startDate > endDate | Fechas inválidas | Muestra error de validación |
+| Debounce <500ms | Typing rápido | No ejecuta petición |
+| Debounce ≥500ms | Pausa en typing | Ejecuta 1 petición |
+
+---
+
+### TC-012 — Navegación de paginación preserva filtros activos
+
+- **ID del Test**: TC-012
+- **Capa**: Frontend
+- **Prioridad**: ALTA
+- **Historia asociada**: US-013, US-016
+- **Descripción**: Validar que al cambiar de página con KudoPagination, los filtros activos se preservan y la petición incluye los mismos query params.
+- **Riesgo cubierto**: Cambiar de página resetea filtros, usuario pierde contexto de búsqueda, o la URL no refleja estado actual (deep linking roto).
+- **Precondiciones**: 
+  - Usuario ha aplicado filtros: category=TEAMWORK, searchText="proyecto"
+  - Resultados tienen totalPages=5
+  - Usuario está en página 0
+
+#### Escenario (Gherkin)
+
+```gherkin
+Given el usuario tiene filtros activos: {category: 'TEAMWORK', searchText: 'proyecto'}
+And está en currentPage=0
+When el usuario hace click en botón "Siguiente"
+Then setPage(1) es invocado
+And kudosService.list es llamado con:
+  filters: {category: 'TEAMWORK', searchText: 'proyecto'}
+  page: 1
+  size: 20
+  sortDirection: 'DESC'
+And los filtros NO se resetean
+
+When el usuario navega a página 4 (última página)
+Then el botón "Siguiente" está disabled
+And el botón "Anterior" está enabled
+
+When el usuario hace click en "Anterior"
+Then setPage(3) es invocado
+And kudosService.list se ejecuta con page=3 y mismos filtros
+
+Given el usuario está en página 2 con filtros activos
+When el usuario recarga la página (F5)
+Then los query params en URL se preservan: ?page=2&category=TEAMWORK&searchText=proyecto
+And KudosListPage lee params de URL
+And ejecuta kudosService.list con valores de URL
+```
+
+#### Partición de Equivalencia
+
+| Grupo | Acción | Tipo |
+|-------|--------|------|
+| Siguiente habilitado | currentPage < totalPages-1 | Válido |
+| Siguiente deshabilitado | currentPage === totalPages-1 | Válido - disabled |
+| Anterior habilitado | currentPage > 0 | Válido |
+| Anterior deshabilitado | currentPage === 0 | Válido - disabled |
+| Cambio de página con filtros | Navegación con filtros activos | Válido - preserva filtros |
+
+#### Valores Límite
+
+| Valor | Contexto | Resultado Esperado |
+|-------|----------|-------------------|
+| currentPage=0 | Primera página | Botón "Anterior" disabled |
+| currentPage=totalPages-1 | Última página | Botón "Siguiente" disabled |
+| Cambio página 0→1 | Click "Siguiente" | kudosService.list(filters, 1, 20, 'DESC') |
+| Cambio página 2→1 | Click "Anterior" | kudosService.list(filters, 1, 20, 'DESC') |
+
+#### Tabla de Decisión
+
+| currentPage | totalPages | Botón Anterior | Botón Siguiente | Filtros preservados |
+|-------------|------------|----------------|-----------------|---------------------|
+| 0 | 5 | disabled | enabled | Sí |
+| 2 | 5 | enabled | enabled | Sí |
+| 4 | 5 | enabled | disabled | Sí |
