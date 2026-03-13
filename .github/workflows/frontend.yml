@@ -116,9 +116,13 @@ jobs:
 
       # -- Install exact dependency versions from lockfile --------------------
       # `npm ci` is faster than `npm install` and guarantees reproducibility.
+      # Reset npm cache to avoid corruption, then install dependencies.
       - name: Install Dependencies
         working-directory: ./frontend
-        run: npm install
+        run: |
+          npm cache clean --force
+          npm ci
+          npm install
 
       # -- Scan npm dependencies for known vulnerabilities (US-004) -----------
       # Runs `npm audit` to detect CVEs in the dependency tree.
