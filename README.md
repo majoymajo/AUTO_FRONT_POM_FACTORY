@@ -20,17 +20,19 @@ Framework de automatización E2E para el frontend de **Sofkianos MVP** usando **
 
 ## Arquitectura E2E
 
-Arquitecrura consolidada desde los escenarios Gherkin hasta la aplicación bajo prueba:
+Arquitectura consolidada desde los escenarios Gherkin hasta la aplicación bajo prueba:
 
 ```mermaid
 graph TD
     subgraph Features["📋 Capa de Negocio - Escenarios"]
+
         F1["kudos_listing.feature<br/>(11 escenarios)"]
         F2["kudos_send.feature<br/>(4 escenarios)"]
         F3["navigation.feature<br/>(3 escenarios)"]
     end
 
     subgraph StepDefs["⚙️ Capa de Traducción - Steps"]
+
         S1["KudosListingSteps.java"]
         S2["KudosSendSteps.java"]
         S3["NavigationSteps.java"]
@@ -38,6 +40,7 @@ graph TD
     end
 
     subgraph PageObj["🔶 Capa de Abstracción - Pages"]
+
         P1["KudosListPage.java"]
         P2["KudoSendPage.java"]
         P3["NavigationBar.java"]
@@ -45,6 +48,7 @@ graph TD
     end
 
     subgraph Infra["🔷 Capa de Infraestructura"]
+    
         D["DriverFactory.java<br/>ThreadLocal WebDriver"]
         B["Chrome Headless<br/>Selenium 4"]
     end
