@@ -193,7 +193,16 @@ google-chrome --version  # Chrome instalado
 
 ## Instrucciones de Ejecución
 
-### 1. Clonar el repositorio
+### 1. Ubicarse en el proyecto de automatización
+
+Si estás trabajando dentro del monorepo `sofkianos-mvp`, el framework E2E vive en la carpeta `pom-pagefactory`:
+
+```bash
+# Desde la raíz del monorepo
+cd pom-pagefactory
+```
+
+Si trabajas este proyecto de forma aislada, clónalo y entra a la carpeta raíz:
 
 ```bash
 git clone https://github.com/majoymajo/AUTO_FRONT_POM_FACTORY.git
@@ -205,17 +214,13 @@ cd AUTO_FRONT_POM_FACTORY
 El framework apunta a `http://localhost:5173`. El frontend de Sofkianos MVP debe estar disponible:
 
 ```bash
-# Opción A: Con Docker (recomendado)
-git clone https://github.com/ElyRiven/sofkianos-mvp.git
-cd sofkianos-mvp
-docker-compose -f docker-compose.dev.yml up -d
-
-# Opción B: Desarrollo local
-git clone https://github.com/ElyRiven/sofkianos-mvp.git
-cd sofkianos-mvp/frontend
+# Desde la raíz del monorepo sofkianos-mvp
+cd frontend
 npm install
 npm run dev
 ```
+
+Si el frontend no está disponible en `localhost:5173`, los tests E2E fallarán con errores de Selenium como `TimeoutException` o `NoSuchElementException`.
 
 ### 3. Ejecutar todos los tests
 
@@ -223,27 +228,58 @@ npm run dev
 # Linux / macOS
 ./gradlew test
 
-# Windows
-gradlew.bat test
+# Windows PowerShell / CMD
+.\gradlew.bat test
 ```
 
 ### 4. Ejecutar un feature específico
 
 ```bash
-# Solo escenarios de listado (US-012)
+# Linux / macOS
 ./gradlew test -Dcucumber.features="src/test/resources/features/kudos_listing.feature"
+./gradlew test -Dcucumber.features="src/test/resources/features/kudos_send.feature"
+./gradlew test -Dcucumber.features="src/test/resources/features/navigation.feature"
+
+# Windows PowerShell / CMD
+.\gradlew.bat test -Dcucumber.features="src/test/resources/features/kudos_listing.feature"
+.\gradlew.bat test -Dcucumber.features="src/test/resources/features/kudos_send.feature"
+.\gradlew.bat test -Dcucumber.features="src/test/resources/features/navigation.feature"
+```
+
+Atajos por feature:
+
+```bash
+# Solo escenarios de listado (US-012)
+.\gradlew.bat test -Dcucumber.features="src/test/resources/features/kudos_listing.feature"
 
 # Solo escenarios de envío
-./gradlew test -Dcucumber.features="src/test/resources/features/kudos_send.feature"
+.\gradlew.bat test -Dcucumber.features="src/test/resources/features/kudos_send.feature"
 
 # Solo escenarios de navegación
-./gradlew test -Dcucumber.features="src/test/resources/features/navigation.feature"
+.\gradlew.bat test -Dcucumber.features="src/test/resources/features/navigation.feature"
 ```
 
 ### 5. Ejecutar por tags (si se agregan)
 
 ```bash
+# Linux / macOS
 ./gradlew test -Dcucumber.filter.tags="@smoke"
+
+# Windows PowerShell / CMD
+.\gradlew.bat test -Dcucumber.filter.tags="@smoke"
+```
+
+### 6. Flujo recomendado de ejecución
+
+```bash
+# Terminal 1 - frontend
+cd frontend
+npm install
+npm run dev
+
+# Terminal 2 - E2E
+cd pom-pagefactory
+.\gradlew.bat test
 ```
 
 ---
@@ -254,7 +290,7 @@ Tras la ejecución, los reportes se generan en:
 
 | Reporte | Ruta | Formato |
 |---|---|---|
-| **Cucumber HTML** | `build/reports/cucumber-report.html` | Visual con detalle por escenario |
+| **Cucumber HTML** | `build/reports/cucumber.html` | Visual con detalle por escenario |
 | **JUnit XML** | `build/test-results/test/` | Para integración con CI/CD |
 | **Consola** | Terminal | Pretty-print de pasos |
 
@@ -262,10 +298,10 @@ Para abrir el reporte HTML:
 
 ```bash
 # Linux / macOS
-open build/reports/cucumber-report.html
+open build/reports/cucumber.html
 
 # Windows
-start build/reports/cucumber-report.html
+start build/reports/cucumber.html
 ```
 
 ---
