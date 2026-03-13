@@ -32,3 +32,8 @@ aws/
 Docker/
 documentacion/
 assets/
+pom-pagefactory/
+
+# Root files to hide in main branch
+docker-compose.yml
+README_ROOT.md
