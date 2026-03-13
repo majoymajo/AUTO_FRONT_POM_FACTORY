@@ -115,13 +115,22 @@ jobs:
           cache-dependency-path: 'frontend/package.json'
 
       # -- Install exact dependency versions from lockfile --------------------
-      # Uses `npm install` with legacy peer deps flag to ensure all dependencies
-      # are installed and compatible. Resets cache if issues occur.
+      # Clean install using npm ci ensures all transitive dependencies are installed.
+      # If package-lock.json doesn't exist, falls back to npm install.
       - name: Install Dependencies
         working-directory: ./frontend
         run: |
-          npm install --legacy-peer-deps --no-optional
-          npm list vitest 2>/dev/null || npm install vitest@latest @vitest/coverage-v8@latest --legacy-peer-deps
+          # Check if lock file exists, if not create it
+          if [ ! -f "package-lock.json" ]; then
+            echo "📝 No package-lock.json found, creating from package.json..."
+            npm install --package-lock-only --legacy-peer-deps
+          fi
+          
+          # Clean install with CI mode
+          npm ci --legacy-peer-deps || npm install --legacy-peer-deps
+          
+          # Ensure tinyexec is installed (transitive dep of vitest)
+          npm install tinyexec --legacy-peer-deps --no-save || true
         env:
           CI: true
 
@@ -217,7 +226,7 @@ jobs:
       - name: Run Tests & Check Coverage
         working-directory: ./frontend
         run: |
-          npm run test:unit -- --coverage --coverage.lines=70 --coverage.functions=70 --coverage.branches=70 --coverage.statements=70 || npx vitest run --coverage --coverage.lines=70 --coverage.functions=70 --coverage.branches=70 --coverage.statements=70
+          npm run test:unit -- --coverage --coverage.lines=70 --coverage.functions=70 --coverage.branches=70 --coverage.statements=70
 
       # -- Upload coverage report even on failure for debugging ---------------
       - name: Upload Coverage Report
