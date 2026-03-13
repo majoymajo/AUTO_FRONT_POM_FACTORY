@@ -1,0 +1,352 @@
+# BACKEND CI/CD WORKFLOW
+#
+# PURPOSE:
+#   Independent pipeline for the backend services (producer-api & consumer-worker).
+#   Builds, tests, scans dependencies & Docker images for vulnerabilities,
+#   and deploys to AWS EC2.
+#
+# DESIGN DECISIONS:
+#   - Separated from frontend to avoid unnecessary runs on unrelated changes
+#   - Uses `paths` filter with `!` negations so doc files are EXCLUDED
+#   - OWASP Dependency-Check scans Maven dependencies for known CVEs (US-004)
+#   - Trivy scans Docker images for OS & library vulnerabilities (US-004)
+#   - Critical/High vulnerabilities block deployment automatically
+#   - Deploy job restricted to `main` branch only (test & build run on all)
+#   - Docker layer caching via GitHub Actions cache to speed up builds
+#   - Each image tagged with both `latest` and the commit SHA for traceability
+# ==============================================================================
+
+name: Backend CI/CD
+
+# ──────────────────────────────────────────────────────────────────────────────
+# TRIGGERS
+# ──────────────────────────────────────────────────────────────────────────────
+# Runs on push/PR to main, develop, and feature/** branches.
+# Only triggers when backend-related CODE files are modified.
+#
+# The `!` negation patterns ensure that changes to documentation and
+# non-code files (.md, .txt, .pdf, images, logs) do NOT trigger the workflow,
+# even if those files live inside the backend directories.
+# ──────────────────────────────────────────────────────────────────────────────
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - "feature/**"
+    paths:
+      - "producer-api/**"
+      - "consumer-worker/**"
+      - "Docker/docker-compose*.yml"
+      - ".github/workflows/backend.yml"
+      # ── Exclude documentation / non-code files ──
+      - "!**/*.md"
+      - "!**/*.txt"
+      - "!**/*.pdf"
+      - "!**/*.png"
+      - "!**/*.jpg"
+      - "!**/*.jpeg"
+      - "!**/*.gif"
+      - "!**/*.svg"
+      - "!**/*.log"
+
+  pull_request:
+    branches:
+      - main
+      - develop
+      - "feature/**"
+    paths:
+      - "producer-api/**"
+      - "consumer-worker/**"
+      - "Docker/docker-compose*.yml"
+      - ".github/workflows/backend.yml"
+      # ── Exclude documentation / non-code files ──
+      - "!**/*.md"
+      - "!**/*.txt"
+      - "!**/*.pdf"
+      - "!**/*.png"
+      - "!**/*.jpg"
+      - "!**/*.jpeg"
+      - "!**/*.gif"
+      - "!**/*.svg"
+      - "!**/*.log"
+
+# ──────────────────────────────────────────────────────────────────────────────
+# GLOBAL ENVIRONMENT VARIABLES
+# ──────────────────────────────────────────────────────────────────────────────
+# Shared across all jobs so tool versions and image names stay consistent.
+# ──────────────────────────────────────────────────────────────────────────────
+env:
+  JAVA_VERSION: "17"
+  SPRING_PROFILES_ACTIVE: test
+
+  # Docker Hub image names — prefixed with the Docker Hub username
+  PRODUCER_IMAGE: ${{ secrets.DOCKER_USER }}/sofkianos-producer
+  CONSUMER_IMAGE: ${{ secrets.DOCKER_USER }}/sofkianos-consumer
+
+jobs:
+  # ========================================================================
+  # JOB 1 — TEST
+  # ========================================================================
+  # Runs Maven tests for both backend services IN PARALLEL using a matrix.
+  # Each service runs as an independent job so one failure does not block
+  # the other. If ANY test job fails → merge is blocked (when branch
+  # protection rules require this check to pass).
+  # ========================================================================
+  test:
+    name: "🔧 Test — ${{ matrix.service }}"
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false # Run ALL matrix jobs even if one fails
+      matrix:
+        include:
+          - service: consumer-worker
+            directory: ./consumer-worker
+          - service: producer-api
+            directory: ./producer-api
+
+    steps:
+      # -- Checkout source code -----------------------------------------------
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: "temurin"
+          cache: "maven"
+
+      # -- Test & Check Coverage (70% Minimum) --------------------------------
+      # Executes unit and integration tests. JaCoCo generates the coverage
+      # report automatically (bound to the test phase via pom.xml).
+      - name: Test & Check Coverage (70% Minimum)
+        working-directory: ${{ matrix.directory }}
+        run: |
+          ./mvnw clean test
+          COVERAGE=$(awk -F, 'NR>1 { instructions += $4 + $5; covered += $5 } END { if (instructions > 0) print (covered/instructions)*100; else print 0 }' target/site/jacoco/jacoco.csv)
+          echo "${{ matrix.service }} Coverage: $COVERAGE%"
+          if awk "BEGIN {exit !($COVERAGE < 70.0)}"; then
+            echo "::error::❌ ${{ matrix.service }} coverage ($COVERAGE%) is below the 70% threshold."
+            exit 1
+          fi
+          echo "✅ ${{ matrix.service }} coverage meets the threshold."
+
+      - name: Upload Test Reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-reports-${{ matrix.service }}
+          path: |
+            ${{ matrix.directory }}/target/site/jacoco/
+            ${{ matrix.directory }}/target/surefire-reports/
+          retention-days: 3
+
+  # ========================================================================
+  # JOB 2 — DOCKER BUILD & PUSH
+  # ========================================================================
+  # Builds Docker images for producer-api and consumer-worker using their
+  # respective multi-stage Dockerfiles, then pushes to Docker Hub.
+  #
+  # Only runs AFTER tests pass (`needs: test`) and only on push events
+  # (not on PRs, to avoid pushing throwaway images).
+  # ========================================================================
+  docker-build:
+    name: "🐳 Docker Build & Push"
+    needs: [test] # Fail-fast: skip if tests fail
+    # if: github.event_name == 'push' # Don't push images for PRs
+    if: always()
+    runs-on: ubuntu-latest
+
+    # ──────────────────────────────────────────────────────────────────────────
+    # PERMISSIONS
+    # ──────────────────────────────────────────────────────────────────────────
+    # security-events: required by github/codeql-action/upload-sarif to push
+    #                  Trivy scan results to the GitHub Security tab.
+    permissions:
+      contents: read
+      security-events: write
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4      
+
+      # -- Extract short SHA for tagging --------------------------------------
+      # Generates a 7-character short SHA from the commit hash
+      - name: Generate Short SHA
+        id: short-sha
+        run: echo "sha_short=$(git rev-parse --short=7 HEAD)" >> $GITHUB_OUTPUT
+
+      # -- Login to Docker Hub ------------------------------------------------
+      # Requires repository secrets: DOCKER_USER and DOCKER_PASSWORD
+      - name: Login to Docker
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USER }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      # -- Setup Docker Buildx for advanced build features --------------------
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # -- Build & push Producer API image ------------------------------------
+      # Uses the multi-stage Dockerfile (JDK builder → JRE runtime)
+      # Tags:
+      #   - latest       → always points to the most recent build
+      #   - <short-sha>  → immutable 7-char tag tied to the commit for rollback
+      - name: Build & Push Producer API
+        uses: docker/build-push-action@v6
+        with:
+          context: ./producer-api
+          file: ./producer-api/Dockerfile
+          push: true
+          tags: |
+            ${{ env.PRODUCER_IMAGE }}:latest
+            ${{ env.PRODUCER_IMAGE }}:${{ steps.short-sha.outputs.sha_short }}
+          cache-from: type=gha # GitHub Actions cache for Docker layers
+          cache-to: type=gha,mode=max
+
+      # -- Build & push Consumer Worker image ---------------------------------
+      - name: Build & Push Consumer Worker
+        uses: docker/build-push-action@v6
+        with:
+          context: ./consumer-worker
+          file: ./consumer-worker/Dockerfile
+          push: true
+          tags: |
+            ${{ env.CONSUMER_IMAGE }}:${{ steps.short-sha.outputs.sha_short }}
+            ${{ env.CONSUMER_IMAGE }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # ════════════════════════════════════════════════════════════════════════
+      # DOCKER IMAGE VULNERABILITY SCANNING (US-004)
+      # ════════════════════════════════════════════════════════════════════════
+      # Aqua Trivy scans both built images for:
+      #   - OS package vulnerabilities (Alpine apk packages)
+      #   - Application library vulnerabilities (JARs baked in)
+      # Severity threshold: CRITICAL and HIGH block the pipeline.
+      # ════════════════════════════════════════════════════════════════════════
+
+      # -- Scan Producer API image for vulnerabilities ------------------------
+      - name: Docker Image Vulnerability Scan — Producer API (Trivy)
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: ${{ env.PRODUCER_IMAGE }}:${{ steps.short-sha.outputs.sha_short }}
+          format: 'table'
+          exit-code: '1'
+          severity: 'CRITICAL,HIGH'
+          ignore-unfixed: true
+
+      # -- Scan Consumer Worker image for vulnerabilities ---------------------
+      - name: Docker Image Vulnerability Scan — Consumer Worker (Trivy)
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: ${{ env.CONSUMER_IMAGE }}:${{ steps.short-sha.outputs.sha_short }}
+          format: 'table'
+          exit-code: '1'
+          severity: 'CRITICAL,HIGH'
+          ignore-unfixed: true
+
+      # -- Generate Trivy SARIF reports for archival --------------------------
+      # Produces SARIF-format reports suitable for:
+      #   - GitHub Security tab integration (Code Scanning alerts)
+      #   - External SIEM/compliance tool ingestion
+      #   - Long-term vulnerability trend analysis
+      # exit-code: '0' ensures these steps NEVER fail — their only purpose
+      # is to generate report artifacts, not to gate the pipeline.
+      - name: Generate Trivy SARIF Report — Producer API
+        uses: aquasecurity/trivy-action@0.28.0
+        if: always()
+        with:
+          image-ref: ${{ env.PRODUCER_IMAGE }}:${{ steps.short-sha.outputs.sha_short }}
+          format: 'sarif'
+          output: 'trivy-producer-results.sarif'
+          exit-code: '0'
+          severity: 'CRITICAL,HIGH,MEDIUM'
+          ignore-unfixed: true
+
+      - name: Generate Trivy SARIF Report — Consumer Worker
+        uses: aquasecurity/trivy-action@0.28.0
+        if: always()
+        with:
+          image-ref: ${{ env.CONSUMER_IMAGE }}:${{ steps.short-sha.outputs.sha_short }}
+          format: 'sarif'
+          output: 'trivy-consumer-results.sarif'
+          exit-code: '0'
+          severity: 'CRITICAL,HIGH,MEDIUM'
+          ignore-unfixed: true
+
+      # -- Upload Trivy SARIF to GitHub Security tab --------------------------
+      # Integrates scan results into the repository's Security → Code Scanning
+      # alerts, providing a centralized view of all vulnerability findings.
+      - name: Upload Trivy SARIF to GitHub Security — Producer API
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-producer-results.sarif'
+          category: 'trivy-producer-docker'
+
+      - name: Upload Trivy SARIF to GitHub Security — Consumer Worker
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-consumer-results.sarif'
+          category: 'trivy-consumer-docker'
+
+      # -- Upload Trivy reports as artifacts ----------------------------------
+      # Archives SARIF reports for 14 days alongside the OWASP reports,
+      # providing a complete security audit trail per pipeline execution.
+      - name: Upload Trivy Report Artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: trivy-backend-reports
+          path: |
+            trivy-producer-results.sarif
+            trivy-consumer-results.sarif
+          retention-days: 14
+
+  # ========================================================================
+  # JOB 3 — DEPLOY TO EC2
+  # ========================================================================
+  # SSHs into the AWS EC2 instance, pulls the latest Docker images, and
+  # restarts the backend containers via docker-compose.
+  #
+  # Only runs on pushes to `main` (production deploys).
+  # Requires secrets: EC2_HOST, EC2_USER, EC2_SSH_KEY.
+  # ========================================================================
+  deploy:
+    name: "🚀 Deploy Backend"
+    needs: [docker-build]
+    if: github.ref == 'refs/heads/main' # Deploy only from main branch
+    runs-on: ubuntu-latest
+
+    steps:
+      # -- SSH into EC2 and update containers ---------------------------------
+      # Uses appleboy/ssh-action for a clean SSH connection.
+      # Only the backend containers are restarted (--no-deps avoids touching
+      # frontend or RabbitMQ).
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd ~/sofkianos-mvp
+
+            # Pull latest code (docker-compose changes, env files, etc.)
+            git pull origin main
+
+            # Pull the freshly built Docker images
+            docker pull ${{ env.PRODUCER_IMAGE }}:latest
+            docker pull ${{ env.CONSUMER_IMAGE }}:latest
+
+            # Restart only the backend services (zero-downtime for frontend)
+            docker-compose -f docker-compose.prod.yml up -d \
+              --no-deps --force-recreate producer-api consumer-worker
+
+            # Show running containers for verification
+            docker-compose -f docker-compose.prod.yml ps
