@@ -2,8 +2,6 @@ package com.sofka.automation.stepdefinitions;
 
 import com.sofka.automation.drivers.DriverFactory;
 import com.sofka.automation.pages.KudoSendPage;
-import com.sofka.automation.pages.KudosListPage;
-import com.sofka.automation.pages.LandingPage;
 import com.sofka.automation.pages.NavigationBar;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
