@@ -20,38 +20,37 @@ Framework de automatización E2E para el frontend de **Sofkianos MVP** usando **
 
 ## Arquitectura E2E
 
-El flujo completo desde el escenario Gherkin hasta el navegador:
+Arquitecrura consolidada desde los escenarios Gherkin hasta la aplicación bajo prueba:
 
 ```mermaid
 graph TD
-    subgraph "Capa de Negocio"
-        F1["kudos_listing.feature<br/>11 escenarios"]
-        F2["kudos_send.feature<br/>4 escenarios"]
-        F3["navigation.feature<br/>3 escenarios"]
+    subgraph Features["📋 Capa de Negocio - Escenarios"]
+        F1["kudos_listing.feature<br/>(11 escenarios)"]
+        F2["kudos_send.feature<br/>(4 escenarios)"]
+        F3["navigation.feature<br/>(3 escenarios)"]
     end
 
-    subgraph "Capa de Traducción - Step Definitions"
+    subgraph StepDefs["⚙️ Capa de Traducción - Steps"]
         S1["KudosListingSteps.java"]
         S2["KudosSendSteps.java"]
         S3["NavigationSteps.java"]
-        H["Hooks.java<br/>@Before / @After"]
+        S4["Hooks.java<br/>Before / After"]
     end
 
-    subgraph "Capa de Abstracción - Page Objects"
-        P1["KudosListPage.java<br/>filtros, tabla, paginación, estados"]
-        P2["KudoSendPage.java<br/>formulario, categorías, slider"]
-        P3["NavigationBar.java<br/>enlaces, logo, toggle vista"]
-        P4["LandingPage.java<br/>hero, secciones"]
+    subgraph PageObj["🔶 Capa de Abstracción - Pages"]
+        P1["KudosListPage.java"]
+        P2["KudoSendPage.java"]
+        P3["NavigationBar.java"]
+        P4["LandingPage.java"]
     end
 
-    subgraph "Capa de Infraestructura"
-        DF["DriverFactory.java<br/>ThreadLocal + ChromeOptions"]
-        WD["Selenium WebDriver"]
-        BR["Chrome Browser - Headless"]
+    subgraph Infra["🔷 Capa de Infraestructura"]
+        D["DriverFactory.java<br/>ThreadLocal WebDriver"]
+        B["Chrome Headless<br/>Selenium 4"]
     end
 
-    subgraph "Aplicación Bajo Prueba"
-        FE["Frontend React + Vite<br/>localhost:5173"]
+    subgraph App["🚀 Aplicación Bajo Prueba"]
+        WEB["React + Vite<br/>localhost:5173"]
         API["Producer API<br/>GET /api/v1/kudos"]
     end
 
@@ -59,75 +58,27 @@ graph TD
     F2 --> S2
     F3 --> S3
     S1 --> P1
-    S2 --> P2
-    S2 --> P3
-    S3 --> P3
-    S3 --> P1
-    S3 --> P2
-    S3 --> P4
-    H --> DF
-    P1 --> WD
-    P2 --> WD
-    P3 --> WD
-    P4 --> WD
-    DF --> WD
-    WD --> BR
-    BR --> FE
-    FE --> API
+    S2 --> P2 & P3
+    S3 --> P1 & P3 & P4
+    S4 --> D
+    P1 & P2 & P3 & P4 --> B
+    B --> WEB --> API
 
-    style F1 fill:#4a9eff,color:#fff
-    style F2 fill:#4a9eff,color:#fff
-    style F3 fill:#4a9eff,color:#fff
-    style S1 fill:#f59e0b,color:#fff
-    style S2 fill:#f59e0b,color:#fff
-    style S3 fill:#f59e0b,color:#fff
-    style H fill:#f59e0b,color:#fff
-    style P1 fill:#10b981,color:#fff
-    style P2 fill:#10b981,color:#fff
-    style P3 fill:#10b981,color:#fff
-    style P4 fill:#10b981,color:#fff
-    style DF fill:#8b5cf6,color:#fff
-    style WD fill:#8b5cf6,color:#fff
-    style BR fill:#8b5cf6,color:#fff
-    style FE fill:#ef4444,color:#fff
-    style API fill:#ef4444,color:#fff
-```
-
-### Flujo de Ejecución Secuencial
-
-```mermaid
-sequenceDiagram
-    participant Runner as RunCucumberTest
-    participant Cucumber as Cucumber Engine
-    participant Hooks as Hooks.java
-    participant Steps as Step Definitions
-    participant Pages as Page Objects
-    participant Driver as WebDriver
-    participant App as Frontend (localhost:5173)
-
-    Runner->>Cucumber: Descubre .feature files
-    Cucumber->>Cucumber: Parsea escenarios Gherkin
-
-    loop Por cada escenario
-        Cucumber->>Hooks: @Before → DriverFactory.getDriver()
-        Hooks->>Driver: Inicia Chrome headless
-
-        loop Por cada paso (Given/When/Then)
-            Cucumber->>Steps: Ejecuta step definition
-            Steps->>Pages: Invoca método del Page Object
-            Pages->>Driver: @FindBy resuelve elemento
-            Driver->>App: Interactúa con el DOM
-            App-->>Driver: Respuesta del navegador
-            Driver-->>Pages: Resultado
-            Pages-->>Steps: Dato/Estado
-            Steps->>Steps: Assertion (AssertJ)
-        end
-
-        Cucumber->>Hooks: @After → DriverFactory.quitDriver()
-        Hooks->>Driver: Cierra navegador
-    end
-
-    Cucumber->>Runner: Genera reporte HTML + consola
+    style F1 fill:#60a5fa
+    style F2 fill:#60a5fa
+    style F3 fill:#60a5fa
+    style S1 fill:#fbbf24
+    style S2 fill:#fbbf24
+    style S3 fill:#fbbf24
+    style S4 fill:#fbbf24
+    style P1 fill:#34d399
+    style P2 fill:#34d399
+    style P3 fill:#34d399
+    style P4 fill:#34d399
+    style D fill:#818cf8
+    style B fill:#818cf8
+    style WEB fill:#f87171
+    style API fill:#f87171
 ```
 
 ---
