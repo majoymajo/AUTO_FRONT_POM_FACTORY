@@ -11,7 +11,6 @@ Framework de automatización E2E para el frontend de **Sofkianos MVP** usando **
 - [Arquitectura E2E](#arquitectura-e2e)
 - [Historias de Usuario Cubiertas](#historias-de-usuario-cubiertas)
 - [Estructura del Proyecto](#estructura-del-proyecto)
-- [Prerrequisitos](#prerrequisitos)
 - [Instrucciones de Ejecución](#instrucciones-de-ejecución)
 - [Reportes](#reportes)
 - [Buenas Prácticas](#buenas-prácticas)
