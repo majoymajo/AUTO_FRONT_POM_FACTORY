@@ -120,7 +120,8 @@ jobs:
       - name: Install Dependencies
         working-directory: ./frontend
         run: |
-          npm install --legacy-peer-deps
+          npm install --legacy-peer-deps --no-optional
+          npm list vitest 2>/dev/null || npm install vitest@latest @vitest/coverage-v8@latest --legacy-peer-deps
         env:
           CI: true
 
@@ -216,8 +217,7 @@ jobs:
       - name: Run Tests & Check Coverage
         working-directory: ./frontend
         run: |
-          npm install vitest @vitest/coverage-v8 --save-dev --legacy-peer-deps
-          npx vitest run --coverage --coverage.lines=70 --coverage.functions=70 --coverage.branches=70 --coverage.statements=70
+          npm run test:unit -- --coverage --coverage.lines=70 --coverage.functions=70 --coverage.branches=70 --coverage.statements=70 || npx vitest run --coverage --coverage.lines=70 --coverage.functions=70 --coverage.branches=70 --coverage.statements=70
 
       # -- Upload coverage report even on failure for debugging ---------------
       - name: Upload Coverage Report
