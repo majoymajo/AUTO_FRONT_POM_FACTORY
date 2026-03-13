@@ -34,7 +34,7 @@ jspm_packages/
 .eslintcache
 
 # Lock files
-package-lock.json
+# package-lock.json is INCLUDED for CI/CD reproducibility
 yarn.lock
 pnpm-lock.yaml
 # Environment variables
