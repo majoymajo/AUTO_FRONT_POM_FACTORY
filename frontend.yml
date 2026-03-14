@@ -101,7 +101,7 @@ jobs:
       pull-requests: read  # Read PR info (optional)
 
     steps:
-      # -- Checkout source code -----------------------------------------------
+      # -- Checkout source code --------------------------------------------
       - name: Checkout Code
         uses: actions/checkout@v4
 
