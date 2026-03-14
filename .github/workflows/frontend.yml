@@ -359,6 +359,13 @@ jobs:
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
 
+    # ──────────────────────────────────────────────────────────────────────────────
+    # PERMISSIONS
+    # ──────────────────────────────────────────────────────────────────────────────
+    # Minimal permissions: read-only access to repository contents.
+    permissions:
+      contents: read
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -449,6 +456,12 @@ jobs:
     needs: [e2e-tests]
     if: github.ref == 'refs/heads/main'   # Deploy only from main branch
     runs-on: ubuntu-latest
+
+    # ──────────────────────────────────────────────────────────────────────────────
+    # PERMISSIONS
+    # ──────────────────────────────────────────────────────────────────────────────
+    # No GitHub API access needed — deployment is done entirely via SSH.
+    permissions: {}
 
     steps:
       # -- SSH into EC2 and update the frontend container ---------------------
