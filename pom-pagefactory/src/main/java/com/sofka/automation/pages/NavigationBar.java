@@ -15,7 +15,7 @@ public class NavigationBar {
     @FindBy(xpath = "//button[contains(text(),'Acceder') or contains(text(),'Volver')]")
     private WebElement toggleViewButton;
 
-    @FindBy(xpath = "//button[contains(text(),'SofkianOS')]")
+    @FindBy(xpath = "//button[contains(.,'SofkianOS')]")
     private WebElement brandLogo;
 
     public NavigationBar(WebDriver driver) {

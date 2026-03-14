@@ -9,8 +9,8 @@ public class LandingPage {
 
     private final WebDriver driver;
 
-    @FindBy(xpath = "//h1[contains(.,'Sofkianos')]")
-    private WebElement heroTitle;
+    @FindBy(xpath = "//h1[contains(.,'SofkianOS')]")
+    private WebElement pageHeading;
 
     @FindBy(id = "como-funciona")
     private WebElement howItWorksSection;
@@ -24,7 +24,7 @@ public class LandingPage {
     }
 
     public boolean isHeroTitleDisplayed() {
-        return heroTitle.isDisplayed();
+        return pageHeading.isDisplayed();
     }
 
     public boolean isHowItWorksSectionVisible() {

@@ -19,13 +19,13 @@ public class KudoSendPage {
     @FindBy(xpath = "//h2[contains(.,'Reconoce a un')]")
     private WebElement pageHeading;
 
-    @FindBy(xpath = "//select[..//label[contains(text(),'De (Remitente)')]]")
+    @FindBy(xpath = "//label[contains(text(),'De (Remitente)')]/following-sibling::div//select")
     private WebElement senderSelect;
 
-    @FindBy(xpath = "//select[..//label[contains(text(),'Para (Destino)')]]")
+    @FindBy(xpath = "//label[contains(text(),'Para (Destino)')]/following-sibling::div//select")
     private WebElement recipientSelect;
 
-    @FindBy(xpath = "//select[../label[contains(text(),'Categoría')]]")
+    @FindBy(xpath = "//label[contains(text(),'Categoría')]/following-sibling::div//select")
     private WebElement categorySelect;
 
     @FindBy(xpath = "//textarea[@placeholder='Escribe tu mensaje...']")
@@ -35,7 +35,7 @@ public class KudoSendPage {
     private WebElement slideToSendLabel;
 
     // Assuming the slider handle is a div with a specific class or a sibling of the label
-    @FindBy(css = ".slider-thumb, [role='slider'], .slide-handle")
+    @FindBy(xpath = "//div[contains(@class, 'bg-brand') and .//*[local-name()='svg']]")
     private WebElement sliderHandle;
 
     @FindBy(xpath = "//p[contains(text(),'No pudimos enviar tu Kudo')]")
