@@ -289,13 +289,29 @@ jobs:
 
       - name: Build Frontend Application
         working-directory: ./frontend
-        run: npm run build
+        run: |
+          echo "🔨 Building React application..."
+          npm run build
+          if [ -d "dist" ]; then
+            echo "✅ Build successful. dist/ directory created:"
+            ls -lh dist/ | head -5
+          else
+            echo "❌ Build failed. dist/ directory not found!"
+            exit 1
+          fi
         env:
           VITE_LOG_LEVEL: info
 
       - name: Start Frontend Dev Server
         working-directory: ./frontend
-        run: npm run preview &
+        run: |
+          echo "🚀 Starting Vite preview server on http://localhost:5173..."
+          nohup npm run preview > /tmp/preview.log 2>&1 &
+          echo $! > /tmp/preview.pid
+          echo "📌 Preview PID: $(cat /tmp/preview.pid)"
+          sleep 3
+          echo "Checking if server started (preview.log):"
+          head -20 /tmp/preview.log || echo "(log file not yet created)"
         env:
           HOST: localhost
           PORT: 5173
@@ -314,19 +330,37 @@ jobs:
               echo "✅ Frontend is ready and responsive at attempt $i"
               exit 0
             fi
-            echo "  Attempt $i/$MAX_ATTEMPTS — frontend not ready yet, retrying in ${RETRY_INTERVAL}s..."
+            echo "  Attempt $i/$MAX_ATTEMPTS — retrying in ${RETRY_INTERVAL}s..."
             sleep $RETRY_INTERVAL
           done
 
           echo ""
           echo "❌ Frontend did not start within $((MAX_ATTEMPTS * RETRY_INTERVAL)) seconds"
-          echo "   Debugging information:"
-          echo "   - Checking if process is listening on port 5173..."
-          netstat -tlnp 2>/dev/null | grep 5173 || echo "     (No process found)"
-          echo "   - Last 20 lines of system logs (if available)..."
-          dmesg | tail -20 || echo "     (Unable to retrieve logs)"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "DEBUGGING INFORMATION:"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "1️⃣  Checking if npm preview process is running..."
+          if [ -f /tmp/preview.pid ]; then
+            PID=$(cat /tmp/preview.pid)
+            if ps -p $PID > /dev/null 2>&1; then
+              echo "   ✅ Process $PID is still running"
+            else
+              echo "   ❌ Process $PID crashed or exited"
+            fi
+          else
+            echo "   ❌ PID file not found"
+          fi
+          echo ""
+          echo "2️⃣  Preview server output log (/tmp/preview.log):"
+          tail -30 /tmp/preview.log 2>/dev/null || echo "   (Log file not found)"
+          echo ""
+          echo "3️⃣  Checking port 5173 listening status..."
+          netstat -tlnp 2>/dev/null | grep 5173 || echo "   (No process listening on 5173)"
+          echo ""
+          echo "4️⃣  All Node processes running:"
+          ps aux | grep -i node | grep -v grep || echo "   (No Node processes found)"
           exit 1
-        timeout-minutes: 2
+        timeout-minutes: 3
 
       # ────────────────────────────────────────────────────────────────────
       # 4. E2E TESTS: Run Cucumber tests with Gradle
