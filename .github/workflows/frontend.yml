@@ -256,19 +256,6 @@ jobs:
         with:
           chrome-version: 'stable'
 
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_USER }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-
-      - name: Start Frontend Container
-        run: |
-          docker pull ${{ env.FRONTEND_IMAGE }}:latest
-          docker run -d --name sofkianos-frontend \
-            -p 5173:5173 \
-            ${{ env.FRONTEND_IMAGE }}:latest
-
       - name: Wait for Frontend to be Ready
         run: |
           echo "⏳ Waiting for frontend at http://localhost:5173..."
@@ -311,6 +298,3 @@ jobs:
           path: pom-pagefactory/build/test-results/test/
           retention-days: 30
 
-      - name: Stop Frontend Container
-        if: always()
-        run: docker stop sofkianos-frontend && docker rm sofkianos-frontend
