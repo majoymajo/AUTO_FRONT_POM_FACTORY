@@ -13,6 +13,7 @@ Framework de automatización E2E para el frontend de **Sofkianos MVP** usando **
 - [Estructura del Proyecto](#estructura-del-proyecto)
 - [Instrucciones de Ejecución](#instrucciones-de-ejecución)
 - [Reportes](#reportes)
+- [Patrones de Diseño](#patrones-de-diseño)
 - [Buenas Prácticas](#buenas-prácticas)
 
 ---
@@ -306,18 +307,26 @@ start build/reports/cucumber.html
 
 ---
 
-## Buenas Prácticas
+## 3. Patrones de Diseño Utilizados
 
-### Page Object Model + Page Factory
+### Page Object Model (POM)
+Es el pilar de la arquitectura. Permite crear un repositorio de objetos que representan las páginas del sitio, permitiendo que las pruebas sean legibles y fáciles de mantener al separar la lógica de la prueba de la lógica de la página.
 
-| Práctica | Aplicación en este proyecto |
-|---|---|
-| **Responsabilidad única por página** | Cada page object encapsula una sola pantalla: `KudosListPage` solo conoce la lista, `KudoSendPage` solo conoce el formulario |
-| **`@FindBy` declarativo** | Los localizadores se declaran como metadatos del campo, no dispersos en el código con `driver.findElement()` |
-| **`PageFactory.initElements()`** | Inicialización lazy de elementos — se resuelven al interactuar, reduciendo errores de stale element |
-| **Métodos retornan Page Objects** | `NavigationBar.navigateToExploreKudos()` retorna `KudosListPage` — la navegación es type-safe y el compilador valida transiciones |
-| **Campos privados** | Los `WebElement` son detalles internos — solo se expone comportamiento mediante métodos públicos semánticos |
-| **Métodos compuestos** | `KudoSendPage.fillKudoForm()` agrupa 4 acciones individuales para mantener los step definitions limpios |
+### Page Factory
+*   **Uso:** Implementado mediante las anotaciones `@FindBy` y el método `PageFactory.initElements(driver, this)` en los constructores de las páginas.
+*   **Ventaja:** Proporciona una inicialización Lazy (perezosa). Los elementos no se buscan en el DOM hasta que son utilizados por primera vez, optimizando el rendimiento y evitando errores de `NoSuchElementException` prematuros.
+
+### Factory Method (en NavigationBar.java)
+*   **Uso:** Los métodos `navigateToExploreKudos()`, `navigateToSendKudos()` y `navigateToHome()` actúan como fábricas de objetos.
+*   **Ventaja:** Al navegar, el método retorna automáticamente la instancia del Page Object de la página destino. Esto permite un estilo de programación fluido (Fluent Interface), donde el Step Definition sabe exactamente qué página está disponible después de una acción.
+
+### Singleton / ThreadLocal Driver
+*   **Uso:** En `DriverFactory.java`, se utiliza `ThreadLocal<WebDriver>`.
+*   **Ventaja:** Garantiza la seguridad de hilos (Thread-Safety). Cada hilo de ejecución (importante para ejecución en paralelo con JUnit 5) tiene su propia instancia aislada del WebDriver. Además, centraliza el ciclo de vida (creación y cierre) del navegador en un solo punto estratégico.
+
+---
+
+## Buenas Prácticas Adicionales
 
 ### Gherkin Declarativo
 
