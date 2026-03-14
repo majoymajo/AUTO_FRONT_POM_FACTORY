@@ -29,7 +29,12 @@ tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
 }
 
+tasks.named('processTestResources') {
+    enabled = false
+}
+
 test {
+    doNotTrackState("Test outputs are under iCloud reparse points and are not regular files")
     useJUnitPlatform()
     jvmArgs '-Dfile.encoding=UTF-8'
     systemProperty 'file.encoding', 'UTF-8'

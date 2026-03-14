@@ -1,4 +1,4 @@
-Feature: Listado público de Kudos con filtros y paginación
+﻿Feature: Listado público de Kudos con filtros y paginación
 
   Como usuario de Sofkianos MVP
   Quiero explorar los reconocimientos otorgados en la organización
@@ -69,3 +69,4 @@ Feature: Listado público de Kudos con filtros y paginación
     When el usuario accede a la página de exploración de kudos
     Then se muestra el mensaje "Error al cargar kudos"
     And se ofrece la opción de reintentar
+

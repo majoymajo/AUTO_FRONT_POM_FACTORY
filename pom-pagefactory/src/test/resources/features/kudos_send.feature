@@ -1,4 +1,4 @@
-Feature: Envío de reconocimientos entre compañeros
+﻿Feature: Envío de reconocimientos entre compañeros
 
   Como usuario de Sofkianos MVP
   Quiero enviar un reconocimiento (Kudo) a un compañero
@@ -33,3 +33,4 @@ Feature: Envío de reconocimientos entre compañeros
       | Teamwork   |
       | Passion    |
       | Mastery    |
+

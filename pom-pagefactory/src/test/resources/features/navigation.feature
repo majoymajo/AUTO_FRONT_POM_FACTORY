@@ -1,4 +1,4 @@
-Feature: Navegación entre secciones de Sofkianos MVP
+﻿Feature: Navegación entre secciones de Sofkianos MVP
 
   Como usuario de Sofkianos MVP
   Quiero navegar fluídamente entre la landing, el formulario de envío y la exploración de kudos
@@ -19,3 +19,4 @@ Feature: Navegación entre secciones de Sofkianos MVP
     Given el usuario se encuentra en la página de exploración de kudos
     When selecciona el logo de SofkianOS en la barra de navegación
     Then regresa a la landing page principal
+
