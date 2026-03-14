@@ -14,9 +14,3 @@
     When selecciona "Acceder" en la barra de navegación
     Then accede al formulario de envío de kudos
 
-  @skip
-  Scenario: El usuario regresa a la landing desde la exploración de kudos
-    Given el usuario se encuentra en la página de exploración de kudos
-    When selecciona el logo de SofkianOS en la barra de navegación
-    Then regresa a la landing page principal
-

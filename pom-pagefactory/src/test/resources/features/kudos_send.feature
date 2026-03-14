@@ -9,19 +9,6 @@
     When navega hacia la sección de envío de kudos
     Then se muestra el formulario de reconocimiento con los campos Remitente, Destinatario, Categoría y Mensaje
 
-  @skip
-  Scenario: El usuario completa el formulario de envío de un kudo
-    Given el usuario se encuentra en el formulario de envío de kudos
-    When completa el formulario con remitente, destinatario, categoría y mensaje válidos
-    Then se muestra la previsualización del avatar del destinatario
-    And el control de envío por deslizamiento está visible
-
-  @skip
-  Scenario: El sistema muestra un error cuando el envío falla
-    Given el usuario ha completado el formulario de envío de kudos
-    When el envío es rechazado por el servidor
-    Then se muestra el banner de error con el detalle de los campos inválidos
-
   Scenario Outline: El formulario valida las categorías permitidas
     Given el usuario se encuentra en el formulario de envío de kudos
     When selecciona la categoría "<categoria>"
