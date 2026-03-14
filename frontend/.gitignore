@@ -34,7 +34,6 @@ jspm_packages/
 .eslintcache
 
 # Lock files
-package-lock.json
 yarn.lock
 pnpm-lock.yaml
 # Environment variables
