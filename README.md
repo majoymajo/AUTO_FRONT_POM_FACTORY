@@ -23,14 +23,14 @@ Arquitectura consolidada desde los escenarios Gherkin hasta la aplicación bajo 
 
 ```mermaid
 graph TD
-    subgraph Features["📋 Capa de Negocio - Escenarios"]
+    subgraph Features["📋 Business Layer - Scenarios"]
 
         F1["kudos_listing.feature<br/>(11 escenarios)"]
         F2["kudos_send.feature<br/>(4 escenarios)"]
         F3["navigation.feature<br/>(3 escenarios)"]
     end
 
-    subgraph StepDefs["⚙️ Capa de Traducción - Steps"]
+    subgraph StepDefs["⚙️ Action Layer- Steps"]
 
         S1["KudosListingSteps.java"]
         S2["KudosSendSteps.java"]
@@ -38,7 +38,7 @@ graph TD
         S4["Hooks.java<br/>Before / After"]
     end
 
-    subgraph PageObj["🔶 Capa de Abstracción - Pages"]
+    subgraph PageObj["🔶 Abstraction Layer - Pages"]
 
         P1["KudosListPage.java"]
         P2["KudoSendPage.java"]
@@ -46,13 +46,13 @@ graph TD
         P4["LandingPage.java"]
     end
 
-    subgraph Infra["🔷 Capa de Infraestructura"]
+    subgraph Infra["🔷 Core Layer"]
     
         D["DriverFactory.java<br/>ThreadLocal WebDriver"]
         B["Chrome Headless<br/>Selenium 4"]
     end
 
-    subgraph App["🚀 Aplicación Bajo Prueba"]
+    subgraph App["🚀 Test Layer"]
         WEB["React + Vite<br/>localhost:5173"]
         API["Producer API<br/>GET /api/v1/kudos"]
     end

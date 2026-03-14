@@ -65,12 +65,15 @@ public class KudosSendSteps {
 
     @When("el envío es rechazado por el servidor")
     public void elEnvioEsRechazadoPorElServidor() {
-        // Placeholder: server rejection occurs after submit attempt
+        // Trigger the submission via slider to get the server response
+        kudoSendPage.performSlideToSend();
     }
 
     @Then("se muestra el banner de error con el detalle de los campos inválidos")
     public void seMuestraElBannerDeErrorConElDetalleDeLosCamposInvalidos() {
-        assertThat(kudoSendPage.isServerErrorDisplayed()).isTrue();
+        assertThat(kudoSendPage.isServerErrorDisplayed())
+                .withFailMessage("Expected server error banner to be displayed but it was not.")
+                .isTrue();
     }
 
     @When("selecciona la categoría {string}")
@@ -80,6 +83,7 @@ public class KudosSendSteps {
 
     @Then("la categoría {string} queda seleccionada en el formulario")
     public void laCategoriaQuedaSeleccionadaEnElFormulario(String category) {
-        assertThat(category).isIn("Innovation", "Teamwork", "Passion", "Mastery");
+        assertThat(kudoSendPage.getSelectedCategory())
+                .isEqualTo(category);
     }
 }
