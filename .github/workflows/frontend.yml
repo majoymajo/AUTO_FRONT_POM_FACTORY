@@ -228,22 +228,45 @@ jobs:
   # Runs the Selenium-based E2E test suite using the POM Page Factory
   # pattern with Cucumber Gherkin scenarios.
   #
+  # Test Flow:
+  #   1. Checkout code and setup Node.js + JDK
+  #   2. Build React frontend (production-ready build)
+  #   3. Start Vite dev server (serves built app on http://localhost:5173)
+  #   4. Wait for frontend availability with robust health checks
+  #   5. Run E2E Cucumber tests with Selenium + Chrome
+  #   6. Upload test reports for analysis
+  #
   # Covers:
   #   - US-012: Kudos listing (filters, pagination, sorting, empty/error states)
   #   - Kudo sending (form, avatar preview, categories, server errors)
   #   - Navigation (Landing ↔ List ↔ Send page transitions)
   #
   # Quality gate: deploy is blocked if any E2E scenario fails.
+  #
+  # IMPORTANT: No Docker is used here. Frontend runs natively via npm.
   # ========================================================================
   e2e-tests:
     name: "🎭 E2E Tests — POM Page Factory"
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     steps:
+      # ────────────────────────────────────────────────────────────────────
+      # 1. SETUP: Checkout and install tools
+      # ────────────────────────────────────────────────────────────────────
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      # Setup Node.js with npm caching (for frontend build + dev server)
+      - name: Set up Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      # Setup JDK for Gradle/Cucumber tests
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
@@ -251,26 +274,63 @@ jobs:
           distribution: 'temurin'
           cache: 'gradle'
 
+      # Install chrome browser for Selenium tests
       - name: Install Google Chrome
         uses: browser-actions/setup-chrome@v1
         with:
           chrome-version: 'stable'
 
+      # ────────────────────────────────────────────────────────────────────
+      # 2. FRONTEND: Build and start dev server
+      # ────────────────────────────────────────────────────────────────────
+      - name: Install Frontend Dependencies
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: Build Frontend Application
+        working-directory: ./frontend
+        run: npm run build
+        env:
+          VITE_LOG_LEVEL: info
+
+      - name: Start Frontend Dev Server
+        working-directory: ./frontend
+        run: npm run preview &
+        env:
+          HOST: localhost
+          PORT: 5173
+
+      # ────────────────────────────────────────────────────────────────────
+      # 3. HEALTH CHECK: Verify frontend is ready
+      # ────────────────────────────────────────────────────────────────────
       - name: Wait for Frontend to be Ready
         run: |
           echo "⏳ Waiting for frontend at http://localhost:5173..."
-          for i in $(seq 1 30); do
-            if curl -s -o /dev/null -w "%{http_code}" http://localhost:5173 | grep -q "200"; then
-              echo "✅ Frontend is ready!"
+          MAX_ATTEMPTS=60
+          RETRY_INTERVAL=2
+
+          for i in $(seq 1 $MAX_ATTEMPTS); do
+            if timeout 5 curl -sf http://localhost:5173 > /dev/null 2>&1; then
+              echo "✅ Frontend is ready and responsive at attempt $i"
               exit 0
             fi
-            echo "  Attempt $i/30 — not ready yet, retrying in 2s..."
-            sleep 2
+            echo "  Attempt $i/$MAX_ATTEMPTS — frontend not ready yet, retrying in ${RETRY_INTERVAL}s..."
+            sleep $RETRY_INTERVAL
           done
-          echo "❌ Frontend did not start within 60 seconds"
-          docker logs sofkianos-frontend
-          exit 1
 
+          echo ""
+          echo "❌ Frontend did not start within $((MAX_ATTEMPTS * RETRY_INTERVAL)) seconds"
+          echo "   Debugging information:"
+          echo "   - Checking if process is listening on port 5173..."
+          netstat -tlnp 2>/dev/null | grep 5173 || echo "     (No process found)"
+          echo "   - Last 20 lines of system logs (if available)..."
+          dmesg | tail -20 || echo "     (Unable to retrieve logs)"
+          exit 1
+        timeout-minutes: 2
+
+      # ────────────────────────────────────────────────────────────────────
+      # 4. E2E TESTS: Run Cucumber tests with Gradle
+      # ────────────────────────────────────────────────────────────────────
       - name: Grant Execute Permission for Gradle Wrapper
         working-directory: ./pom-pagefactory
         run: chmod +x gradlew 2>/dev/null || true
@@ -278,10 +338,16 @@ jobs:
       - name: Run E2E Cucumber Tests
         working-directory: ./pom-pagefactory
         run: |
-          ./gradlew test --no-daemon || gradle test --no-daemon
+          echo "🧪 Starting E2E Cucumber tests..."
+          ./gradlew test --no-daemon
         env:
           CHROME_BIN: /usr/bin/google-chrome
+          BASE_URL: http://localhost:5173
+        continue-on-error: false
 
+      # ────────────────────────────────────────────────────────────────────
+      # 5. REPORTING: Upload test artifacts
+      # ────────────────────────────────────────────────────────────────────
       - name: Upload Cucumber E2E Report
         uses: actions/upload-artifact@v4
         if: always()
@@ -298,3 +364,10 @@ jobs:
           path: pom-pagefactory/build/test-results/test/
           retention-days: 30
 
+      - name: Upload Gradle Build Logs
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: gradle-build-logs
+          path: pom-pagefactory/build/logs/
+          retention-days: 7
