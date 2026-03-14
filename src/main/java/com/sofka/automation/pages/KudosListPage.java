@@ -103,7 +103,15 @@ public class KudosListPage {
 
     public void applyFilters() {
         applyFiltersButton.click();
-        wait.until(ExpectedConditions.visibilityOfAllElements(kudoTableRows));
+        waitForResults();
+    }
+
+    private void waitForResults() {
+        wait.until(driver -> 
+            (kudoTableRows.size() > 0 && kudoTableRows.get(0).isDisplayed()) || 
+            isEmptyStateDisplayed() || 
+            isErrorStateDisplayed()
+        );
     }
 
     public void clearFilters() {
@@ -140,21 +148,29 @@ public class KudosListPage {
     }
 
     public void goToNextPage() {
-        nextPageButton.click();
-        wait.until(ExpectedConditions.stalenessOf(kudoTableRows.get(0)));
+        wait.until(ExpectedConditions.elementToBeClickable(nextPageButton)).click();
+        waitForResults();
     }
 
     public void goToPreviousPage() {
-        previousPageButton.click();
-        wait.until(ExpectedConditions.stalenessOf(kudoTableRows.get(0)));
+        wait.until(ExpectedConditions.elementToBeClickable(previousPageButton)).click();
+        waitForResults();
     }
 
     public boolean isNextPageEnabled() {
-        return nextPageButton.isEnabled();
+        try {
+            return nextPageButton.isDisplayed() && nextPageButton.isEnabled();
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     public boolean isPreviousPageEnabled() {
-        return previousPageButton.isEnabled();
+        try {
+            return previousPageButton.isDisplayed() && previousPageButton.isEnabled();
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     public String getCurrentPageNumber() {
@@ -166,11 +182,19 @@ public class KudosListPage {
     }
 
     public boolean isEmptyStateDisplayed() {
-        return emptyStateMessage.isDisplayed();
+        try {
+            return emptyStateMessage.isDisplayed();
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     public boolean isErrorStateDisplayed() {
-        return errorStateTitle.isDisplayed();
+        try {
+            return errorStateTitle.isDisplayed();
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     public void retryAfterError() {

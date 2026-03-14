@@ -30,8 +30,14 @@ public class KudosListingSteps {
 
     @Then("se muestra la tabla de kudos con las columnas De, Para, Categoría, Mensaje y Fecha")
     public void seMuestraLaTablaDeKudosConLasColumnas() {
+        if (kudosListPage.isErrorStateDisplayed()) {
+            throw new AssertionError("El sistema muestra un estado de error. El backend podría estar caído o mal configurado.");
+        }
         List<String> expectedHeaders = List.of("De", "Para", "Categoría", "Mensaje", "Fecha");
-        assertThat(kudosListPage.getTableHeaderLabels()).containsExactlyElementsOf(expectedHeaders);
+        List<String> actualHeaders = kudosListPage.getTableHeaderLabels();
+        assertThat(actualHeaders)
+                .withFailMessage("La tabla de kudos no se muestra o no tiene las columnas esperadas. Columnas encontradas: %s", actualHeaders)
+                .containsExactlyElementsOf(expectedHeaders);
     }
 
     @And("se muestra el total de kudos encontrados")

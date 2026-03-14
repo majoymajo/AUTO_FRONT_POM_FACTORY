@@ -112,13 +112,13 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          cache-dependency-path: frontend/package.json
+          cache-dependency-path: frontend/package-lock.json
 
       # -- Install exact dependency versions from lockfile --------------------
       # `npm ci` is faster than `npm install` and guarantees reproducibility.
       - name: Install Dependencies
         working-directory: ./frontend
-        run: npm install
+        run: npm ci
 
       # -- Scan npm dependencies for known vulnerabilities (US-004) -----------
       # Runs `npm audit` to detect CVEs in the dependency tree.
