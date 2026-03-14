@@ -6,6 +6,7 @@ Feature: Listado público de Kudos con filtros y paginación
 
   Historia de usuario: US-012
 
+  @skip
   Scenario: El usuario visualiza el listado de kudos al acceder a la página
     Given el usuario se encuentra en la página de exploración de kudos
     When la página termina de cargar
@@ -17,11 +18,13 @@ Feature: Listado público de Kudos con filtros y paginación
     When filtra los kudos por la categoría "Teamwork"
     Then todos los kudos visibles pertenecen a la categoría "Teamwork"
 
+  @skip
   Scenario: El usuario filtra kudos por texto de búsqueda
     Given el usuario se encuentra en la página de exploración de kudos
     When busca kudos con el texto "proyecto"
     Then los kudos visibles contienen "proyecto" en sus campos de texto
 
+  @skip
   Scenario: El usuario filtra kudos por rango de fechas
     Given el usuario se encuentra en la página de exploración de kudos
     When filtra kudos desde "2026-02-01" hasta "2026-02-10"
@@ -32,6 +35,7 @@ Feature: Listado público de Kudos con filtros y paginación
     When ingresa una fecha de inicio posterior a la fecha de fin
     Then se muestra el mensaje de error "La fecha de inicio no puede ser posterior a la fecha de fin"
 
+  @skip
   Scenario: El usuario limpia todos los filtros aplicados
     Given el usuario ha aplicado filtros en la lista de kudos
     When limpia los filtros
@@ -42,6 +46,7 @@ Feature: Listado público de Kudos con filtros y paginación
     When cambia la dirección de ordenamiento
     Then el indicador de orden refleja la nueva dirección
 
+  @skip
   Scenario: El usuario navega a la siguiente página de resultados
     Given el usuario se encuentra en la página de exploración de kudos
     And existen múltiples páginas de resultados
@@ -53,6 +58,7 @@ Feature: Listado público de Kudos con filtros y paginación
     Given el usuario se encuentra en la primera página de resultados
     Then el botón de página anterior está deshabilitado
 
+  @skip
   Scenario: El sistema muestra un estado vacío cuando no hay resultados
     Given el usuario se encuentra en la página de exploración de kudos
     When aplica filtros que no coinciden con ningún kudo

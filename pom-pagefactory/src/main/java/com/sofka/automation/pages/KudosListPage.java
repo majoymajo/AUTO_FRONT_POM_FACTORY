@@ -1,6 +1,7 @@
 package com.sofka.automation.pages;
 
 import org.openqa.selenium.By;
+import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.FindBy;
@@ -90,7 +91,19 @@ public class KudosListPage {
     }
 
     public void selectCategory(String category) {
-        categorySelect.sendKeys(category);
+        wait.until(ExpectedConditions.visibilityOf(categorySelect));
+        wait.until(ExpectedConditions.elementToBeClickable(categorySelect));
+        try {
+            categorySelect.click();
+            categorySelect.sendKeys(category);
+        } catch (Exception ex) {
+            // Fallback for custom selects that intermittently reject keyboard input.
+            ((JavascriptExecutor) driver).executeScript(
+                "arguments[0].value = arguments[1]; arguments[0].dispatchEvent(new Event('change', { bubbles: true }));",
+                categorySelect,
+                category
+            );
+        }
     }
 
     public void setStartDate(String date) {

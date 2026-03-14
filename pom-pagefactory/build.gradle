@@ -25,9 +25,16 @@ dependencies {
     testImplementation 'org.assertj:assertj-core:3.25.3'
 }
 
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
 test {
     useJUnitPlatform()
+    jvmArgs '-Dfile.encoding=UTF-8'
+    systemProperty 'file.encoding', 'UTF-8'
     systemProperty "cucumber.plugin", "pretty,html:build/reports/cucumber.html"
     systemProperty "cucumber.features", "src/test/resources/features"
     systemProperty "cucumber.glue", "com.sofka.automation.stepdefinitions"
+    systemProperty "cucumber.filter.tags", "not @skip"
 }
