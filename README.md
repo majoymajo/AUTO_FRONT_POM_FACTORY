@@ -1,460 +1,385 @@
-# SofkianOS - Distributed System (Microservices Architecture)
+# 🧪 POM Page Factory — Sofkianos MVP E2E Automation
 
-<div align="center">
-  <img src="./assets/sofka-logo.png" alt="Sofka Logo" height="150px" />
-</div>
+Framework de automatización E2E para el frontend de **Sofkianos MVP** usando **Page Object Model (POM)** con **Page Factory**, **Cucumber** y **JUnit 5**.
 
----
-
-## Team
-
-- **Christopher Pallo**
-- **Elian Condor**
-- **Leonel**
-- **Jean Pierre Villacis**
-- **Hans Ortiz**
+> 🔗 **Aplicación bajo prueba:** Este framework automatiza el frontend del proyecto [**Sofkianos MVP**](https://github.com/ElyRiven/sofkianos-mvp), un sistema distribuido de reconocimientos (Kudos) entre compañeros construido con React + Vite (frontend) y Spring Boot (backend).
 
 ---
 
-## Documentation & Resources
+## 📋 Tabla de Contenido
 
-- **Documentación Oficial:** [https://sofkianos-docs.vercel.app/](https://sofkianos-docs.vercel.app/)
-
-### Tracking del Proyecto
-
-> _Nota: Markdown no soporta la incrustación directa de iframes por motivos de seguridad. Haz clic en el siguiente botón para acceder al documento._
-
-[![Google Sheets - Tracking del Proyecto](https://img.shields.io/badge/Google%20Sheets-Tracking%20del%20Proyecto-34A853?style=for-the-badge&logo=google-sheets&logoColor=white)](https://docs.google.com/spreadsheets/d/1B9BNs2P8Uc9wHLLaO9lWZXL5TQA7hflkfwGPXLah0is/edit?gid=0#gid=0)
-
----
-
-## Reason for Being
-
-SofkianOS transforms the Sofkian identity into tangible **Kudos**. The term **Kudos** comes from the Greek _kŷdos_, meaning honor, recognition, and prestige for an achievement. This system represents how we celebrate the real contributions of each person, creating a **Rewards Culture** that strengthens bonds between geographically distributed teams.
-
-**Sofkian** (our essence) + **OS** (Operating System of Kudos) = **Rewards Culture**
-
-### Value Proposition
-
-- **Instant Recognition**: Kudos are sent immediately, with no visible waits or queues for the user
-- **No Blocking**: Asynchronous architecture with messaging. The API responds with 202 and work continues in the background
-- **Fair Gamification**: Categories with points, traceability, and a system designed to scale with your team
-- **Massive Processing**: SofkianOS processes thousands of recognitions without blocking thanks to the asynchronous pipeline
+- [Arquitectura E2E](#arquitectura-e2e)
+- [Historias de Usuario Cubiertas](#historias-de-usuario-cubiertas)
+- [Estructura del Proyecto](#estructura-del-proyecto)
+- [Instrucciones de Ejecución](#instrucciones-de-ejecución)
+- [Reportes](#reportes)
+- [Patrones de Diseño](#patrones-de-diseño)
+- [Buenas Prácticas](#buenas-prácticas)
 
 ---
 
-## System Architecture
+## Arquitectura E2E
 
-### Data Flow (C2 - Containers)
+Arquitectura consolidada desde los escenarios Gherkin hasta la aplicación bajo prueba:
 
-SofkianOS operates as a distributed system where Kudos flow through multiple bounded contexts:
+```mermaid
+graph TD
+    subgraph Features["📋 Business Layer - Scenarios"]
 
-1. **Sofka Employee** → User sends a Kudo from the web interface
-2. **SofkianOS Web (React + Vite)** → Sends JSON request to Producer API
-3. **Producer API (Spring Boot)** → Validates and publishes event to RabbitMQ
-4. **RabbitMQ (Broker/Store)** → Asynchronous decoupling, temporary storage
-5. **Consumer Worker (Spring Boot Listener)** → Processes heavy gamification logic
-6. **Database (PostgreSQL)** → Final persistence (future)
+        F1["kudos_listing.feature<br/>(11 escenarios)"]
+        F2["kudos_send.feature<br/>(4 escenarios)"]
+        F3["navigation.feature<br/>(3 escenarios)"]
+    end
 
-**Key Benefits**:
+    subgraph StepDefs["⚙️ Action Layer- Steps"]
 
-- **Non-Blocking API**: Producer responds instantly (202), processing occurs asynchronously
-- **Scalability**: Multiple Consumer instances can process messages in parallel
-- **Resilience**: Messages persist in RabbitMQ if Consumers are temporarily unavailable
-- **Decoupling**: Frontend and Producer don't need to know the Consumer implementation
+        S1["KudosListingSteps.java"]
+        S2["KudosSendSteps.java"]
+        S3["NavigationSteps.java"]
+        S4["Hooks.java<br/>Before / After"]
+    end
 
----
+    subgraph PageObj["🔶 Abstraction Layer - Pages"]
 
-## Technology Stack
+        P1["KudosListPage.java"]
+        P2["KudoSendPage.java"]
+        P3["NavigationBar.java"]
+        P4["LandingPage.java"]
+    end
 
-<div align="center">
+    subgraph Infra["🔷 Core Layer"]
+    
+        D["DriverFactory.java<br/>ThreadLocal WebDriver"]
+        B["Chrome Headless<br/>Selenium 4"]
+    end
 
-### Frontend & Backend
+    subgraph App["🚀 Test Layer"]
+        WEB["React + Vite<br/>localhost:5173"]
+        API["Producer API<br/>GET /api/v1/kudos"]
+    end
 
-[![TypeScript](https://skillicons.dev/icons?i=ts)](https://www.typescriptlang.org/)
-[![React](https://skillicons.dev/icons?i=react)](https://react.dev/)
-[![Vite](https://skillicons.dev/icons?i=vite)](https://vitejs.dev/)
-[![Tailwind](https://skillicons.dev/icons?i=tailwind)](https://tailwindcss.com/)
-[![Spring](https://skillicons.dev/icons?i=spring)](https://spring.io/)
-[![Java](https://skillicons.dev/icons?i=java)](https://www.java.com/)
-[![Maven](https://skillicons.dev/icons?i=maven)](https://maven.apache.org/)
+    F1 --> S1
+    F2 --> S2
+    F3 --> S3
+    S1 --> P1
+    S2 --> P2 & P3
+    S3 --> P1 & P3 & P4
+    S4 --> D
+    P1 & P2 & P3 & P4 --> B
+    B --> WEB --> API
 
-### Infrastructure
-
-[![RabbitMQ](https://skillicons.dev/icons?i=rabbitmq)](https://www.rabbitmq.com/)
-[![Docker](https://skillicons.dev/icons?i=docker)](https://www.docker.com/)
-[![Terraform](https://skillicons.dev/icons?i=terraform)](https://www.terraform.io/)
-[![AWS](https://skillicons.dev/icons?i=aws)](https://aws.amazon.com/)
-
-</div>
-
-### Specific Versions
-
-| Category           | Technology   | Version         |
-| ------------------ | ------------ | --------------- |
-| **Frontend**       | React        | 19.2.0          |
-|                    | TypeScript   | 5.9.3           |
-|                    | Vite         | 7.2.4           |
-|                    | Tailwind CSS | 3.4.19          |
-| **Backend**        | Spring Boot  | 3.3.5           |
-|                    | Java         | 17              |
-|                    | Maven        | (Spring Parent) |
-| **Messaging**      | RabbitMQ     | 3-management    |
-| **Infrastructure** | Docker       | Multi-stage     |
-|                    | Terraform    | (AWS)           |
-
----
-
-## Visual Architecture (C4 Model)
-
-Architecture diagrams are stored in `./assets/`:
-
-### System Context (C1)
-
-![System Context](./assets/architecture-c1.png)
-
-High-level view of SofkianOS showing external actors (Sofka Employees) and the system boundary with Frontend, Producer API, RabbitMQ, and Consumer Worker.
-
-### Container Architecture (C2)
-
-![Container Architecture](./assets/architecture-c2.png)
-
-Detailed container-level architecture showing internal components of each service, communication protocols (HTTP, AMQP), and data flow.
-
-### Component Detail (C3)
-
-![Component Detail](./assets/architecture-c3.png)
-![Component Detail](./assets/architecture-c33.png)
-
-}
-Detailed view of internal components of each service (Controllers, Services, Configurations, Consumers).
-
----
-
-## Project Navigation
-
-This repository contains three main services, each with its own README:
-
-| Service             | Path               | Description                                 | README                                         |
-| ------------------- | ------------------ | ------------------------------------------- | ---------------------------------------------- |
-| **Frontend**        | `/frontend`        | React SPA with landing page and Kudo form   | [Frontend README](./frontend/README.md)        |
-| **Producer API**    | `/producer-api`    | REST API gateway that publishes to RabbitMQ | [Producer README](./producer-api/README.md)    |
-| **Consumer Worker** | `/consumer-worker` | Asynchronous worker that processes Kudos    | [Consumer README](./consumer-worker/README.md) |
-| **Infrastructure**  | `/aws`             | Terraform configurations for AWS            | (See `.tf` files)                              |
-
----
-
-## AI Workflow — SofkianOS
-
-**Document:** AI Interaction Strategy  
-**Team:** SofkianOS  
-**Version:** 1.0
-
-### 1. Methodology: AI-First
-
-SofkianOS adopts an **AI-First** approach to development:
-
-- **Humans = Architects.** We define vision, requirements, architecture, and quality criteria. We decide _what_ to build and _why_.
-- **AI = Junior Developer.** AI executes implementation under human direction: code, tests, and documentation. We review and refine its output.
-
-We do not treat AI as a replacement for judgment; we use it as a disciplined executor that we orchestrate and validate.
-
-### 2. Golden Rule
-
-**Strictly NO manual boilerplate code.**
-
-- All scaffolding, boilerplate, and repetitive structure must be **orchestrated via AI** (prompts, code generation, templates).
-- Humans **do not** write repetitive configuration by hand; we **prompt and review** so that AI produces it.
-- Exceptions (e.g., unique config or security-critical snippets) must be justified and documented.
-
-### 3. Roles
-
-| Responsibility     | Owner  | Description                                                                            |
-| ------------------ | ------ | -------------------------------------------------------------------------------------- |
-| Strategy           | Humans | Product/technology direction, priorities, architecture decisions.                      |
-| Prompt Engineering | Humans | Designing and improving prompts; defining [ROLE], [CONTEXT], [CONSTRAINT], [OUTPUT].   |
-| Security Review    | Humans | Review of dependencies, auth, data handling, and security-sensitive changes.           |
-| PR Merging         | Humans | Final approval and merge to `develop` / `main`; no automated merge without human gate. |
-| Coding             | AI     | Implementation of features, refactors, and fixes from approved specifications.         |
-| Unit Tests         | AI     | Writing and maintaining unit tests aligned with acceptance criteria.                   |
-| Documentation      | AI     | Inline docs, README updates, and technical documentation from human outlines.          |
-
-### 4. Prompt Protocol
-
-Every request to AI must follow this structure:
-
-```
-[ROLE]      — Who the AI is acting as (e.g., "Backend developer", "QA engineer").
-[CONTEXT]   — Relevant background: ticket, architecture, files, or decisions.
-[CONSTRAINT] — Hard limits: stack, patterns, style, security, performance.
-[OUTPUT]    — Exact deliverable: files, format, behavior, acceptance criteria.
+    style F1 fill:#60a5fa
+    style F2 fill:#60a5fa
+    style F3 fill:#60a5fa
+    style S1 fill:#fbbf24
+    style S2 fill:#fbbf24
+    style S3 fill:#fbbf24
+    style S4 fill:#fbbf24
+    style P1 fill:#34d399
+    style P2 fill:#34d399
+    style P3 fill:#34d399
+    style P4 fill:#34d399
+    style D fill:#818cf8
+    style B fill:#818cf8
+    style WEB fill:#f87171
+    style API fill:#f87171
 ```
 
-**Example:**
+---
 
-```text
-[ROLE] Act as backend developer for our REST API.
-[CONTEXT] We are adding a new "projects" resource; see ADR-002 and OpenAPI specification in /docs.
-[CONSTRAINT] Use our existing service/repository pattern; no new dependencies without approval; follow project ESLint config.
-[OUTPUT] Implement GET /api/v1/projects and POST /api/v1/projects with validation; add unit tests and update OpenAPI.
+## Historias de Usuario Cubiertas
+
+### US-012 — Integración Frontend–Backend para Listado de Kudos
+
+| Aspecto | Detalle |
+|---|---|
+| **Feature file** | `kudos_listing.feature` |
+| **Page Object** | `KudosListPage.java` |
+| **Escenarios** | 11 |
+| **Cobertura UI** | Tabla de kudos, filtros (categoría, texto, fechas), paginación, ordenamiento, estados vacío/error |
+
+**Como** usuario de Sofkianos MVP  
+**Quiero** explorar los reconocimientos otorgados en la organización  
+**Para** descubrir el impacto de la cultura de reconocimiento  
+
+#### Escenarios del Listado
+
+| # | Escenario | Validación |
+|---|---|---|
+| 1 | Visualizar listado al acceder | Tabla con columnas De, Para, Categoría, Mensaje, Fecha |
+| 2 | Filtrar por categoría | Solo kudos de la categoría seleccionada |
+| 3 | Filtrar por texto de búsqueda | Kudos que contienen el texto buscado |
+| 4 | Filtrar por rango de fechas | Kudos dentro del rango especificado |
+| 5 | Validar fecha inicio > fecha fin | Mensaje de error de validación |
+| 6 | Limpiar filtros | Lista completa sin restricciones |
+| 7 | Cambiar dirección de orden | Indicador refleja "Más recientes" / "Más antiguos" |
+| 8 | Navegar a siguiente página | Tabla actualizada + indicador de página |
+| 9 | Botón anterior deshabilitado en pág. 1 | Botón no clickeable |
+| 10 | Estado vacío sin resultados | Mensaje "No se encontraron kudos" |
+| 11 | Estado de error en falla de carga | Mensaje "Error al cargar kudos" + botón reintentar |
+
+### Envío de Kudos (derivado de US-004 + US-012)
+
+| Aspecto | Detalle |
+|---|---|
+| **Feature file** | `kudos_send.feature` |
+| **Page Object** | `KudoSendPage.java` |
+| **Escenarios** | 4 (incluye Scenario Outline con 4 categorías) |
+| **Cobertura UI** | Formulario, selects, avatar preview, slider de envío, errores del servidor |
+
+### Navegación (cross-cutting)
+
+| Aspecto | Detalle |
+|---|---|
+| **Feature file** | `navigation.feature` |
+| **Page Object** | `NavigationBar.java`, `LandingPage.java` |
+| **Escenarios** | 3 |
+| **Cobertura UI** | Transiciones Landing ↔ Lista ↔ Envío |
+
+---
+
+## Estructura del Proyecto
+
+```
+AUTO_FRONT_POM_FACTORY/
+├── build.gradle                                    ← Dependencias y config
+├── settings.gradle
+├── gradle/wrapper/gradle-wrapper.properties
+│
+├── src/main/java/com/sofka/automation/
+│   ├── drivers/
+│   │   └── DriverFactory.java                      ← ThreadLocal + Chrome headless
+│   └── pages/
+│       ├── NavigationBar.java                       ← @FindBy → Navbar.tsx
+│       ├── LandingPage.java                         ← @FindBy → LandingPage.tsx
+│       ├── KudosListPage.java                       ← @FindBy → KudosListPage.tsx
+│       └── KudoSendPage.java                        ← @FindBy → KudoForm.tsx
+│
+└── src/test/
+    ├── java/com/sofka/automation/
+    │   ├── runners/
+    │   │   └── RunCucumberTest.java                 ← JUnit 5 + Cucumber
+    │   └── stepdefinitions/
+    │       ├── Hooks.java                           ← @Before / @After
+    │       ├── TestConstants.java                   ← BASE_URL
+    │       ├── KudosListingSteps.java               ← 11 escenarios US-012
+    │       ├── KudosSendSteps.java                  ← 4 escenarios envío
+    │       └── NavigationSteps.java                 ← 3 escenarios navegación
+    └── resources/features/
+        ├── kudos_listing.feature                    ← Declarativo — US-012
+        ├── kudos_send.feature                       ← Declarativo — Envío
+        └── navigation.feature                       ← Declarativo — Navegación
 ```
 
-Prompts that omit any of the four parts must be completed by the author before sending.
-
-### 5. Git Flow
-
-We use a simple branching model:
-
-| Branch      | Purpose                                                                                                                                       |
-| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| `main`      | Production-ready code. Protected; only updated via merges from `develop` (or release process).                                                |
-| `develop`   | Integration branch. All feature work is merged here after review.                                                                             |
-| `feature/*` | One branch per feature/task (e.g., `feature/auth-login`, `feature/api-projects`). Branched from `develop`, merged back into `develop` via PR. |
-
-**Rules:**
-
-- Create `feature/<short-name>` from `develop`.
-- Work (human + AI) happens on the feature branch.
-- Open a Pull Request toward `develop`; humans perform Security Review and approval.
-- Only humans merge PRs. After merge, delete the feature branch.
-- Releases to `main` follow the team's release process (e.g., from `develop` or via release branches).
-
-### Summary
-
-| Principle   | Rule                                                               |
-| ----------- | ------------------------------------------------------------------ |
-| Methodology | AI-First: Humans architect, AI implements.                         |
-| Golden Rule | No manual boilerplate; AI generates scaffolding.                   |
-| Roles       | Humans: Strategy, Prompts, Security, Merge. AI: Code, Tests, Docs. |
-| Prompts     | Always use [ROLE] + [CONTEXT] + [CONSTRAINT] + [OUTPUT].           |
-| Git         | `main`, `develop`, `feature/*`; humans gate merges.                |
-
 ---
 
-## 🚀 Live Demo & Observability
+## Prerrequisitos
 
-The system is deployed on **AWS EC2** (backend and containers) and **Vercel** (frontend). Because the architecture is **event-driven (asynchronous)**, observing container logs via Dozzle is essential to understand the end-to-end data flow.
+| Herramienta | Versión Mínima | Propósito |
+|---|---|---|
+| **Java JDK** | 17+ | Compilación y ejecución |
+| **Gradle** | 8.x (wrapper incluido) | Build tool |
+| **Google Chrome** | 120+ | Navegador para tests |
+| **Frontend Sofkianos** | N/A | La app debe estar corriendo en `localhost:5173` |
 
-### Frontend (UI) 🟢
-
-|                 |                                                                                                       |
-| --------------- | ----------------------------------------------------------------------------------------------------- |
-| **Link**        | https://sofkianos-mvp-edub.vercel.app/                                                                |
-| **Description** | User interface where Kudos are submitted. Send a Kudo and then verify its flow in Dozzle (see below). |
-
-### Observability (Crucial) 📊
-
-|          |                               |
-| -------- | ----------------------------- |
-| **Tool** | Dozzle (real-time log viewer) |
-| **Link** | http://54.210.184.144:8888/   |
-
-Since the system uses **RabbitMQ**, transaction processing is **asynchronous**. The API returns **202 Accepted** immediately; actual processing happens in the Consumer Worker. To see the full flow:
-
-1. **Producer API** — In Dozzle, open the **producer-api** container logs. After sending a Kudo from the UI, you will see the HTTP request and the message being **published** to RabbitMQ.
-2. **Consumer Worker** — In Dozzle, open the **consumer-worker** container logs. Shortly after, you will see the same message being **consumed** and processed in real time.
-
-Inspecting both containers in Dozzle is the recommended way to confirm that a Kudo was produced and consumed end-to-end.
-
-### Backend Services & Health 🟢
-
-| Service             | Swagger Documentation                                          | Health Check                                       |
-| ------------------- | -------------------------------------------------------------- | -------------------------------------------------- |
-| **Producer API**    | [Swagger UI](http://54.210.184.144:8081/swagger-ui/index.html) | [Health](http://54.210.184.144:8081/api/v1/health) |
-| **Consumer Worker** | [Swagger UI](http://54.210.184.144:8082/swagger-ui/index.html) | [Health](http://54.210.184.144:8082/health)        |
-
----
-
-## Execution
-
-### Prerequisites
-
-- **Docker** and **Docker Compose** installed
-- **Available ports**: 5173 (Frontend - dev only), 8082 (Producer), 8081 (Consumer), 5672 (RabbitMQ AMQP), 15672 (RabbitMQ Management), 8888 (Dozzle)
-
-### Docker Compose Configurations
-
-SofkianOS provides three Docker Compose configurations for different environments:
-
-#### Development Configuration (`docker-compose.yml`)
-
-**Use for local development.** Includes all services with Frontend running locally.
+### Verificar prerrequisitos
 
 ```bash
-docker compose up -d
+java -version       # Debe ser 17+
+gradle --version    # Opcional si se usa wrapper
+google-chrome --version  # Chrome instalado
 ```
 
-**Services:**
+---
 
-- Frontend (React) — http://localhost:5173
-- Producer API — http://localhost:8082
-- Consumer Worker — http://localhost:8081
-- RabbitMQ — http://localhost:15672
-- Dozzle (Log Viewer) — http://localhost:8888
+## Instrucciones de Ejecución
 
-#### Test Configuration (`docker-compose.test.yml`)
+### 1. Ubicarse en el proyecto de automatización
 
-**Use for test environment.** Includes all services with Frontend running locally.
-
-**Requires** .env file configuration inside the Docker directory
+Si estás trabajando dentro del monorepo `sofkianos-mvp`, el framework E2E vive en la carpeta `pom-pagefactory`:
 
 ```bash
-docker compose -f ./Docker/docker-compose.test.yml up -d
+# Desde la raíz del monorepo
+cd pom-pagefactory
 ```
 
-#### Production Configuration (`docker-compose.prod.yml`)
-
-**Use for AWS deployment.** Backend services only; Frontend is hosted on Vercel.
+Si trabajas este proyecto de forma aislada, clónalo y entra a la carpeta raíz:
 
 ```bash
-docker compose -f ./Docker/docker-compose.prod.yml up -d
+git clone https://github.com/majoymajo/AUTO_FRONT_POM_FACTORY.git
+cd AUTO_FRONT_POM_FACTORY
 ```
 
-**Services:**
+### 2. Asegurar que el frontend esté corriendo
 
-- Producer API — Port 8082
-- Consumer Worker — Port 8081
-- RabbitMQ — Ports 5672, 15672
-- Dozzle (Log Viewer) — Port 8888
-
-**Frontend:** Deployed separately on **Vercel** (https://sofkianos-mvp.vercel.app/)
-
-### Quick Start (Local Development)
-
-1. **Configure environment** (optional):
-
-   ```bash
-   cp .env.example .env
-   ```
-
-   Default RabbitMQ credentials: `guest` / `guest` (local only).
-
-2. **Start the development stack**:
-
-   ```bash
-   docker compose up -d
-   ```
-
-   This command:
-   - Download the service images (Frontend, Producer API, Consumer Worker) from Docker Hub
-   - Starts RabbitMQ with health checks
-   - Starts Producer API (waits for RabbitMQ to be healthy)
-   - Starts Consumer Worker (waits for RabbitMQ and DB to be healthy)
-   - Starts Frontend (waits for Producer API to be available)
-   - Starts Dozzle log viewer
-
-3. **Verify services**:
-   - **Frontend**: http://localhost:5173
-   - **Producer API**: http://localhost:8082/api/v1/kudos (POST)
-   - **Consumer Worker**: http://localhost:8081/api/v1/health
-   - **RabbitMQ Management**: http://localhost:15672 (guest/guest)
-   - **Dozzle Logs**: http://localhost:8888
-
-4. **Stop the stack**:
-
-   ```bash
-   docker compose down
-   ```
-
-   To remove volumes (including RabbitMQ data):
-
-   ```bash
-   docker compose down -v
-   ```
-
-### Service Dependencies & Startup Order
-
-The orchestration ensures the correct startup order:
-
-**Development** (`docker-compose.yml`):
-
-- RabbitMQ starts first with health checks
-- PostgreSQL database follows with health checks
-- Producer API and Consumer Worker wait for RabbitMQ to be healthy
-- Consumer Worker wait for PostgreSQL to be healthy too
-- Frontend waits for Producer API to be available
-- All services communicate via the `sofkian-net` bridge network
-
-**Testing** (`docker-compose.test.yml`):
-
-- RabbitMQ starts first with health checks
-- PostgreSQL database follows with health checks
-- Producer API and Consumer Worker wait for RabbitMQ to be healthy
-- Consumer Worker wait for PostgreSQL to be healthy too
-- Frontend waits for Producer API to be available
-- All services communicate via the `sofkian-net` bridge network
-
-**Production** (`docker-compose.prod.yml`):
-
-- RabbitMQ starts first with health checks
-- Producer API and Consumer Worker wait for RabbitMQ to be healthy
-- Frontend is hosted separately on Vercel
-- All services communicate via the `sofkian-net` bridge network
-
-### Testing the Flow (Development)
-
-When using `docker-compose.yml`:
-
-1. Open http://localhost:5173
-2. Navigate to the Kudo form
-3. Send a Kudo (From, To, Category, Message)
-4. Verify Producer API logs (Dozzle): should show HTTP 202 response
-5. Verify RabbitMQ Management UI: check message in `kudos.queue`
-6. Verify Consumer Worker logs (Dozzle): should show message processing
-7. Verify that Consumer processed the Kudo (check database/logs)
-
----
-
-## Network Architecture
-
-All services run on the Docker bridge network `sofkian-net`:
-
-- **Frontend** → **Producer API**: HTTP (port 8082)
-- **Producer API** → **RabbitMQ**: AMQP (port 5672)
-- **Consumer Worker** → **RabbitMQ**: AMQP (port 5672)
-- **External Access**: Ports exposed via Docker port mappings
-
----
-
-## Monitoring & Observability
-
-- **Dozzle**: Real-time container logs at http://localhost:8888
-- **RabbitMQ Management UI**: Queue monitoring, message inspection at http://localhost:15672
-- **Health Endpoints**:
-  - Producer API: `GET http://localhost:8082/health`
-  - Consumer Worker: `GET http://localhost:8081/api/v1/health`
-
----
-
-## Assets
-
-Architecture diagrams and evidence files are stored in `./assets/` at the project root. Create the folder if it doesn't exist:
+El framework apunta a `http://localhost:5173`. El frontend de Sofkianos MVP debe estar disponible:
 
 ```bash
-mkdir -p assets
+# Desde la raíz del monorepo sofkianos-mvp
+cd frontend
+npm install
+npm run dev
 ```
 
-Expected files:
+Si el frontend no está disponible en `localhost:5173`, los tests E2E fallarán con errores de Selenium como `TimeoutException` o `NoSuchElementException`.
 
-- `sofka-logo.png` — Sofka logo
-- `architecture-c1.png` — System context diagram
-- `architecture-c2.png` — Container diagram
-- `architecture-c3.png` — Component diagram
+### 3. Ejecutar todos los tests
+
+```bash
+# Linux / macOS
+./gradlew test
+
+# Windows PowerShell / CMD
+.\gradlew.bat test
+```
+
+### 4. Ejecutar un feature específico
+
+```bash
+# Linux / macOS
+./gradlew test -Dcucumber.features="src/test/resources/features/kudos_listing.feature"
+./gradlew test -Dcucumber.features="src/test/resources/features/kudos_send.feature"
+./gradlew test -Dcucumber.features="src/test/resources/features/navigation.feature"
+
+# Windows PowerShell / CMD
+.\gradlew.bat test -Dcucumber.features="src/test/resources/features/kudos_listing.feature"
+.\gradlew.bat test -Dcucumber.features="src/test/resources/features/kudos_send.feature"
+.\gradlew.bat test -Dcucumber.features="src/test/resources/features/navigation.feature"
+```
+
+Atajos por feature:
+
+```bash
+# Solo escenarios de listado (US-012)
+.\gradlew.bat test -Dcucumber.features="src/test/resources/features/kudos_listing.feature"
+
+# Solo escenarios de envío
+.\gradlew.bat test -Dcucumber.features="src/test/resources/features/kudos_send.feature"
+
+# Solo escenarios de navegación
+.\gradlew.bat test -Dcucumber.features="src/test/resources/features/navigation.feature"
+```
+
+### 5. Ejecutar por tags (si se agregan)
+
+```bash
+# Linux / macOS
+./gradlew test -Dcucumber.filter.tags="@smoke"
+
+# Windows PowerShell / CMD
+.\gradlew.bat test -Dcucumber.filter.tags="@smoke"
+```
+
+### 6. Flujo recomendado de ejecución
+
+```bash
+# Terminal 1 - frontend
+cd frontend
+npm install
+npm run dev
+
+# Terminal 2 - E2E
+cd pom-pagefactory
+.\gradlew.bat test
+```
 
 ---
 
-## Contributing
+## Reportes
 
-Found a bug, a security issue, or a piece of technical debt? Use the structured issue templates:
+Tras la ejecución, los reportes se generan en:
 
-- 🐛 [Bug Report](https://github.com/ElyRiven/sofkianos-mvp/issues/new?template=bug_report.yml)
-- 🔧 [Technical Debt / Known Limitation](https://github.com/ElyRiven/sofkianos-mvp/issues/new?template=technical_debt.yml)
-- 🔴 [Security Issue](https://github.com/ElyRiven/sofkianos-mvp/issues/new?template=security_issue.yml)
+| Reporte | Ruta | Formato |
+|---|---|---|
+| **Cucumber HTML** | `build/reports/cucumber.html` | Visual con detalle por escenario |
+| **JUnit XML** | `build/test-results/test/` | Para integración con CI/CD |
+| **Consola** | Terminal | Pretty-print de pasos |
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide on how the templates work, severity levels, and branch/commit conventions.
+Para abrir el reporte HTML:
+
+```bash
+# Linux / macOS
+open build/reports/cucumber.html
+
+# Windows
+start build/reports/cucumber.html
+```
 
 ---
 
-## License
+## 3. Patrones de Diseño Utilizados
 
-Proprietary — Sofka Internal Use
+### Page Object Model (POM)
+Es el pilar de la arquitectura. Permite crear un repositorio de objetos que representan las páginas del sitio, permitiendo que las pruebas sean legibles y fáciles de mantener al separar la lógica de la prueba de la lógica de la página.
+
+### Page Factory
+*   **Uso:** Implementado mediante las anotaciones `@FindBy` y el método `PageFactory.initElements(driver, this)` en los constructores de las páginas.
+*   **Ventaja:** Proporciona una inicialización Lazy (perezosa). Los elementos no se buscan en el DOM hasta que son utilizados por primera vez, optimizando el rendimiento y evitando errores de `NoSuchElementException` prematuros.
+
+### Factory Method (en NavigationBar.java)
+*   **Uso:** Los métodos `navigateToExploreKudos()`, `navigateToSendKudos()` y `navigateToHome()` actúan como fábricas de objetos.
+*   **Ventaja:** Al navegar, el método retorna automáticamente la instancia del Page Object de la página destino. Esto permite un estilo de programación fluido (Fluent Interface), donde el Step Definition sabe exactamente qué página está disponible después de una acción.
+
+### Singleton / ThreadLocal Driver
+*   **Uso:** En `DriverFactory.java`, se utiliza `ThreadLocal<WebDriver>`.
+*   **Ventaja:** Garantiza la seguridad de hilos (Thread-Safety). Cada hilo de ejecución (importante para ejecución en paralelo con JUnit 5) tiene su propia instancia aislada del WebDriver. Además, centraliza el ciclo de vida (creación y cierre) del navegador en un solo punto estratégico.
+
+---
+
+## Buenas Prácticas Adicionales
+
+### Gherkin Declarativo
+
+| Principio | Ejemplo en este proyecto |
+|---|---|
+| **Lenguaje de negocio** | `"filtra los kudos por la categoría Teamwork"` en vez de `"hace click en el select y elige TEAMWORK"` |
+| **Sin selectores CSS/XPath** | Los escenarios no mencionan IDs, clases, ni localizadores |
+| **Estable ante rediseños** | Si el frontend cambia de tabla a cards, solo se modifican los Page Objects — los features no cambian |
+| **Scenario Outline para datos** | Las 4 categorías (Innovation, Teamwork, Passion, Mastery) se validan con un solo escenario parametrizado |
+| **Español para stakeholders** | Los escenarios están en español para ser legibles por POs, BAs y el equipo de QA |
+
+### Código Limpio en Automatización
+
+| Regla | Implementación |
+|---|---|
+| **Sin código comentado** | Ninguna clase contiene `//` comentarios inline ni bloques `/* */` deshabilitados |
+| **Sin comentarios innecesarios** | Los nombres de métodos son auto-explicativos: `isEmptyStateDisplayed()`, `getDateValidationErrorText()` |
+| **Naming semántico** | Métodos en inglés orientados al negocio, no a la implementación: `enterEmail()` vs `type1()` |
+| **Constantes centralizadas** | `TestConstants.BASE_URL` en un solo lugar — no hardcoded en cada step |
+| **Hooks para lifecycle** | `@Before`/`@After` garantizan un navegador limpio por escenario — sin ventanas huérfanas |
+
+
+
+---
+
+## Stack Tecnológico
+
+| Tecnología | Versión | Propósito |
+|---|---|---|
+| Java | 17 | Lenguaje base |
+| Selenium WebDriver | 4.18.1 | Automatización del navegador |
+| WebDriverManager | 5.7.0 | Gestión automática de drivers |
+| Cucumber | 7.15.0 | Motor BDD + Gherkin |
+| JUnit 5 | 5.10.2 | Runner de tests |
+| AssertJ | 3.25.3 | Assertions fluidas |
+| Gradle | 8.6 | Build tool |
+
+---
+
+## Aplicación Bajo Prueba
+
+Este framework automatiza el frontend del proyecto **Sofkianos MVP**:
+
+| Aspecto | Detalle |
+|---|---|
+| **Repositorio** | [github.com/ElyRiven/sofkianos-mvp](https://github.com/ElyRiven/sofkianos-mvp) |
+| **Frontend** | React 18 + Vite + Tailwind CSS, servido con Nginx en puerto 5173 |
+| **Backend** | Spring Boot (Producer API + Consumer Worker) con RabbitMQ y PostgreSQL |
+| **Arquitectura** | Clean Architecture (Hexagonal) con microservicios |
+| **Funcionalidad automatizada** | Listado público de Kudos con filtros, paginación y envío de reconocimientos |
+
+---
+
+## Licencia
+
+Este proyecto es parte del proceso de formación en QA Automation de Sofka Technologies.
