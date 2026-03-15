@@ -366,19 +366,6 @@ Es el pilar de la arquitectura. Permite crear un repositorio de objetos que repr
 
 ---
 
-## Aplicación Bajo Prueba
-
-Este framework automatiza el frontend del proyecto **Sofkianos MVP**:
-
-| Aspecto | Detalle |
-|---|---|
-| **Repositorio** | [github.com/ElyRiven/sofkianos-mvp](https://github.com/ElyRiven/sofkianos-mvp) |
-| **Frontend** | React 18 + Vite + Tailwind CSS, servido con Nginx en puerto 5173 |
-| **Backend** | Spring Boot (Producer API + Consumer Worker) con RabbitMQ y PostgreSQL |
-| **Arquitectura** | Clean Architecture (Hexagonal) con microservicios |
-| **Funcionalidad automatizada** | Listado público de Kudos con filtros, paginación y envío de reconocimientos |
-
----
 
 ## Licencia
 
