@@ -101,7 +101,7 @@ jobs:
       pull-requests: read  # Read PR info (optional)
 
     steps:
-      # -- Checkout source code --------------------------------------------
+      # -- Checkout source code -----------------------------------------------
       - name: Checkout Code
         uses: actions/checkout@v4
 
@@ -223,128 +223,18 @@ jobs:
           retention-days: 3
 
   # ========================================================================
-  # JOB 2 — DOCKER BUILD & PUSH
-  # ========================================================================
-  # Builds the frontend Docker image using the multi-stage Dockerfile
-  # (Node 20 builder → Nginx runtime), then pushes to Docker Hub.
-  #
-  # Only runs AFTER tests pass (`needs: test`) and only on push events
-  # (not on PRs, to avoid pushing throwaway images).
-  # ========================================================================
-  docker-build:
-    name: "🐳 Docker Build & Push"
-    needs: [test]                       # Fail-fast: skip if tests fail
-    if: github.event_name == 'push'     # Don't push images for PRs
-    runs-on: ubuntu-latest
-
-    # ──────────────────────────────────────────────────────────────────────────
-    # PERMISSIONS
-    # ──────────────────────────────────────────────────────────────────────────
-    # security-events: required by github/codeql-action/upload-sarif to push
-    #                  Trivy scan results to the GitHub Security tab.
-    permissions:
-      contents: read
-      security-events: write
-
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      # -- Extract short SHA for tagging --------------------------------------
-      # Generates a 7-character short SHA from the commit hash
-      - name: Generate Short SHA
-        id: short-sha
-        run: echo "sha_short=$(git rev-parse --short=7 HEAD)" >> $GITHUB_OUTPUT
-
-      # -- Login to Docker Hub ------------------------------------------------
-      # Requires repository secrets: DOCKER_USER and DOCKER_PASSWORD
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_USER }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-
-      # -- Setup Docker Buildx for layer caching ------------------------------
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      # -- Build & push the frontend image ------------------------------------
-      # Tags:
-      #   - latest       → always points to the newest build
-      #   - <short-sha>  → immutable 7-char tag tied to the commit for rollback
-      - name: Build & Push Frontend
-        uses: docker/build-push-action@v6
-        with:
-          context: ./frontend
-          file: ./frontend/Dockerfile
-          push: true
-          tags: |
-            ${{ env.FRONTEND_IMAGE }}:${{ steps.short-sha.outputs.sha_short }}
-            ${{ env.FRONTEND_IMAGE }}:latest
-          cache-from: type=gha          # GitHub Actions cache for Docker layers
-          cache-to: type=gha,mode=max
-
-      # -- Scan Docker image for vulnerabilities with Trivy (US-004) ----------
-      # Aqua Trivy scans the built image for:
-      #   - OS package vulnerabilities (e.g., Nginx, Alpine apk packages)
-      #   - Application library vulnerabilities (node_modules baked in)
-      # Severity threshold: CRITICAL and HIGH block the pipeline.
-      # Generates both a human-readable table (logs) and a SARIF report.
-      - name: Docker Image Vulnerability Scan (Trivy)
-        uses: aquasecurity/trivy-action@0.28.0
-        with:
-          image-ref: ${{ env.FRONTEND_IMAGE }}:${{ steps.short-sha.outputs.sha_short }}
-          format: 'table'
-          exit-code: '1'
-          severity: 'CRITICAL,HIGH'
-          ignore-unfixed: true
-
-      # -- Generate Trivy SARIF report for archival ---------------------------
-      # Produces a SARIF-format report suitable for:
-      #   - GitHub Security tab integration (Code Scanning alerts)
-      #   - External SIEM/compliance tool ingestion
-      #   - Long-term vulnerability trend analysis
-      # This step always runs (even if the previous scan found issues)
-      # so the report is available for review.
-      # exit-code: '0' ensures this step NEVER fails — its only purpose
-      # is to generate the report artifact, not to gate the pipeline.
-      - name: Generate Trivy SARIF Report
-        uses: aquasecurity/trivy-action@0.28.0
-        if: always()
-        with:
-          image-ref: ${{ env.FRONTEND_IMAGE }}:${{ steps.short-sha.outputs.sha_short }}
-          format: 'sarif'
-          output: 'trivy-frontend-results.sarif'
-          exit-code: '0'
-          severity: 'CRITICAL,HIGH,MEDIUM'
-          ignore-unfixed: true
-
-      # -- Upload Trivy SARIF to GitHub Security tab --------------------------
-      # Integrates scan results into the repository's Security → Code Scanning
-      # alerts, providing a centralized view of all vulnerability findings.
-      - name: Upload Trivy SARIF to GitHub Security
-        uses: github/codeql-action/upload-sarif@v3
-        if: always()
-        with:
-          sarif_file: 'trivy-frontend-results.sarif'
-          category: 'trivy-frontend-docker'
-
-      # -- Upload Trivy report as artifact ------------------------------------
-      # Archives the SARIF report for 14 days alongside the npm audit report,
-      # providing a complete security audit trail per pipeline execution.
-      - name: Upload Trivy Report Artifact
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: trivy-frontend-report
-          path: trivy-frontend-results.sarif
-          retention-days: 14
-
-  # ========================================================================
-  # JOB 3 — E2E TESTS (POM Page Factory + Cucumber)
+  # JOB 2 — E2E TESTS (POM Page Factory + Cucumber)
   # ========================================================================
   # Runs the Selenium-based E2E test suite using the POM Page Factory
   # pattern with Cucumber Gherkin scenarios.
+  #
+  # Test Flow:
+  #   1. Checkout code and setup Node.js + JDK
+  #   2. Build React frontend (production-ready build)
+  #   3. Start Vite dev server (serves built app on http://localhost:5173)
+  #   4. Wait for frontend availability with robust health checks
+  #   5. Run E2E Cucumber tests with Selenium + Chrome
+  #   6. Upload test reports for analysis
   #
   # Covers:
   #   - US-012: Kudos listing (filters, pagination, sorting, empty/error states)
@@ -352,24 +242,31 @@ jobs:
   #   - Navigation (Landing ↔ List ↔ Send page transitions)
   #
   # Quality gate: deploy is blocked if any E2E scenario fails.
+  #
+  # IMPORTANT: No Docker is used here. Frontend runs natively via npm.
   # ========================================================================
   e2e-tests:
     name: "🎭 E2E Tests — POM Page Factory"
-    needs: [docker-build]
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
-
-    # ──────────────────────────────────────────────────────────────────────────────
-    # PERMISSIONS
-    # ──────────────────────────────────────────────────────────────────────────────
-    # Minimal permissions: read-only access to repository contents.
-    permissions:
-      contents: read
+    timeout-minutes: 15
 
     steps:
+      # ────────────────────────────────────────────────────────────────────
+      # 1. SETUP: Checkout and install tools
+      # ────────────────────────────────────────────────────────────────────
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      # Setup Node.js with npm caching (for frontend build + dev server)
+      - name: Set up Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      # Setup JDK for Gradle/Cucumber tests
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
@@ -377,39 +274,94 @@ jobs:
           distribution: 'temurin'
           cache: 'gradle'
 
+      # Install chrome browser for Selenium tests
       - name: Install Google Chrome
         uses: browser-actions/setup-chrome@v1
         with:
           chrome-version: 'stable'
 
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_USER }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+      # ────────────────────────────────────────────────────────────────────
+      # 2. FRONTEND: Build and start dev server
+      # ────────────────────────────────────────────────────────────────────
+      - name: Install Frontend Dependencies
+        working-directory: ./frontend
+        run: npm ci
 
-      - name: Start Frontend Container
+      - name: Build Frontend Application
+        working-directory: ./frontend
         run: |
-          docker pull ${{ env.FRONTEND_IMAGE }}:latest
-          docker run -d --name sofkianos-frontend \
-            -p 5173:5173 \
-            ${{ env.FRONTEND_IMAGE }}:latest
+          echo "🔨 Building React application..."
+          npm run build
+          if [ -d "dist" ]; then
+            echo "✅ Build successful. dist/ directory created:"
+            ls -lh dist/ | head -5
+          else
+            echo "❌ Build failed. dist/ directory not found!"
+            exit 1
+          fi
+        env:
+          VITE_LOG_LEVEL: info
 
+      - name: Start Frontend Dev Server
+        working-directory: ./frontend
+        run: |
+          echo "🚀 Starting Vite preview server on http://localhost:5173..."
+          nohup npx vite preview --port 5173 --host 0.0.0.0 > /tmp/preview.log 2>&1 &
+          echo $! > /tmp/preview.pid
+          echo "📌 Preview PID: $(cat /tmp/preview.pid)"
+          sleep 3
+          echo "Checking if server started (preview.log):"
+          head -20 /tmp/preview.log || echo "(log file not yet created)"
+
+      # ────────────────────────────────────────────────────────────────────
+      # 3. HEALTH CHECK: Verify frontend is ready
+      # ────────────────────────────────────────────────────────────────────
       - name: Wait for Frontend to be Ready
         run: |
           echo "⏳ Waiting for frontend at http://localhost:5173..."
-          for i in $(seq 1 30); do
-            if curl -s -o /dev/null -w "%{http_code}" http://localhost:5173 | grep -q "200"; then
-              echo "✅ Frontend is ready!"
+          MAX_ATTEMPTS=60
+          RETRY_INTERVAL=2
+
+          for i in $(seq 1 $MAX_ATTEMPTS); do
+            if timeout 5 curl -sf http://localhost:5173 > /dev/null 2>&1; then
+              echo "✅ Frontend is ready and responsive at attempt $i"
               exit 0
             fi
-            echo "  Attempt $i/30 — not ready yet, retrying in 2s..."
-            sleep 2
+            echo "  Attempt $i/$MAX_ATTEMPTS — retrying in ${RETRY_INTERVAL}s..."
+            sleep $RETRY_INTERVAL
           done
-          echo "❌ Frontend did not start within 60 seconds"
-          docker logs sofkianos-frontend
-          exit 1
 
+          echo ""
+          echo "❌ Frontend did not start within $((MAX_ATTEMPTS * RETRY_INTERVAL)) seconds"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "DEBUGGING INFORMATION:"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "1️⃣  Checking if npm preview process is running..."
+          if [ -f /tmp/preview.pid ]; then
+            PID=$(cat /tmp/preview.pid)
+            if ps -p $PID > /dev/null 2>&1; then
+              echo "   ✅ Process $PID is still running"
+            else
+              echo "   ❌ Process $PID crashed or exited"
+            fi
+          else
+            echo "   ❌ PID file not found"
+          fi
+          echo ""
+          echo "2️⃣  Preview server output log (/tmp/preview.log):"
+          tail -30 /tmp/preview.log 2>/dev/null || echo "   (Log file not found)"
+          echo ""
+          echo "3️⃣  Checking port 5173 listening status..."
+          netstat -tlnp 2>/dev/null | grep 5173 || echo "   (No process listening on 5173)"
+          echo ""
+          echo "4️⃣  All Node processes running:"
+          ps aux | grep -i node | grep -v grep || echo "   (No Node processes found)"
+          exit 1
+        timeout-minutes: 3
+
+      # ────────────────────────────────────────────────────────────────────
+      # 4. E2E TESTS: Run Cucumber tests with Gradle
+      # ────────────────────────────────────────────────────────────────────
       - name: Grant Execute Permission for Gradle Wrapper
         working-directory: ./pom-pagefactory
         run: chmod +x gradlew 2>/dev/null || true
@@ -417,10 +369,16 @@ jobs:
       - name: Run E2E Cucumber Tests
         working-directory: ./pom-pagefactory
         run: |
-          ./gradlew test --no-daemon || gradle test --no-daemon
+          echo "🧪 Starting E2E Cucumber tests..."
+          ./gradlew test --no-daemon
         env:
           CHROME_BIN: /usr/bin/google-chrome
+          BASE_URL: http://localhost:5173
+        continue-on-error: false
 
+      # ────────────────────────────────────────────────────────────────────
+      # 5. REPORTING: Upload test artifacts
+      # ────────────────────────────────────────────────────────────────────
       - name: Upload Cucumber E2E Report
         uses: actions/upload-artifact@v4
         if: always()
@@ -437,54 +395,10 @@ jobs:
           path: pom-pagefactory/build/test-results/test/
           retention-days: 30
 
-      - name: Stop Frontend Container
-        if: always()
-        run: docker stop sofkianos-frontend && docker rm sofkianos-frontend
-
-  # ========================================================================
-  # JOB 4 — DEPLOY TO EC2
-  # ========================================================================
-  # SSHs into the AWS EC2 instance, pulls the latest frontend image,
-  # and restarts only the frontend container.
-  #
-  # Only runs on pushes to `main` (production deploys).
-  # Requires: E2E tests must pass first (quality gate).
-  # Requires secrets: EC2_HOST, EC2_USER, EC2_SSH_KEY.
-  # ========================================================================
-  deploy:
-    name: "🚀 Deploy Frontend"
-    needs: [e2e-tests]
-    if: github.ref == 'refs/heads/main'   # Deploy only from main branch
-    runs-on: ubuntu-latest
-
-    # ──────────────────────────────────────────────────────────────────────────────
-    # PERMISSIONS
-    # ──────────────────────────────────────────────────────────────────────────────
-    # No GitHub API access needed — deployment is done entirely via SSH.
-    permissions: {}
-
-    steps:
-      # -- SSH into EC2 and update the frontend container ---------------------
-      # Only the frontend container is restarted (--no-deps keeps backend
-      # and RabbitMQ untouched).
-      - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1
+      - name: Upload Gradle Build Logs
+        uses: actions/upload-artifact@v4
+        if: failure()
         with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          script: |
-            cd ~/sofkianos-mvp
-
-            # Pull latest code (nginx.conf, docker-compose changes, etc.)
-            git pull origin main
-
-            # Pull the freshly built Docker image
-            docker pull ${{ env.FRONTEND_IMAGE }}:latest
-
-            # Restart only the frontend container (zero-downtime for backend)
-            docker-compose -f docker-compose.prod.yml up -d \
-              --no-deps --force-recreate frontend
-
-            # Show running containers for verification
-            docker-compose -f docker-compose.prod.yml ps
+          name: gradle-build-logs
+          path: pom-pagefactory/build/logs/
+          retention-days: 7
