@@ -1,34 +1,4 @@
-# ==============================================================================
-# FRONTEND CI/CD WORKFLOW
-#
-# PURPOSE:
-#   Independent pipeline for the frontend React application.
-#   Runs linting, unit tests & security scans, builds the Docker image,
-#   scans it for vulnerabilities, and deploys to AWS EC2.
-#
-# DESIGN DECISIONS:
-#   - Isolated from backend — only triggers when frontend code changes
-#   - Uses `!` negation patterns to skip doc/non-code file changes
-#   - Lint step catches style issues early before tests run
-#   - npm audit scans dependencies for known CVEs (US-004)
-#   - Trivy scans Docker images for OS & library vulnerabilities (US-004)
-#   - Critical/High vulnerabilities block deployment automatically
-#   - Docker image uses multi-stage build (Node builder → Nginx runtime)
-#   - Deploy updates only the frontend container, leaving backend untouched
-# ==============================================================================
-
-name: Frontend CI/CD
-
-# ──────────────────────────────────────────────────────────────────────────────
-# TRIGGERS
-# ──────────────────────────────────────────────────────────────────────────────
-# Runs on push/PR to main, develop, and feature/** branches.
-# Only triggers when frontend CODE files are modified.
-#
-# The `!` negation patterns ensure that documentation and non-code files
-# (.md, .txt, .pdf, images, logs) do NOT trigger this workflow,
-# even if those files are inside the frontend/ directory.
-# ──────────────────────────────────────────────────────────────────────────────
+name: Frontend CI/CD─────────────────────────────────────────────────────────────────────────────
 on:
   push:
     branches:
@@ -39,7 +9,6 @@ on:
       - "frontend/**"
       - "pom-pagefactory/**"
       - ".github/workflows/frontend.yml"
-      # ── Exclude documentation / non-code files ──
       - "!**/*.md"
       - "!**/*.txt"
       - "!**/*.pdf"
@@ -366,32 +335,56 @@ jobs:
         working-directory: ./pom-pagefactory
         run: chmod +x gradlew 2>/dev/null || true
 
-      - name: Run E2E Cucumber Tests
+      - name: Run E2E Cucumber Tests with Serenity
         working-directory: ./pom-pagefactory
         run: |
-          echo "🧪 Starting E2E Cucumber tests..."
-          ./gradlew test --no-daemon
+          echo "🧪 Starting E2E Cucumber tests with Serenity..."
+          echo "═══════════════════════════════════════════════════════════════"
+          echo "Executing Cucumber scenarios against frontend at http://localhost:5173"
+          echo "═══════════════════════════════════════════════════════════════"
+          echo ""
+          ./gradlew clean test aggregate --no-daemon
+          EXIT_CODE=$?
+          echo ""
+          echo "═══════════════════════════════════════════════════════════════"
+          if [ $EXIT_CODE -eq 0 ]; then
+            echo "✅ All E2E tests passed!"
+            echo "📊 Serenity report generated at: build/reports/serenity/index.html"
+          else
+            echo "❌ Some E2E tests failed. Review the Serenity report for details."
+            echo "📊 Serenity report available at: build/reports/serenity/index.html"
+          fi
+          echo "═══════════════════════════════════════════════════════════════"
+          exit $EXIT_CODE
         env:
           CHROME_BIN: /usr/bin/google-chrome
           BASE_URL: http://localhost:5173
         continue-on-error: false
 
       # ────────────────────────────────────────────────────────────────────
-      # 5. REPORTING: Upload test artifacts
+      # 5. REPORTING: Upload test artifacts and Serenity reports
       # ────────────────────────────────────────────────────────────────────
+      - name: Upload Serenity E2E Report (Primary)
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: serenity-e2e-report
+          path: pom-pagefactory/build/reports/serenity/
+          retention-days: 30
+      
       - name: Upload Cucumber E2E Report
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: cucumber-e2e-report
-          path: pom-pagefactory/build/reports/cucumber-report.html
+          path: pom-pagefactory/build/reports/cucumber.html
           retention-days: 30
 
       - name: Upload JUnit E2E Results
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: e2e-test-results
+          name: e2e-junit-results
           path: pom-pagefactory/build/test-results/test/
           retention-days: 30
 
@@ -402,3 +395,31 @@ jobs:
           name: gradle-build-logs
           path: pom-pagefactory/build/logs/
           retention-days: 7
+      
+      - name: Display Test Execution Summary
+        if: always()
+        run: |
+          echo ""
+          echo "╔════════════════════════════════════════════════════════════════╗"
+          echo "║               E2E TEST EXECUTION SUMMARY                        ║"
+          echo "╚════════════════════════════════════════════════════════════════╝"
+          echo ""
+          echo "📋 Available Reports:"
+          echo "  • Serenity Report:  pom-pagefactory/build/reports/serenity/"
+          echo "  • Cucumber Report:  pom-pagefactory/build/reports/cucumber.html"
+          echo "  • JUnit Results:    pom-pagefactory/build/test-results/test/"
+          echo ""
+          echo "📊 Report Details:"
+          if [ -d "pom-pagefactory/build/reports/serenity" ]; then
+            SERENITY_DIR=$(find pom-pagefactory/build/reports/serenity -name "index.html" | head -1)
+            if [ -n "$SERENITY_DIR" ]; then
+              echo "  ✅ Serenity report generated successfully"
+              echo "     Open: pom-pagefactory/build/reports/serenity/index.html"
+            fi
+          fi
+          echo ""
+          echo "👉 Next Steps:"
+          echo "  1. Download the 'serenity-e2e-report' artifact"
+          echo "  2. Extract and open 'index.html' in your browser"
+          echo "  3. Review test execution timeline, screenshots, and failure details"
+          echo ""

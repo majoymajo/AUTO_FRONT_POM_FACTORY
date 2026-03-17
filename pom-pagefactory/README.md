@@ -270,7 +270,48 @@ Atajos por feature:
 .\gradlew.bat test -Dcucumber.filter.tags="@smoke"
 ```
 
-### 6. Flujo recomendado de ejecución
+### 6. Ejecutar con Serenity Report
+
+Esta es la forma recomendada y genera reportes automáticamente:
+
+```bash
+# Linux / macOS
+./gradlew clean test aggregate
+
+# Windows PowerShell / CMD
+.\gradlew.bat clean test aggregate
+```
+
+El comando `aggregate` ejecuta Serenity Report con las siguientes características:
+- Recolecta resultados de test en `build/test-results/test/`
+- Genera reporte HTML en `build/reports/serenity/`
+- Procesa screenshots automáticamente
+- Genera timeline de ejecución
+
+### 7. Ejecutar tests por categoría con Serenity
+
+```bash
+# Solo listado de kudos
+.\gradlew.bat clean test -Dcucumber.features="src/test/resources/features/kudos_listing.feature" aggregate
+
+# Solo envío de kudos
+.\gradlew.bat clean test -Dcucumber.features="src/test/resources/features/kudos_send.feature" aggregate
+
+# Solo navegación
+.\gradlew.bat clean test -Dcucumber.features="src/test/resources/features/navigation.feature" aggregate
+```
+
+### 8. Ejecutar con Tags y Serenity
+
+```bash
+# Ejecutar solo tests con @smoke
+.\gradlew.bat clean test -Dcucumber.filter.tags="@smoke" aggregate
+
+# Ejecutar excluyendo tests @skip
+.\gradlew.bat clean test -Dcucumber.filter.tags="not @skip" aggregate
+```
+
+### 9. Flujo recomendado de ejecución (Serenity + Frontend)
 
 ```bash
 # Terminal 1 - frontend
@@ -278,24 +319,55 @@ cd frontend
 npm install
 npm run dev
 
-# Terminal 2 - E2E
+# Terminal 2 - E2E + Serenity
 cd pom-pagefactory
-.\gradlew.bat test
+.\gradlew.bat clean test aggregate
+
+# Abrir reporte
+start build/reports/serenity/index.html
 ```
+
+### 10. Quick Commands Reference
+
+| Objetivo | Comando |
+|---|---|
+| **Ejecutar todo con Serenity** | `.\gradlew.bat clean test aggregate` |
+| **Solo tests (sin reporte)** | `.\gradlew.bat test` |
+| **Solo generar reporte de última ejecución** | `.\gradlew.bat aggregate` |
+| **Limpiar y empezar de cero** | `.\gradlew.bat clean` |
+| **Ver reportes recientes** | `start build/reports/serenity/index.html` |
 
 ---
 
 ## Reportes
 
-Tras la ejecución, los reportes se generan en:
+Tras la ejecución de tests, se generan múltiples reportes en diferentes formatos:
 
-| Reporte | Ruta | Formato |
-|---|---|---|
-| **Cucumber HTML** | `build/reports/cucumber.html` | Visual con detalle por escenario |
-| **JUnit XML** | `build/test-results/test/` | Para integración con CI/CD |
-| **Consola** | Terminal | Pretty-print de pasos |
+### Reportes Disponibles
 
-Para abrir el reporte HTML:
+| Reporte | Ruta | Formato | Descripción |
+|---|---|---|---|
+| **Serenity HTML** | `build/reports/serenity/index.html` | HTML Visual | Reporte interactivo con detalles de escenarios, pasos ejecutados, screenshots y timeline |
+| **Cucumber HTML** | `build/reports/cucumber.html` | HTML Pretty | Desglose por feature con estados pass/fail |
+| **JUnit XML** | `build/test-results/test/` | XML | Para integración con CI/CD y dashboards |
+| **Consola** | Terminal | Pretty-print | Resumen en tiempo real durante ejecución |
+
+### Abrir Reportes Localmente
+
+#### Serenity Report (Recomendado)
+
+```bash
+# Linux / macOS
+open build/reports/serenity/index.html
+
+# Windows PowerShell
+Start-Process build/reports/serenity/index.html
+
+# Windows CMD
+start build/reports/serenity/index.html
+```
+
+#### Cucumber Report
 
 ```bash
 # Linux / macOS
@@ -304,6 +376,17 @@ open build/reports/cucumber.html
 # Windows
 start build/reports/cucumber.html
 ```
+
+### Contenido del Reporte Serenity
+
+El reporte Serenity incluye:
+- ✅ **Resumen ejecutivo** — Estadísticas generales de pruebas (total, pasadas, fallidas)
+- 📊 **Gráficos** — Distribución de resultados, timeline de ejecución
+- 🎭 **Timeline por feature** — Árbol expandible con escenarios y pasos
+- 📸 **Screenshots** — Capturados en cada paso (especialmente en fallos)
+- ⏱️ **Duración** — Tiempo de cada escenario y paso individual
+- 🏷️ **Trazabilidad** — Enlace directo al source code de features y steps
+- 📋 **Evidencia** — Logs de navegador, eventos de Selenium, estados de elementos
 
 ---
 
