@@ -216,7 +216,6 @@ jobs:
   # ========================================================================
   e2e-tests:
     name: "🎭 E2E Tests — POM Page Factory"
-    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -252,8 +251,6 @@ jobs:
       # Install matching ChromeDriver for the installed Chrome version
       - name: Setup ChromeDriver
         uses: nanasess/setup-chromedriver@v2
-        with:
-          chromedriver-version: 'matching'
 
       # Install OS-level dependencies required for headless Chrome
       - name: Install dependencies
