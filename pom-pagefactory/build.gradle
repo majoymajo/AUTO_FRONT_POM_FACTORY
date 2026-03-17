@@ -69,38 +69,6 @@ test {
     useJUnitPlatform()
     jvmArgs '-Dfile.encoding=UTF-8'
     systemProperty 'file.encoding', 'UTF-8'
-    
-    // ✅ Enhanced test logging and error reporting
-    testLogging {
-        events "passed", "skipped", "failed", "standardError"
-        exceptionFormat "full"
-        showExceptions true
-        showCauses true
-        showStackTraces true
-        afterSuite { desc, result ->
-            if (!desc.parent) {
-                println "\n" + ("─" * 80)
-                println "Test Results Summary:"
-                println "  Total Tests:     ${result.testCount}"
-                println "  Passed:          ${result.successfulTestCount}"
-                println "  Failed:          ${result.failedTestCount}"
-                println "  Skipped:         ${result.skippedTestCount}"
-                println "  Time Elapsed:    ${(result.endTime - result.startTime)}ms"
-                println "─" * 80 + "\n"
-                
-                if (result.failedTestCount > 0) {
-                    println "❌ Failed Tests Detected!"
-                    println "   Review: build/reports/tests/test/index.html"
-                    println "   Serenity: target/site/serenity/index.html"
-                }
-            }
-        }
-    }
-    
-    // ✅ Improve gradle output for CI/CD visibility
-    onOutput { descriptor, event ->
-        println(event.message)
-    }
 }
 
 gradle.startParameter.continueOnFailure = true

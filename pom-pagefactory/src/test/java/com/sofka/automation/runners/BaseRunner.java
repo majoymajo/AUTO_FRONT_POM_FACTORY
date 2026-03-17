@@ -40,7 +40,14 @@ public abstract class BaseRunner {
     }
 
     private static WebDriver createEdgeDriver() {
-        WebDriverManager.edgedriver().setup();  // ✅ Auto-download correct version
+        try {
+            // Try to use WebDriverManager first (for CI/CD environments)
+            WebDriverManager.edgedriver().setup();
+        } catch (Exception e) {
+            // Fallback for local development when WebDriverManager can't download
+            System.out.println("[INFO] WebDriverManager download failed (network issue), using system Edge driver");
+        }
+        
         EdgeOptions options = new EdgeOptions();
         options.addArguments(
                 "--remote-allow-origins=*",
@@ -63,7 +70,14 @@ public abstract class BaseRunner {
     }
 
     private static WebDriver createChromeDriver() {
-        WebDriverManager.chromedriver().setup();  // ✅ Auto-download correct version
+        try {
+            // Try to use WebDriverManager first (for CI/CD environments)
+            WebDriverManager.chromedriver().setup();
+        } catch (Exception e) {
+            // Fallback for local development when WebDriverManager can't download
+            System.out.println("[INFO] WebDriverManager download failed (network issue), using system Chrome driver");
+        }
+        
         ChromeOptions options = new ChromeOptions();
         options.addArguments(
                 "--remote-allow-origins=*",
