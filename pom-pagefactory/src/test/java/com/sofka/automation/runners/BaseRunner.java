@@ -70,16 +70,22 @@ public abstract class BaseRunner {
     }
 
     private static WebDriver createChromeDriver() {
-        try {
-            // Try to use WebDriverManager first (for CI/CD environments)
-            WebDriverManager.chromedriver().setup();
-        } catch (Exception e) {
-            // Fallback for local development when WebDriverManager can't download
-            System.out.println("[INFO] WebDriverManager download failed (network issue), using system Chrome driver");
+        String driverPath = System.getProperty("webdriver.chrome.driver");
+        if (driverPath == null || driverPath.isEmpty()) {
+            try {
+                // Try to use WebDriverManager first (for CI/CD environments)
+                WebDriverManager.chromedriver().setup();
+            } catch (Exception e) {
+                // Fallback for local development when WebDriverManager can't download
+                System.out.println("[INFO] WebDriverManager download failed (network issue), using system Chrome driver");
+            }
+        } else {
+            System.out.println("[INFO] Using system ChromeDriver from: " + driverPath);
         }
         
         ChromeOptions options = new ChromeOptions();
         options.addArguments(
+                "--headless",              // Required in CI: no display server available
                 "--remote-allow-origins=*",
                 "--test-type",
                 "--no-sandbox",
