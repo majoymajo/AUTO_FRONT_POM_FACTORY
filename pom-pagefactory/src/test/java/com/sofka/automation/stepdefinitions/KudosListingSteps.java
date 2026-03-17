@@ -1,7 +1,7 @@
 package com.sofka.automation.stepdefinitions;
 
-import com.sofka.automation.drivers.DriverFactory;
 import com.sofka.automation.pages.KudosListPage;
+import com.sofka.automation.runners.BaseRunner;
 import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
@@ -14,7 +14,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class KudosListingSteps {
 
-    private final WebDriver driver = DriverFactory.getDriver();
+    private final WebDriver driver = BaseRunner.getDriver();
     private KudosListPage kudosListPage;
 
     @Given("el usuario se encuentra en la página de exploración de kudos")

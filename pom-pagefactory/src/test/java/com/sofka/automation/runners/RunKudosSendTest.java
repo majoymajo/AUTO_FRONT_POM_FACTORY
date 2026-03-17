@@ -13,9 +13,9 @@ import static io.cucumber.junit.platform.engine.Constants.PLUGIN_PROPERTY_NAME;
 @Suite
 @IncludeEngines("cucumber")
 @SelectClasspathResource("features")
-@ConfigurationParameter(key = FEATURES_PROPERTY_NAME, value = "src/test/resources/features")
+@ConfigurationParameter(key = FEATURES_PROPERTY_NAME, value = "src/test/resources/features/kudos_send.feature")
 @ConfigurationParameter(key = GLUE_PROPERTY_NAME, value = "com.sofka.automation.stepdefinitions")
 @ConfigurationParameter(key = FILTER_TAGS_PROPERTY_NAME, value = "not @skip")
-@ConfigurationParameter(key = PLUGIN_PROPERTY_NAME, value = "pretty,html:build/reports/cucumber-report.html")
-public class RunCucumberTest extends BaseRunner {
+@ConfigurationParameter(key = PLUGIN_PROPERTY_NAME, value = "pretty,html:build/reports/cucumber-send-report.html")
+public class RunKudosSendTest extends BaseRunner {
 }

@@ -1,10 +1,10 @@
 package com.sofka.automation.stepdefinitions;
 
-import com.sofka.automation.drivers.DriverFactory;
 import com.sofka.automation.pages.KudoSendPage;
 import com.sofka.automation.pages.KudosListPage;
 import com.sofka.automation.pages.LandingPage;
 import com.sofka.automation.pages.NavigationBar;
+import com.sofka.automation.runners.BaseRunner;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
@@ -14,7 +14,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class NavigationSteps {
 
-    private final WebDriver driver = DriverFactory.getDriver();
+    private final WebDriver driver = BaseRunner.getDriver();
     private NavigationBar navigationBar;
     private KudosListPage kudosListPage;
     private KudoSendPage kudoSendPage;

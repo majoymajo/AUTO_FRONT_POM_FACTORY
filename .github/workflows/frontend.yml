@@ -358,6 +358,7 @@ jobs:
           exit $EXIT_CODE
         env:
           CHROME_BIN: /usr/bin/google-chrome
+          BROWSER: chrome
           BASE_URL: http://localhost:5173
         continue-on-error: false
 

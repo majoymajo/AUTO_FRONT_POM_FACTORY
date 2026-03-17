@@ -1,8 +1,8 @@
 package com.sofka.automation.stepdefinitions;
 
-import com.sofka.automation.drivers.DriverFactory;
 import com.sofka.automation.pages.KudoSendPage;
 import com.sofka.automation.pages.NavigationBar;
+import com.sofka.automation.runners.BaseRunner;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
@@ -12,7 +12,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class KudosSendSteps {
 
-    private final WebDriver driver = DriverFactory.getDriver();
+    private final WebDriver driver = BaseRunner.getDriver();
     private KudoSendPage kudoSendPage;
 
     @Given("el usuario se encuentra en el formulario de envío de kudos")
