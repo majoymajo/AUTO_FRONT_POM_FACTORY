@@ -13,8 +13,10 @@ Framework de automatización E2E para el frontend de **Sofkianos MVP** usando **
 - [Estructura del Proyecto](#estructura-del-proyecto)
 - [Instrucciones de Ejecución](#instrucciones-de-ejecución)
 - [Reportes](#reportes)
+- [Troubleshooting & Validación](#troubleshooting--validación)
 - [Patrones de Diseño](#patrones-de-diseño)
 - [Buenas Prácticas](#buenas-prácticas)
+
 
 ---
 
@@ -26,12 +28,12 @@ Arquitectura consolidada desde los escenarios Gherkin hasta la aplicación bajo 
 graph TD
     subgraph Features["📋 Business Layer - Scenarios"]
 
-        F1["kudos_listing.feature<br/>(11 escenarios)"]
-        F2["kudos_send.feature<br/>(4 escenarios)"]
-        F3["navigation.feature<br/>(3 escenarios)"]
+        F1["kudos_listing.feature<br/>(2 escenarios)"]
+        F2["kudos_send.feature<br/>(1 escenario)"]
+        F3["navigation.feature<br/>(2 escenarios)"]
     end
 
-    subgraph StepDefs["⚙️ Action Layer- Steps"]
+    subgraph StepDefs["⚙️ Action Layer - Steps"]
 
         S1["KudosListingSteps.java"]
         S2["KudosSendSteps.java"]
@@ -49,8 +51,8 @@ graph TD
 
     subgraph Infra["🔷 Core Layer"]
     
-        D["DriverFactory.java<br/>ThreadLocal WebDriver"]
-        B["Chrome Headless<br/>Selenium 4"]
+        D["BaseRunner.java<br/>ThreadLocal WebDriver"]
+        B["Chrome/Edge (WebDriverManager)<br/>Selenium 4"]
     end
 
     subgraph App["🚀 Test Layer"]
@@ -89,88 +91,124 @@ graph TD
 
 ## Historias de Usuario Cubiertas
 
-### US-012 — Integración Frontend–Backend para Listado de Kudos
+### Escenarios Totales: 5 ejecutables (2 + 1 + 2)
 
-| Aspecto | Detalle |
-|---|---|
-| **Feature file** | `kudos_listing.feature` |
-| **Page Object** | `KudosListPage.java` |
-| **Escenarios** | 11 |
-| **Cobertura UI** | Tabla de kudos, filtros (categoría, texto, fechas), paginación, ordenamiento, estados vacío/error |
+| Feature | Escenarios | Page Objects | Steps |
+|---|---|---|---|
+| `kudos_listing.feature` | 2 | KudosListPage | KudosListingSteps |
+| `kudos_send.feature` | 1 | KudoSendPage | KudosSendSteps |
+| `navigation.feature` | 2 | NavigationBar, LandingPage | NavigationSteps |
 
-**Como** usuario de Sofkianos MVP  
-**Quiero** explorar los reconocimientos otorgados en la organización  
-**Para** descubrir el impacto de la cultura de reconocimiento  
+### US-012 — Listado público de Kudos con filtros y paginación
 
-#### Escenarios del Listado
+```gherkin
+Scenario: El usuario cambia el orden de los kudos por fecha
+  Given el usuario se encuentra en la página de exploración de kudos
+  When cambia la dirección de ordenamiento
+  Then el indicador de orden refleja la nueva dirección
 
-| # | Escenario | Validación |
-|---|---|---|
-| 1 | Visualizar listado al acceder | Tabla con columnas De, Para, Categoría, Mensaje, Fecha |
-| 2 | Filtrar por categoría | Solo kudos de la categoría seleccionada |
-| 3 | Filtrar por texto de búsqueda | Kudos que contienen el texto buscado |
-| 4 | Filtrar por rango de fechas | Kudos dentro del rango especificado |
-| 5 | Validar fecha inicio > fecha fin | Mensaje de error de validación |
-| 6 | Limpiar filtros | Lista completa sin restricciones |
-| 7 | Cambiar dirección de orden | Indicador refleja "Más recientes" / "Más antiguos" |
-| 8 | Navegar a siguiente página | Tabla actualizada + indicador de página |
-| 9 | Botón anterior deshabilitado en pág. 1 | Botón no clickeable |
-| 10 | Estado vacío sin resultados | Mensaje "No se encontraron kudos" |
-| 11 | Estado de error en falla de carga | Mensaje "Error al cargar kudos" + botón reintentar |
+Scenario: El botón de página anterior se deshabilita en la primera página
+  Given el usuario se encuentra en la primera página de resultados
+  Then el botón de página anterior está deshabilitado
+```
 
-### Envío de Kudos (derivado de US-004 + US-012)
+### Envío de Kudos
 
-| Aspecto | Detalle |
-|---|---|
-| **Feature file** | `kudos_send.feature` |
-| **Page Object** | `KudoSendPage.java` |
-| **Escenarios** | 4 (incluye Scenario Outline con 4 categorías) |
-| **Cobertura UI** | Formulario, selects, avatar preview, slider de envío, errores del servidor |
+```gherkin
+Scenario: El usuario accede al formulario de envío de kudos
+  Given el usuario está en la página de envío de kudos
+  When completa el formulario
+  Then envía el kudos exitosamente
+```
 
 ### Navegación (cross-cutting)
 
-| Aspecto | Detalle |
-|---|---|
-| **Feature file** | `navigation.feature` |
-| **Page Object** | `NavigationBar.java`, `LandingPage.java` |
-| **Escenarios** | 3 |
-| **Cobertura UI** | Transiciones Landing ↔ Lista ↔ Envío |
+```gherkin
+Scenario: El usuario navega desde la landing hacia la exploración de kudos
+  Given el usuario está en la landing
+  When hace clic en el botón de exploración
+  Then llega a la página de listado
+
+Scenario: El usuario navega desde la landing hacia el envío de kudos
+  Given el usuario está en la landing
+  When hace clic en el botón de envío
+  Then llega al formulario de envío
+```
 
 ---
 
 ## Estructura del Proyecto
 
 ```
-AUTO_FRONT_POM_FACTORY/
-├── build.gradle                                    ← Dependencias y config
-├── settings.gradle
-├── gradle/wrapper/gradle-wrapper.properties
+sofkianos-mvp/pom-pagefactory/
+├── 📄 build.gradle                                 ← Gradle config + dependencies
+├── 📄 settings.gradle                              ← Gradle settings
+├── 📄 README.md                                    ← Este archivo
+├── 📁 gradle/                                      
+│   └── wrapper/                                    ← Gradle Wrapper (no requiere Gradle instalado globalmente)
+│       ├── gradle-wrapper.jar
+│       └── gradle-wrapper.properties
+├── 📁 src/
+│   ├── main/java/com/sofka/automation/
+│   │   └── pages/                                  ← Page Objects (POM Pattern con @FindBy)
+│   │       ├── KudosListPage.java                  ← Elementos para kudos_listing.feature
+│   │       ├── KudoSendPage.java                   ← Elementos para kudos_send.feature
+│   │       ├── LandingPage.java                    ← Elementos para landing (home)
+│   │       └── NavigationBar.java                  ← Elemento navbar (cross-feature)
+│   │
+│   └── test/java/com/sofka/automation/
+│       ├── runners/                                ← Test Executors (JUnit + Cucumber)
+│       │   ├── BaseRunner.java                     ← WebDriver factory con ThreadLocal
+│       │   │                                          (WebDriverManager + try-catch fallback)
+│       │   ├── RunKudosListingTest.java            ← @RunWith(CucumberWithSerenity)
+│       │   │                                          @SuppressWarnings({"deprecation", "removal"})
+│       │   │                                          @CucumberOptions(features="...");
+│       │   ├── RunKudosSendTest.java               ← Idem para send
+│       │   └── RunNavigationTest.java              ← Idem para navigation
+│       │
+│       └── stepdefinitions/                        ← Step Implementations
+│           ├── Hooks.java                          ← @Before (init driver) / @After (quit driver)
+│           ├── TestConstants.java                  ← BASE_URL, timeouts, assertions helpers
+│           ├── KudosListingSteps.java              ← Given/When/Then para 2 escenarios
+│           ├── KudosSendSteps.java                 ← Given/When/Then para 1 escenario
+│           └── NavigationSteps.java                ← Given/When/Then para 2 escenarios
 │
-├── src/main/java/com/sofka/automation/
-│   ├── drivers/
-│   │   └── DriverFactory.java                      ← ThreadLocal + Chrome headless
-│   └── pages/
-│       ├── NavigationBar.java                       ← @FindBy → Navbar.tsx
-│       ├── LandingPage.java                         ← @FindBy → LandingPage.tsx
-│       ├── KudosListPage.java                       ← @FindBy → KudosListPage.tsx
-│       └── KudoSendPage.java                        ← @FindBy → KudoForm.tsx
+│   └── test/resources/
+│       ├── features/                               ← Gherkin Feature Files (.feature) - TOTAL: 5 escenarios
+│       │   ├── kudos_listing.feature (2 escenarios)
+│       │   ├── kudos_send.feature    (1 escenario)
+│       │   └── navigation.feature    (2 escenarios)
+│       │
+│       └── serenity.conf                           ← Config Serenity (driver=edge, screenshots, etc.)
 │
-└── src/test/
-    ├── java/com/sofka/automation/
-    │   ├── runners/
-    │   │   └── RunCucumberTest.java                 ← JUnit 5 + Cucumber
-    │   └── stepdefinitions/
-    │       ├── Hooks.java                           ← @Before / @After
-    │       ├── TestConstants.java                   ← BASE_URL
-    │       ├── KudosListingSteps.java               ← 11 escenarios US-012
-    │       ├── KudosSendSteps.java                  ← 4 escenarios envío
-    │       └── NavigationSteps.java                 ← 3 escenarios navegación
-    └── resources/features/
-        ├── kudos_listing.feature                    ← Declarativo — US-012
-        ├── kudos_send.feature                       ← Declarativo — Envío
-        └── navigation.feature                       ← Declarativo — Navegación
+├── 📁 build/                                       ← Gradle output (auto-generado)
+│   ├── classes/                                    ← Bytecode compilado
+│   ├── reports/                                    ← HTML reports (si se generan)
+│   ├── test-classes/                               ← Test bytecode
+│   └── test-results/                               ← JUnit XML results
+│
+├── 📁 target/                                      ← Serenity HTML reports
+│   └── site/serenity/                              ← Reporte detallado por escenario (serenity-report.html)
+│
+└── 📁 .gradle/                                     ← Gradle cache (no editar)
 ```
 
+### Resumen de Capas
+
+| Capa | Componentes | Propósito |
+|---|---|---|
+| **Feature/Scenario** | `.feature` files | Especificación BDD en Gherkin |
+| **Step Definitions** | `*Steps.java` | Mapeo Gherkin → Java |
+| **Page Objects** | `*Page.java` | Abstracción de elementos UI (@FindBy) |
+| **WebDriver Management** | `BaseRunner.java` | ThreadLocal + WebDriverManager |
+| **Configuration** | `serenity.conf`, `TestConstants.java` | Driver defaults, timeouts, URLs |
+
+### Notas de Estructura Importante
+
+✅ **BaseRunner.java está en `runners/`**, no en `drivers/`  
+✅ **3 Test Runners SEPARADOS** — Cada uno apunta a una feature diferente  
+✅ **serenity.conf existe** en `src/test/resources/` — Controla driver default (edge), screenshots, browser restart  
+✅ **NO existe carpeta `src/main/java/.../drivers/`** — Simplemente no existe
 ---
 
 ## Prerrequisitos
@@ -218,22 +256,76 @@ El framework apunta a `http://localhost:5173`. El frontend de Sofkianos MVP debe
 # Desde la raíz del monorepo sofkianos-mvp
 cd frontend
 npm install
-npm run dev
+npm run build
+npx vite preview --port 5173
 ```
 
 Si el frontend no está disponible en `localhost:5173`, los tests E2E fallarán con errores de Selenium como `TimeoutException` o `NoSuchElementException`.
 
-### 3. Ejecutar todos los tests
+### 3. Verificación de Compilación (sin warnings)
+
+Antes de ejecutar tests, verificar que compile sin warnings de deprecación:
 
 ```bash
 # Linux / macOS
-./gradlew test
+./gradlew compileTestJava
 
 # Windows PowerShell / CMD
-.\gradlew.bat test
+.\gradlew.bat compileTestJava
+
+# ✅ Output esperado: 0 warnings (JUnit 4 warnings están suprimidos)
 ```
 
-### 4. Ejecutar un feature específico
+**Nota sobre warnings:** Los test runners utilizan `@SuppressWarnings({"deprecation", "removal"})` para suprimir advertencias de JUnit 4 (`@RunWith`), manteniendo compatibilidad plena con Serenity BDD 5.3.2.
+
+### 4. Ejecutar todos los tests
+
+**Opción A — Ejecución Local (Windows 10/11 con Edge - DEFAULT)**
+
+```bash
+# Windows PowerShell
+cd pom-pagefactory
+.\gradlew.bat clean test aggregate `
+  -Dbase.url=http://localhost:5173 `
+  -Dwebdriver.wait=15
+
+# Windows CMD
+cd pom-pagefactory
+.\gradlew.bat clean test aggregate -Dbase.url=http://localhost:5173 -Dwebdriver.wait=15
+```
+
+**Opción B — Ejecución con Chrome (para simular CI/CD)**
+
+```bash
+# Windows PowerShell
+.\gradlew.bat clean test aggregate `
+  -Dbase.url=http://localhost:5173 `
+  -Dbrowser=chrome `
+  -Dwebdriver.wait=15
+
+# Windows CMD
+.\gradlew.bat clean test aggregate -Dbase.url=http://localhost:5173 -Dbrowser=chrome -Dwebdriver.wait=15
+```
+
+**Opción C — Ejecución Linux/macOS (CI/CD GitHub Actions)**
+
+```bash
+# Chrome es obligatorio en GitHub Actions (Linux)
+./gradlew clean test aggregate \
+  -Dbase.url=http://localhost:5173 \
+  --no-daemon
+```
+
+**Expected Output:**
+```
+BUILD SUCCESSFUL in 1m 47s
+5 escenarios ejecutados
+- Kudos Listing: 2 escenarios ✓
+- Kudos Send: 1 escenario ✓
+- Navigation: 2 escenarios ✓
+```
+
+### 5. Ejecutar un feature específico
 
 ```bash
 # Linux / macOS
@@ -247,20 +339,7 @@ Si el frontend no está disponible en `localhost:5173`, los tests E2E fallarán 
 .\gradlew.bat test -Dcucumber.features="src/test/resources/features/navigation.feature"
 ```
 
-Atajos por feature:
-
-```bash
-# Solo escenarios de listado (US-012)
-.\gradlew.bat test -Dcucumber.features="src/test/resources/features/kudos_listing.feature"
-
-# Solo escenarios de envío
-.\gradlew.bat test -Dcucumber.features="src/test/resources/features/kudos_send.feature"
-
-# Solo escenarios de navegación
-.\gradlew.bat test -Dcucumber.features="src/test/resources/features/navigation.feature"
-```
-
-### 5. Ejecutar por tags (si se agregan)
+### 6. Ejecutar por tags
 
 ```bash
 # Linux / macOS
@@ -270,39 +349,152 @@ Atajos por feature:
 .\gradlew.bat test -Dcucumber.filter.tags="@smoke"
 ```
 
-### 6. Flujo recomendado de ejecución
+### 7. Flujo recomendado de ejecución
 
 ```bash
 # Terminal 1 - frontend
 cd frontend
 npm install
-npm run dev
+npm run build
+npx vite preview --port 5173
 
-# Terminal 2 - E2E
+# Terminal 2 - E2E tests
 cd pom-pagefactory
-.\gradlew.bat test
+.\gradlew.bat clean test aggregate -Dbase.url=http://localhost:5173 -Dwebdriver.wait=15
 ```
 
 ---
 
-## Reportes
+## 🔧 Configuración Crítica del Framework
+
+### WebDriverManager — Gestión Automática de Driver Binaries
+
+El framework utiliza **WebDriverManager 5.7.0** para gestionar automáticamente los binarios de ChromeDriver y EdgeDriver:
+
+- **CI/CD (GitHub Actions):** WebDriverManager descarga automáticamente ChromeDriver compatible con Chrome instalado en el runner
+- **Local (Windows):** WebDriverManager descarga EdgeDriver; si falla por red, usa el driver del sistema
+- **Fallback:** Si WebDriverManager no puede descargar (red limitada), el framework degrada a drivers del sistema
+
+**Código en BaseRunner.java:**
+
+```java
+private static WebDriver createChromeDriver() {
+    try {
+        WebDriverManager.chromedriver().setup();  // Auto-download for CI/CD
+    } catch (Exception e) {
+        System.out.println("[INFO] WebDriverManager download failed, using system driver");
+    }
+    ChromeOptions options = new ChromeOptions();
+    options.addArguments("--no-sandbox", "--disable-dev-shm-usage", ...);
+    return new ChromeDriver(options);
+}
+```
+
+### Test Runners — Suppresión de Warnings (JUnit 4 Compatibility Layer)
+
+Los test runners (`RunKudosListingTest.java`, `RunKudosSendTest.java`, `RunNavigationTest.java`) usan la anotación `@SuppressWarnings({"deprecation", "removal"})` para:
+
+1. **Mantener compatibilidad con Serenity BDD 5.3.2** → Serenity requiere `@RunWith(CucumberWithSerenity.class)`
+2. **Suprimir warnings de JUnit 4** → La API será removida en futuros JDK, pero Serenity depende de ella
+3. **Eliminar ruido en CI/CD** → Pipeline reporta 0 warnings en compilación de tests
+
+**Configuración en runners:**
+
+```java
+@SuppressWarnings({"deprecation", "removal"})  // Suppress JUnit 4 warnings
+@RunWith(CucumberWithSerenity.class)
+@CucumberOptions(
+    features = "src/test/resources/features/kudos_listing.feature",
+    glue = "com.sofka.automation.stepdefinitions",
+    tags = "not @skip",
+    plugin = {"pretty", "json:target/cucumber-report/kudos_listing.json"}
+)
+public class RunKudosListingTest {
+}
+```
+
+### Configuración de Navegador — Local vs CI/CD
+
+| Contexto | Navegador | Variable | Comando |
+|---|---|---|---|
+| **Windows Local** | Edge | Default | `.\gradlew.bat test` |
+| **Windows + Chrome** | Chrome | `-Dbrowser=chrome` | `.\gradlew.bat test -Dbrowser=chrome` |
+| **GitHub Actions** | Chrome | `BROWSER: chrome` | `./gradlew test --no-daemon` |
+
+**Archivo: .github/workflows/frontend.yml (CI/CD)**
+
+```yaml
+- name: Run E2E Cucumber Tests with Serenity
+  env:
+    BROWSER: chrome  # ← CRÍTICO: Chrome es obligatorio en GitHub Actions Linux
+  run: |
+    ./gradlew clean test aggregate \
+      --no-daemon \
+      -Dbase.url=http://localhost:5173 \
+      -Dwebdriver.wait=10
+```
+
+**Por qué es importante:**
+- En GitHub Actions corre Linux, solo Chrome está disponible
+- El workflow antiguo usaba `BROWSER: edge` → fallaba en CI/CD con `SessionNotCreatedException`
+- WebDriverManager descarga automáticamente el ChromeDriver compatible
+
+---
+
+## 📊 Reportes
 
 Tras la ejecución, los reportes se generan en:
 
-| Reporte | Ruta | Formato |
-|---|---|---|
-| **Cucumber HTML** | `build/reports/cucumber.html` | Visual con detalle por escenario |
-| **JUnit XML** | `build/test-results/test/` | Para integración con CI/CD |
-| **Consola** | Terminal | Pretty-print de pasos |
+| Reporte | Ruta | Formato | Detalle |
+|---|---|---|---|
+| **Serenity HTML Report** | `target/site/serenity/index.html` | Interactivo | Paso a paso con screenshots |
+| **JUnit HTML Report** | `build/reports/tests/test/index.html` | Interactivo | Agregación de resultados |
+| **Cucumber JSON** | `target/cucumber-report/` | JSON | Para integraciones externas |
+| **Consola** | Terminal | Pretty-print | Salida en tiempo real |
 
-Para abrir el reporte HTML:
+**Abrir reportes:**
 
 ```bash
-# Linux / macOS
-open build/reports/cucumber.html
+# Serenity (recomendado — más detallado)
+start target/site/serenity/index.html
 
-# Windows
-start build/reports/cucumber.html
+# JUnit
+start build/reports/tests/test/index.html
+```
+
+---
+
+## ✅ Troubleshooting & Validación
+
+### Problemas Comunes
+
+| Problema | Síntoma | Solución |
+|---|---|---|
+| **SessionNotCreatedException** | Tests fallan al iniciar Chrome/Edge | Verificar navigador instalado o usar `-Dbrowser=chrome` |
+| **deprecation warnings en compilación** | Compiler output muestra warnings de @RunWith | Ya solucionado: `@SuppressWarnings({"deprecation", "removal"})` |
+| **Frontend timeout** | Tests fallan con TimeoutException en health check | Verificar `curl http://localhost:5173` → debe retornar HTTP 200 |
+| **WebDriverManager networking error** | UnknownHostException al descargar driver | Es normal en red limitada; fallback automático a sistema |
+| **Tests intermitentes** | Algunos tests fallan, otros pasan | Aumentar timeout: `-Dwebdriver.wait=20` |
+
+### Checklist Pre-Commit
+
+```bash
+# 1. Compilación sin warnings
+cd pom-pagefactory
+.\gradlew.bat compileTestJava
+# ✅ 0 warnings (con @SuppressWarnings aplicado a runners)
+
+# 2. Frontend disponible
+curl http://localhost:5173
+# ✅ HTTP 200 + HTML
+
+# 3. Todos los tests pasan
+.\gradlew.bat clean test aggregate -Dbase.url=http://localhost:5173 -Dwebdriver.wait=15
+# ✅ BUILD SUCCESSFUL + 5 escenarios (2 listing + 1 send + 2 navigation)
+
+# 4. Reportes accesibles
+start target/site/serenity/index.html
+# ✅ 5 scenarios PASSED (0 FAILED)
 ```
 
 ---
@@ -321,8 +513,8 @@ Es el pilar de la arquitectura. Permite crear un repositorio de objetos que repr
 *   **Ventaja:** Al navegar, el método retorna automáticamente la instancia del Page Object de la página destino. Esto permite un estilo de programación fluido (Fluent Interface), donde el Step Definition sabe exactamente qué página está disponible después de una acción.
 
 ### Singleton / ThreadLocal Driver
-*   **Uso:** En `DriverFactory.java`, se utiliza `ThreadLocal<WebDriver>`.
-*   **Ventaja:** Garantiza la seguridad de hilos (Thread-Safety). Cada hilo de ejecución (importante para ejecución en paralelo con JUnit 5) tiene su propia instancia aislada del WebDriver. Además, centraliza el ciclo de vida (creación y cierre) del navegador en un solo punto estratégico.
+*   **Uso:** En `BaseRunner.java` (ubicado en `src/test/java/.../runners/`), se utiliza `ThreadLocal<WebDriver>` junto con `WebDriverManager` para la gestión automática de drivers.
+*   **Ventaja:** Garantiza la seguridad de hilos (Thread-Safety). Cada hilo de ejecución (importante para ejecución en paralelo) tiene su propia instancia aislada del WebDriver. Además, centraliza el ciclo de vida (creación y cierre) del navegador en un solo punto estratégico. Incluye fallback automático si WebDriverManager no puede descargar el driver por problemas de red.
 
 ---
 
