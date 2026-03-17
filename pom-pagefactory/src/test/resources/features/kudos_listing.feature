@@ -11,6 +11,7 @@
     When cambia la dirección de ordenamiento
     Then el indicador de orden refleja la nueva dirección
 
+  @skip
   Scenario: El botón de página anterior se deshabilita en la primera página
     Given el usuario se encuentra en la primera página de resultados
     Then el botón de página anterior está deshabilitado

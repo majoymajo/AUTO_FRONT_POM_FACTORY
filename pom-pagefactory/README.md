@@ -324,7 +324,7 @@ cd pom-pagefactory
 .\gradlew.bat clean test aggregate
 
 # Abrir reporte
-start build/reports/serenity/index.html
+Start-Process .\target\site\serenity\index.html
 ```
 
 ### 10. Quick Commands Reference
@@ -335,7 +335,7 @@ start build/reports/serenity/index.html
 | **Solo tests (sin reporte)** | `.\gradlew.bat test` |
 | **Solo generar reporte de última ejecución** | `.\gradlew.bat aggregate` |
 | **Limpiar y empezar de cero** | `.\gradlew.bat clean` |
-| **Ver reportes recientes** | `start build/reports/serenity/index.html` |
+| **Ver reportes recientes** | `Start-Process .\target\site\serenity\index.html` |
 
 ---
 
@@ -347,7 +347,7 @@ Tras la ejecución de tests, se generan múltiples reportes en diferentes format
 
 | Reporte | Ruta | Formato | Descripción |
 |---|---|---|---|
-| **Serenity HTML** | `build/reports/serenity/index.html` | HTML Visual | Reporte interactivo con detalles de escenarios, pasos ejecutados, screenshots y timeline |
+| **Serenity HTML** | `target/site/serenity/index.html` | HTML Visual | Reporte interactivo con detalles de escenarios, pasos ejecutados, screenshots y timeline |
 | **Cucumber HTML** | `build/reports/cucumber.html` | HTML Pretty | Desglose por feature con estados pass/fail |
 | **JUnit XML** | `build/test-results/test/` | XML | Para integración con CI/CD y dashboards |
 | **Consola** | Terminal | Pretty-print | Resumen en tiempo real durante ejecución |
@@ -358,13 +358,13 @@ Tras la ejecución de tests, se generan múltiples reportes en diferentes format
 
 ```bash
 # Linux / macOS
-open build/reports/serenity/index.html
+open target/site/serenity/index.html
 
 # Windows PowerShell
-Start-Process build/reports/serenity/index.html
+Start-Process .\target\site\serenity\index.html
 
 # Windows CMD
-start build/reports/serenity/index.html
+start target\site\serenity\index.html
 ```
 
 #### Cucumber Report
@@ -404,7 +404,7 @@ Es el pilar de la arquitectura. Permite crear un repositorio de objetos que repr
 *   **Ventaja:** Al navegar, el método retorna automáticamente la instancia del Page Object de la página destino. Esto permite un estilo de programación fluido (Fluent Interface), donde el Step Definition sabe exactamente qué página está disponible después de una acción.
 
 ### Singleton / ThreadLocal Driver
-*   **Uso:** En `DriverFactory.java`, se utiliza `ThreadLocal<WebDriver>`.
+*   **Uso:** En `BaseRunner.java`, se utiliza `ThreadLocal<WebDriver>`.
 *   **Ventaja:** Garantiza la seguridad de hilos (Thread-Safety). Cada hilo de ejecución (importante para ejecución en paralelo con JUnit 5) tiene su propia instancia aislada del WebDriver. Además, centraliza el ciclo de vida (creación y cierre) del navegador en un solo punto estratégico.
 
 ---

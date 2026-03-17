@@ -349,10 +349,10 @@ jobs:
           echo "═══════════════════════════════════════════════════════════════"
           if [ $EXIT_CODE -eq 0 ]; then
             echo "✅ All E2E tests passed!"
-            echo "📊 Serenity report generated at: build/reports/serenity/index.html"
+            echo "📊 Serenity report generated at: target/site/serenity/index.html"
           else
             echo "❌ Some E2E tests failed. Review the Serenity report for details."
-            echo "📊 Serenity report available at: build/reports/serenity/index.html"
+            echo "📊 Serenity report available at: target/site/serenity/index.html"
           fi
           echo "═══════════════════════════════════════════════════════════════"
           exit $EXIT_CODE
@@ -370,7 +370,7 @@ jobs:
         if: always()
         with:
           name: serenity-e2e-report
-          path: pom-pagefactory/build/reports/serenity/
+          path: pom-pagefactory/target/site/serenity/
           retention-days: 30
       
       - name: Upload Cucumber E2E Report
@@ -406,16 +406,16 @@ jobs:
           echo "╚════════════════════════════════════════════════════════════════╝"
           echo ""
           echo "📋 Available Reports:"
-          echo "  • Serenity Report:  pom-pagefactory/build/reports/serenity/"
+          echo "  • Serenity Report:  pom-pagefactory/target/site/serenity/"
           echo "  • Cucumber Report:  pom-pagefactory/build/reports/cucumber.html"
           echo "  • JUnit Results:    pom-pagefactory/build/test-results/test/"
           echo ""
           echo "📊 Report Details:"
-          if [ -d "pom-pagefactory/build/reports/serenity" ]; then
-            SERENITY_DIR=$(find pom-pagefactory/build/reports/serenity -name "index.html" | head -1)
+          if [ -d "pom-pagefactory/target/site/serenity" ]; then
+            SERENITY_DIR=$(find pom-pagefactory/target/site/serenity -name "index.html" | head -1)
             if [ -n "$SERENITY_DIR" ]; then
               echo "  ✅ Serenity report generated successfully"
-              echo "     Open: pom-pagefactory/build/reports/serenity/index.html"
+              echo "     Open: pom-pagefactory/target/site/serenity/index.html"
             fi
           fi
           echo ""
