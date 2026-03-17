@@ -216,7 +216,6 @@ jobs:
   # ========================================================================
   e2e-tests:
     name: "🎭 E2E Tests — POM Page Factory"
-    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -244,10 +243,18 @@ jobs:
           cache: 'gradle'
 
       # Install chrome browser for Selenium tests
-      - name: Install Google Chrome
+      - name: Setup Chrome
         uses: browser-actions/setup-chrome@v1
         with:
           chrome-version: 'stable'
+
+      # Install matching ChromeDriver for the installed Chrome version
+      - name: Setup ChromeDriver
+        uses: nanasess/setup-chromedriver@v2
+
+      # Install OS-level dependencies required for headless Chrome
+      - name: Install dependencies
+        run: sudo apt-get install -y fonts-liberation libappindicator3-1 xdg-utils
 
       # ────────────────────────────────────────────────────────────────────
       # 2. FRONTEND: Build and start dev server
@@ -345,10 +352,14 @@ jobs:
           echo "═══════════════════════════════════════════════════════════════"
           echo ""
           
+          CHROMEDRIVER_PATH=$(which chromedriver)
+          echo "ChromeDriver path: $CHROMEDRIVER_PATH"
+          
           ./gradlew clean test aggregate \
             --no-daemon \
             -Dbase.url=http://localhost:5173 \
-            -Dwebdriver.wait=10
+            -Dwebdriver.wait=10 \
+            -Dwebdriver.chrome.driver="$CHROMEDRIVER_PATH"
             
           EXIT_CODE=$?
           echo ""
