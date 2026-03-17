@@ -203,12 +203,6 @@ sofkianos-mvp/pom-pagefactory/
 | **WebDriver Management** | `BaseRunner.java` | ThreadLocal + WebDriverManager |
 | **Configuration** | `serenity.conf`, `TestConstants.java` | Driver defaults, timeouts, URLs |
 
-### Notas de Estructura Importante
-
-✅ **BaseRunner.java está en `runners/`**, no en `drivers/`  
-✅ **3 Test Runners SEPARADOS** — Cada uno apunta a una feature diferente  
-✅ **serenity.conf existe** en `src/test/resources/` — Controla driver default (edge), screenshots, browser restart  
-✅ **NO existe carpeta `src/main/java/.../drivers/`** — Simplemente no existe
 ---
 
 ## Prerrequisitos
