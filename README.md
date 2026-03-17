@@ -382,7 +382,7 @@ start build/reports/tests/test/index.html
 
 ---
 
-## 3. Patrones de Diseño Utilizados
+## Patrones de Diseño Utilizados
 
 ### Page Object Model (POM)
 Es el pilar de la arquitectura. Permite crear un repositorio de objetos que representan las páginas del sitio, permitiendo que las pruebas sean legibles y fáciles de mantener al separar la lógica de la prueba de la lógica de la página.
