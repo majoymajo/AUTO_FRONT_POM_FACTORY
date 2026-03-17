@@ -10,9 +10,8 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 
 import java.time.Duration;
 
-public class KudoSendPage {
 
-    private final WebDriver driver;
+public class KudoSendPage {
     private final WebDriverWait wait;
     private final Actions actions;
 
@@ -34,7 +33,6 @@ public class KudoSendPage {
     @FindBy(xpath = "//span[contains(text(),'Desliza para enviar')]")
     private WebElement slideToSendLabel;
 
-    // Assuming the slider handle is a div with a specific class or a sibling of the label
     @FindBy(xpath = "//div[contains(@class, 'bg-brand') and .//*[local-name()='svg']]")
     private WebElement sliderHandle;
 
@@ -45,7 +43,6 @@ public class KudoSendPage {
     private WebElement recipientAvatarPreview;
 
     public KudoSendPage(WebDriver driver) {
-        this.driver = driver;
         this.wait = new WebDriverWait(driver, Duration.ofSeconds(10));
         this.actions = new Actions(driver);
         PageFactory.initElements(driver, this);
@@ -80,9 +77,8 @@ public class KudoSendPage {
     public void performSlideToSend() {
         WebElement handle = waitForVisibility(sliderHandle);
         int width = slideToSendLabel.getSize().getWidth();
-        // Slide to the right
         actions.clickAndHold(handle)
-                .moveByOffset(width - 5, 0) // Full slide
+                .moveByOffset(width - 5, 0)
                 .release()
                 .perform();
     }
@@ -98,7 +94,6 @@ public class KudoSendPage {
 
     public boolean isServerErrorDisplayed() {
         try {
-            // Increased synchronization for React rendering
             return wait.until(ExpectedConditions.visibilityOf(serverErrorBanner)).isDisplayed();
         } catch (Exception e) {
             return false;
@@ -112,10 +107,6 @@ public class KudoSendPage {
         writeMessage(message);
     }
 
-    /**
-     * Helper method to simulate a robust WebElementFacade pattern
-     * Ensures stability by waiting for visibility before any action.
-     */
     private WebElement waitForVisibility(WebElement element) {
         return wait.until(ExpectedConditions.visibilityOf(element));
     }

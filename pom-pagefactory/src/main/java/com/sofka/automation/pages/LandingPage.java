@@ -7,8 +7,6 @@ import org.openqa.selenium.support.PageFactory;
 
 public class LandingPage {
 
-    private final WebDriver driver;
-
     @FindBy(xpath = "//h1[contains(.,'SofkianOS')]")
     private WebElement pageHeading;
 
@@ -19,7 +17,6 @@ public class LandingPage {
     private WebElement technologySection;
 
     public LandingPage(WebDriver driver) {
-        this.driver = driver;
         PageFactory.initElements(driver, this);
     }
 

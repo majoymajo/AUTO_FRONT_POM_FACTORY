@@ -65,7 +65,6 @@ public class KudosSendSteps {
 
     @When("el envío es rechazado por el servidor")
     public void elEnvioEsRechazadoPorElServidor() {
-        // Trigger the submission via slider to get the server response
         kudoSendPage.performSlideToSend();
     }
 

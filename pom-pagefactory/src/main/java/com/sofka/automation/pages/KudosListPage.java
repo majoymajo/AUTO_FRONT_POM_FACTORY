@@ -97,7 +97,6 @@ public class KudosListPage {
             categorySelect.click();
             categorySelect.sendKeys(category);
         } catch (Exception ex) {
-            // Fallback for custom selects that intermittently reject keyboard input.
             ((JavascriptExecutor) driver).executeScript(
                 "arguments[0].value = arguments[1]; arguments[0].dispatchEvent(new Event('change', { bubbles: true }));",
                 categorySelect,
