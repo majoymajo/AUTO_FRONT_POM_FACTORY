@@ -13,7 +13,6 @@ Framework de automatización E2E para el frontend de **Sofkianos MVP** usando **
 - [Estructura del Proyecto](#estructura-del-proyecto)
 - [Instrucciones de Ejecución](#instrucciones-de-ejecución)
 - [Reportes](#reportes)
-- [Troubleshooting & Validación](#troubleshooting--validación)
 - [Patrones de Diseño](#patrones-de-diseño)
 - [Buenas Prácticas](#buenas-prácticas)
 
@@ -380,40 +379,6 @@ start target/site/serenity/index.html
 start build/reports/tests/test/index.html
 ```
 
----
-
-## ✅ Troubleshooting & Validación
-
-### Problemas Comunes
-
-| Problema | Síntoma | Solución |
-|---|---|---|
-| **SessionNotCreatedException** | Tests fallan al iniciar Chrome/Edge | Verificar navigador instalado o usar `-Dbrowser=chrome` |
-| **deprecation warnings en compilación** | Compiler output muestra warnings de @RunWith | Ya solucionado: `@SuppressWarnings({"deprecation", "removal"})` |
-| **Frontend timeout** | Tests fallan con TimeoutException en health check | Verificar `curl http://localhost:5173` → debe retornar HTTP 200 |
-| **WebDriverManager networking error** | UnknownHostException al descargar driver | Es normal en red limitada; fallback automático a sistema |
-| **Tests intermitentes** | Algunos tests fallan, otros pasan | Aumentar timeout: `-Dwebdriver.wait=20` |
-
-### Checklist Pre-Commit
-
-```bash
-# 1. Compilación sin warnings
-cd pom-pagefactory
-.\gradlew.bat compileTestJava
-# ✅ 0 warnings (con @SuppressWarnings aplicado a runners)
-
-# 2. Frontend disponible
-curl http://localhost:5173
-# ✅ HTTP 200 + HTML
-
-# 3. Todos los tests pasan
-.\gradlew.bat clean test aggregate -Dbase.url=http://localhost:5173 -Dwebdriver.wait=15
-# ✅ BUILD SUCCESSFUL + 5 escenarios (2 listing + 1 send + 2 navigation)
-
-# 4. Reportes accesibles
-start target/site/serenity/index.html
-# ✅ 5 scenarios PASSED (0 FAILED)
-```
 
 ---
 
