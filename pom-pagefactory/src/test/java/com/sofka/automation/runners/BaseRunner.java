@@ -1,5 +1,6 @@
 package com.sofka.automation.runners;
 
+import io.github.bonigarcia.wdm.WebDriverManager;
 import org.openqa.selenium.Dimension;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
@@ -39,6 +40,7 @@ public abstract class BaseRunner {
     }
 
     private static WebDriver createEdgeDriver() {
+        WebDriverManager.edgedriver().setup();  // ✅ Auto-download correct version
         EdgeOptions options = new EdgeOptions();
         options.addArguments(
                 "--remote-allow-origins=*",
@@ -61,6 +63,7 @@ public abstract class BaseRunner {
     }
 
     private static WebDriver createChromeDriver() {
+        WebDriverManager.chromedriver().setup();  // ✅ Auto-download correct version
         ChromeOptions options = new ChromeOptions();
         options.addArguments(
                 "--remote-allow-origins=*",

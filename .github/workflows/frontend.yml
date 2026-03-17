@@ -343,7 +343,13 @@ jobs:
           echo "Executing Cucumber scenarios against frontend at http://localhost:5173"
           echo "═══════════════════════════════════════════════════════════════"
           echo ""
-          ./gradlew clean test aggregate --no-daemon
+          echo "🔧 WebDriver Configuration:"
+          echo "  - Browser: Chrome"
+          echo "  - Base URL: http://localhost:5173"
+          echo "  - Chrome Binary: $CHROME_BIN"
+          which google-chrome && echo "  ✅ Chrome binary found" || echo "  ⚠️  Chrome not in PATH"
+          echo ""
+          ./gradlew clean test aggregate --no-daemon -i
           EXIT_CODE=$?
           echo ""
           echo "═══════════════════════════════════════════════════════════════"
@@ -360,6 +366,8 @@ jobs:
           CHROME_BIN: /usr/bin/google-chrome
           BROWSER: chrome
           BASE_URL: http://localhost:5173
+          WEBDRIVERMANAGER_OPERATINGSYSTEM: LINUX
+          WEBDRIVERMANAGER_ARCHITECTURE: X64
         continue-on-error: false
 
       # ────────────────────────────────────────────────────────────────────
