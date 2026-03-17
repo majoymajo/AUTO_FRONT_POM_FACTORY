@@ -75,21 +75,9 @@ test {
     systemProperty "cucumber.filter.tags", "not @skip"
 }
 
-tasks.register('aggregate') {
-    group = 'verification'
-    description = 'Aggregates verification artifacts after tests.'
-    dependsOn 'test'
-}
-
-tasks.register('reports') {
-    group = 'verification'
-    description = 'Generates project reports after test aggregation.'
-    dependsOn 'aggregate'
-}
-
 gradle.startParameter.continueOnFailure = true
 
-test.finalizedBy(aggregate, reports)
+test.finalizedBy(aggregate)
 
 serenity {
     reports = ["single-page-html"]
