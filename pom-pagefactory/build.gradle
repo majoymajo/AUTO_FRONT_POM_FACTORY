@@ -69,10 +69,6 @@ test {
     useJUnitPlatform()
     jvmArgs '-Dfile.encoding=UTF-8'
     systemProperty 'file.encoding', 'UTF-8'
-    systemProperty "cucumber.plugin", "pretty,html:build/reports/cucumber.html"
-    systemProperty "cucumber.features", "src/test/resources/features"
-    systemProperty "cucumber.glue", "com.sofka.automation.stepdefinitions"
-    systemProperty "cucumber.filter.tags", "not @skip"
 }
 
 gradle.startParameter.continueOnFailure = true

@@ -49,7 +49,7 @@ graph TD
 
     subgraph Infra["🔷 Core Layer"]
     
-        D["DriverFactory.java<br/>ThreadLocal WebDriver"]
+        D["BaseRunner.java<br/>ThreadLocal WebDriver"]
         B["Chrome Headless<br/>Selenium 4"]
     end
 
@@ -147,8 +147,11 @@ AUTO_FRONT_POM_FACTORY/
 ├── gradle/wrapper/gradle-wrapper.properties
 │
 ├── src/main/java/com/sofka/automation/
-│   ├── drivers/
-│   │   └── DriverFactory.java                      ← ThreadLocal + Chrome headless
+│   ├── runners/
+│   │   ├── BaseRunner.java                         ← ThreadLocal + Browser lifecycle
+│   │   ├── RunKudosListingTest.java                ← Runner por feature (listing)
+│   │   ├── RunKudosSendTest.java                   ← Runner por feature (send)
+│   │   └── RunNavigationTest.java                  ← Runner por feature (navigation)
 │   └── pages/
 │       ├── NavigationBar.java                       ← @FindBy → Navbar.tsx
 │       ├── LandingPage.java                         ← @FindBy → LandingPage.tsx
@@ -157,8 +160,6 @@ AUTO_FRONT_POM_FACTORY/
 │
 └── src/test/
     ├── java/com/sofka/automation/
-    │   ├── runners/
-    │   │   └── RunCucumberTest.java                 ← JUnit 5 + Cucumber
     │   └── stepdefinitions/
     │       ├── Hooks.java                           ← @Before / @After
     │       ├── TestConstants.java                   ← BASE_URL
@@ -284,7 +285,7 @@ Esta es la forma recomendada y genera reportes automáticamente:
 
 El comando `aggregate` ejecuta Serenity Report con las siguientes características:
 - Recolecta resultados de test en `build/test-results/test/`
-- Genera reporte HTML en `build/reports/serenity/`
+- Genera reporte HTML en `target/site/serenity/`
 - Procesa screenshots automáticamente
 - Genera timeline de ejecución
 
