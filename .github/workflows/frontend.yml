@@ -335,37 +335,87 @@ jobs:
         working-directory: ./pom-pagefactory
         run: chmod +x gradlew 2>/dev/null || true
 
+      - name: Verify Frontend Accessibility
+        run: |
+          echo "🔍 Pre-test diagnostics..."
+          echo ""
+          echo "1️⃣  Testing direct connectivity to http://localhost:5173:"
+          for i in {1..5}; do
+            if curl -s -m 3 http://localhost:5173 > /dev/null 2>&1; then
+              echo "   ✅ Attempt $i: Frontend is accessible ✓"
+              break
+            else
+              echo "   ❌ Attempt $i: Failed (retrying...)"
+              sleep 1
+            fi
+          done
+          
+          echo ""
+          echo "2️⃣  Network interface status:"
+          netstat -tuln 2>/dev/null | grep 5173 || echo "   ⚠️  Port 5173 is not listening - frontend may not be ready"
+          echo ""
+
       - name: Run E2E Cucumber Tests with Serenity
         working-directory: ./pom-pagefactory
         run: |
           echo "🧪 Starting E2E Cucumber tests with Serenity..."
           echo "═══════════════════════════════════════════════════════════════"
-          echo "Executing Cucumber scenarios against frontend at http://localhost:5173"
+          echo "Test Configuration & Environmental Setup"
           echo "═══════════════════════════════════════════════════════════════"
           echo ""
           echo "🔧 WebDriver Configuration:"
-          echo "  - Browser: Chrome"
-          echo "  - Base URL: http://localhost:5173"
-          echo "  - Chrome Binary: $CHROME_BIN"
-          which google-chrome && echo "  ✅ Chrome binary found" || echo "  ⚠️  Chrome not in PATH"
+          echo "  • Browser: Chrome"
+          echo "  • Base URL: http://localhost:5173"
+          echo "  • Chrome Binary: $CHROME_BIN"
+          echo "  • Operating System: $WEBDRIVERMANAGER_OPERATINGSYSTEM"
+          echo "  • Architecture: $WEBDRIVERMANAGER_ARCHITECTURE"
+          which google-chrome && echo "  ✅ Chrome binary found" || echo "  ❌ Chrome not found in PATH"
           echo ""
-          ./gradlew clean test aggregate --no-daemon -i
+          
+          echo "📋 Gradle System Properties:"
+          echo "  • base.url: http://localhost:5173"
+          echo "  • webdriver.wait: 10 seconds"
+          echo "  • webdriver.timeouts.implicitlyWait: 10 seconds"
+          echo ""
+          
+          echo "🧵 Running 8 cucumber scenarios across 5 features..."
+          echo "═══════════════════════════════════════════════════════════════"
+          echo ""
+          
+          # Run tests with explicit system properties and verbose output
+          ./gradlew clean test aggregate \
+            --no-daemon \
+            -Dbase.url=http://localhost:5173 \
+            -Dwebdriver.wait=10 \
+            -Dwebdriver.timeouts.implicitlyWait=10 \
+            -Dfile.encoding=UTF-8 \
+            -i
+            
           EXIT_CODE=$?
           echo ""
           echo "═══════════════════════════════════════════════════════════════"
           if [ $EXIT_CODE -eq 0 ]; then
             echo "✅ All E2E tests passed!"
-            echo "📊 Serenity report generated at: target/site/serenity/index.html"
+            echo "📊 Serenity report: target/site/serenity/index.html"
           else
-            echo "❌ Some E2E tests failed. Review the Serenity report for details."
-            echo "📊 Serenity report available at: target/site/serenity/index.html"
+            echo "⚠️  Tests completed with errors. Analyzing results..."
+            echo ""
+            echo "📊 Test Report Location: target/site/serenity/index.html"
+            echo "🔍 Test Results: build/test-results/test/"
+            echo "📋 Gradle Build Log: build/logs/test.log"
+            echo ""
+            echo "Possible causes of test errors:"
+            echo "  1. Frontend (http://localhost:5173) not responding"
+            echo "  2. Network/DNS resolution issues"
+            echo "  3. Selenium/WebDriver configuration mismatch"
+            echo "  4. Step definition implementation errors"
+            echo "  5. Page objects not matching actual page structure"
           fi
           echo "═══════════════════════════════════════════════════════════════"
           exit $EXIT_CODE
         env:
           CHROME_BIN: /usr/bin/google-chrome
           BROWSER: chrome
-          BASE_URL: http://localhost:5173
           WEBDRIVERMANAGER_OPERATINGSYSTEM: LINUX
           WEBDRIVERMANAGER_ARCHITECTURE: X64
         continue-on-error: false
