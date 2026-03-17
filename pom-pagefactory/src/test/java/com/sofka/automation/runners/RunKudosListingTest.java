@@ -1,12 +1,16 @@
 package com.sofka.automation.runners;
 
-import io.cucumber.junit.platform.engine.Constants;
-import org.junit.platform.suite.api.*;
+import io.cucumber.junit.CucumberOptions;
+import net.serenitybdd.cucumber.CucumberWithSerenity;
+import org.junit.runner.RunWith;
 
-@Suite
-@IncludeEngines("cucumber")
-@SelectClasspathResource("src/test/resources/features/kudos_listing.feature")
-@ConfigurationParameter(key = Constants.GLUE_PROPERTY_NAME, value = "com.sofka.automation.stepdefinitions")
-@ConfigurationParameter(key = Constants.FILTER_TAGS_PROPERTY_NAME, value = "not @skip")
+@SuppressWarnings("deprecation")
+@RunWith(CucumberWithSerenity.class)
+@CucumberOptions(
+        features = "src/test/resources/features/kudos_listing.feature",
+        glue = "com.sofka.automation.stepdefinitions",
+        tags = "not @skip",
+        plugin = {"pretty", "json:target/cucumber-report/kudos_listing.json"}
+)
 public class RunKudosListingTest {
 }
