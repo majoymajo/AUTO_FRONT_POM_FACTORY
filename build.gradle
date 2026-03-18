@@ -27,10 +27,10 @@ ext {
     junit_platform_suite_version = "6.0.3"
     junit_jupiter_engine_version = "6.0.3"
     junit_vintage_engine_version = "6.0.3"
-    logback_classic_version = "1.2.10"
-    assertj_core_version = "3.23.1"
+    logback_classic_version = "1.2.13"
+    assertj_core_version = "3.27.7"
     selenium_version = "4.18.1"
-    webdrivermanager_version = "5.7.0"
+    webdrivermanager_version = "6.1.0"
     cucumber_java_version = "7.15.0"
 }
 
@@ -69,6 +69,12 @@ test {
     useJUnitPlatform()
     jvmArgs '-Dfile.encoding=UTF-8'
     systemProperty 'file.encoding', 'UTF-8'
+    ['base.url', 'webdriver.wait', 'browser', 'headless.mode', 'webdriver.chrome.driver'].each { key ->
+        def value = System.getProperty(key)
+        if (value != null) {
+            systemProperty key, value
+        }
+    }
 }
 
 gradle.startParameter.continueOnFailure = true

@@ -23,8 +23,9 @@ public abstract class BaseRunner {
             return current;
         }
 
+        String defaultBrowser = isHeadlessEnabled() ? "chrome" : "edge";
         String browser = System.getProperty("browser",
-                System.getenv().getOrDefault("BROWSER", "edge")).toLowerCase(Locale.ROOT);
+                System.getenv().getOrDefault("BROWSER", defaultBrowser)).toLowerCase(Locale.ROOT);
         WebDriver created = "chrome".equals(browser) ? createChromeDriver() : createEdgeDriver();
         created.manage().window().setSize(new Dimension(1000, 800));
         DRIVER.set(created);
@@ -64,6 +65,9 @@ public abstract class BaseRunner {
                 "--disable-translate",
                 "--disable-logging"
         );
+        if (isHeadlessEnabled()) {
+            options.addArguments("--headless=new");
+        }
         return new EdgeDriver(options);
     }
 
@@ -92,6 +96,16 @@ public abstract class BaseRunner {
                 "--disable-translate",
                 "--disable-logging"
         );
+        if (isHeadlessEnabled()) {
+            options.addArguments("--headless=new");
+        }
         return new ChromeDriver(options);
+    }
+
+    private static boolean isHeadlessEnabled() {
+        return Boolean.parseBoolean(System.getProperty(
+                "headless.mode",
+                System.getenv().getOrDefault("HEADLESS_MODE", System.getenv().getOrDefault("CI", "false"))
+        ));
     }
 }
