@@ -139,10 +139,10 @@ Scenario: El usuario navega desde la landing hacia el envío de kudos
 ## Estructura del Proyecto
 
 ```
-sofkianos-mvp/pom-pagefactory/
+AUTO_FRONT_POM_FACTORY/
 ├── 📄 build.gradle                                 ← Gradle config + dependencies
 ├── 📄 settings.gradle                              ← Gradle settings
-├── 📄 README.md                                    ← Este archivo
+├── 📄 README.md                                    ← Documentación del framework
 ├── 📁 gradle/                                      
 │   └── wrapper/                                    ← Gradle Wrapper (no requiere Gradle instalado globalmente)
 │       ├── gradle-wrapper.jar
@@ -227,14 +227,7 @@ google-chrome --version  # Chrome instalado
 
 ### 1. Ubicarse en el proyecto de automatización
 
-Si estás trabajando dentro del monorepo `sofkianos-mvp`, el framework E2E vive en la carpeta `pom-pagefactory`:
-
-```bash
-# Desde la raíz del monorepo
-cd pom-pagefactory
-```
-
-Si trabajas este proyecto de forma aislada, clónalo y entra a la carpeta raíz:
+Clona el proyecto y entra a la carpeta raíz:
 
 ```bash
 git clone https://github.com/majoymajo/AUTO_FRONT_POM_FACTORY.git
@@ -277,11 +270,9 @@ Antes de ejecutar tests, verificar que compile sin warnings de deprecación:
 
 ```bash
 # Windows PowerShell
-cd pom-pagefactory
 .\gradlew.bat --% clean test aggregate -Dbase.url=http://localhost:5173 -Dwebdriver.wait=15
 
 # Windows CMD
-cd pom-pagefactory
 .\gradlew.bat clean test aggregate -Dbase.url=http://localhost:5173 -Dwebdriver.wait=15
 ```
 
@@ -301,6 +292,8 @@ cd pom-pagefactory
 # Chrome es obligatorio en GitHub Actions (Linux)
 ./gradlew clean test aggregate \
   -Dbase.url=http://localhost:5173 \
+  -Dbrowser=chrome \
+  -Dheadless.mode=true \
   --no-daemon
 ```
 
@@ -347,7 +340,6 @@ npm run build
 npx vite preview --port 5173
 
 # Terminal 2 - E2E tests
-cd pom-pagefactory
 .\gradlew.bat --% clean test aggregate -Dbase.url=http://localhost:5173 -Dwebdriver.wait=15
 ```
 

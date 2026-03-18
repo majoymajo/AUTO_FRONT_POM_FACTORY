@@ -64,6 +64,9 @@ public abstract class BaseRunner {
                 "--disable-translate",
                 "--disable-logging"
         );
+        if (isHeadlessEnabled()) {
+            options.addArguments("--headless=new");
+        }
         return new EdgeDriver(options);
     }
 
@@ -92,6 +95,16 @@ public abstract class BaseRunner {
                 "--disable-translate",
                 "--disable-logging"
         );
+        if (isHeadlessEnabled()) {
+            options.addArguments("--headless=new");
+        }
         return new ChromeDriver(options);
+    }
+
+    private static boolean isHeadlessEnabled() {
+        return Boolean.parseBoolean(System.getProperty(
+                "headless.mode",
+                System.getenv().getOrDefault("HEADLESS_MODE", System.getenv().getOrDefault("CI", "false"))
+        ));
     }
 }

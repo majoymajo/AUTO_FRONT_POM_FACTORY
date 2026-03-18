@@ -8,7 +8,12 @@ on:
       - "feature/**"
     paths:
       - "frontend/**"
-      - "pom-pagefactory/**"
+      - "src/**"
+      - "gradle/**"
+      - "build.gradle"
+      - "settings.gradle"
+      - "gradlew"
+      - "gradlew.bat"
       - ".github/workflows/frontend.yml"
       - "!**/*.md"
       - "!**/*.txt"
@@ -27,7 +32,12 @@ on:
       - "feature/**"
     paths:
       - "frontend/**"
-      - "pom-pagefactory/**"
+      - "src/**"
+      - "gradle/**"
+      - "build.gradle"
+      - "settings.gradle"
+      - "gradlew"
+      - "gradlew.bat"
       - ".github/workflows/frontend.yml"
       - "!**/*.md"
       - "!**/*.txt"
@@ -166,15 +176,15 @@ jobs:
         timeout-minutes: 3
 
       - name: Grant Execute Permission for Gradle Wrapper
-        working-directory: ./pom-pagefactory
         run: chmod +x gradlew 2>/dev/null || true
 
       - name: Run E2E Cucumber Tests with Serenity
-        working-directory: ./pom-pagefactory
         run: |
           CHROMEDRIVER_PATH=$(which chromedriver)
           ./gradlew clean test aggregate \
             --no-daemon \
+            -Dbrowser=chrome \
+            -Dheadless.mode=true \
             -Dbase.url=http://localhost:5173 \
             -Dwebdriver.wait=10 \
             -Dwebdriver.chrome.driver="$CHROMEDRIVER_PATH"
@@ -186,7 +196,7 @@ jobs:
         if: always()
         with:
           name: serenity-e2e-report
-          path: pom-pagefactory/target/site/serenity/
+          path: target/site/serenity/
           retention-days: 30
 
       - name: Upload Cucumber E2E Report
@@ -194,7 +204,7 @@ jobs:
         if: always()
         with:
           name: cucumber-e2e-report
-          path: pom-pagefactory/build/reports/cucumber.html
+          path: build/reports/cucumber.html
           retention-days: 30
 
       - name: Upload JUnit E2E Results
@@ -202,7 +212,7 @@ jobs:
         if: always()
         with:
           name: e2e-junit-results
-          path: pom-pagefactory/build/test-results/test/
+          path: build/test-results/test/
           retention-days: 30
 
       - name: Upload Gradle Build Logs
@@ -210,12 +220,12 @@ jobs:
         if: failure()
         with:
           name: gradle-build-logs
-          path: pom-pagefactory/build/logs/
+          path: build/logs/
           retention-days: 7
 
       - name: Display Test Execution Summary
         if: always()
         run: |
-          if [ -d "pom-pagefactory/target/site/serenity" ]; then
-            find pom-pagefactory/target/site/serenity -name "index.html" | head -1 || true
+          if [ -d "target/site/serenity" ]; then
+            find target/site/serenity -name "index.html" | head -1 || true
           fi

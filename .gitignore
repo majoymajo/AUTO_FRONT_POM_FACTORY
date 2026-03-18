@@ -40,13 +40,13 @@ frontend/eslint-report.json
 frontend/npm-audit-report.json
 
 # Java/Gradle E2E generated outputs
-pom-pagefactory/.gradle/
-pom-pagefactory/build/
-pom-pagefactory/bin/
-pom-pagefactory/target/
-pom-pagefactory/.classpath
-pom-pagefactory/.project
-pom-pagefactory/.settings/
+.gradle/
+build/
+bin/
+target/
+.classpath
+.project
+.settings/
 
 # Selenium / Serenity local outputs
 *.pid
