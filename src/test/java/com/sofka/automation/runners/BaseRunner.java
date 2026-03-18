@@ -23,8 +23,9 @@ public abstract class BaseRunner {
             return current;
         }
 
+        String defaultBrowser = isHeadlessEnabled() ? "chrome" : "edge";
         String browser = System.getProperty("browser",
-                System.getenv().getOrDefault("BROWSER", "edge")).toLowerCase(Locale.ROOT);
+                System.getenv().getOrDefault("BROWSER", defaultBrowser)).toLowerCase(Locale.ROOT);
         WebDriver created = "chrome".equals(browser) ? createChromeDriver() : createEdgeDriver();
         created.manage().window().setSize(new Dimension(1000, 800));
         DRIVER.set(created);

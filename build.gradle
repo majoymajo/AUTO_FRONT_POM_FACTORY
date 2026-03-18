@@ -69,6 +69,12 @@ test {
     useJUnitPlatform()
     jvmArgs '-Dfile.encoding=UTF-8'
     systemProperty 'file.encoding', 'UTF-8'
+    ['base.url', 'webdriver.wait', 'browser', 'headless.mode', 'webdriver.chrome.driver'].each { key ->
+        def value = System.getProperty(key)
+        if (value != null) {
+            systemProperty key, value
+        }
+    }
 }
 
 gradle.startParameter.continueOnFailure = true

@@ -180,14 +180,12 @@ jobs:
 
       - name: Run E2E Cucumber Tests with Serenity
         run: |
-          CHROMEDRIVER_PATH=$(which chromedriver)
           ./gradlew clean test aggregate \
             --no-daemon \
             -Dbrowser=chrome \
             -Dheadless.mode=true \
             -Dbase.url=http://localhost:5173 \
-            -Dwebdriver.wait=10 \
-            -Dwebdriver.chrome.driver="$CHROMEDRIVER_PATH"
+            -Dwebdriver.wait=10
         env:
           BROWSER: chrome
 
