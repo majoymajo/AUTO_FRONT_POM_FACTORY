@@ -16,11 +16,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-/**
- * US-004 / RP-01 — KudoServiceImpl unit tests.
- * Validates Kudo creation, publishing, and error handling
- * after Clean Architecture migration.
- */
+
 @ExtendWith(MockitoExtension.class)
 class KudoServiceImplTest {
 

@@ -11,9 +11,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.Mockito.*;
 
-/**
- * Unit tests for {@link KudosConsumer}.
- */
+
 @ExtendWith(MockitoExtension.class)
 class KudosConsumerTest {
 

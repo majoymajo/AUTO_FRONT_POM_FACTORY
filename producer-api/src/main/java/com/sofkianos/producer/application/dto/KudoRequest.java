@@ -9,9 +9,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/**
- * Data Transfer Object for Kudo requests.
- */
+
 @Data
 @Builder
 @NoArgsConstructor

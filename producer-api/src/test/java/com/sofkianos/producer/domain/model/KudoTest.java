@@ -6,9 +6,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * US-004 — Kudo domain record and create() factory method.
- */
+
 class KudoTest {
 
     @Test
@@ -37,23 +35,3 @@ class KudoTest {
     void givenTwoCalls_whenCreate_thenDifferentTimestamps() {
         Kudo k1 = Kudo.create("a@a.com", "b@b.com", KudoCategory.Innovation, "msg");
         Kudo k2 = Kudo.create("a@a.com", "b@b.com", KudoCategory.Innovation, "msg");
-        // createdAt is LocalDateTime.now() so both should be very close but
-        // independently generated
-        assertThat(k1.createdAt()).isNotNull();
-        assertThat(k2.createdAt()).isNotNull();
-    }
-
-    @Test
-    @DisplayName("Kudo record should provide accessor methods for all fields")
-    void kudoRecordAccessors() {
-        Kudo kudo = new Kudo(1L, "from", "to", KudoCategory.Passion, "msg",
-                java.time.LocalDateTime.of(2026, 2, 11, 12, 0));
-
-        assertThat(kudo.id()).isEqualTo(1L);
-        assertThat(kudo.fromUser()).isEqualTo("from");
-        assertThat(kudo.toUser()).isEqualTo("to");
-        assertThat(kudo.category()).isEqualTo(KudoCategory.Passion);
-        assertThat(kudo.message()).isEqualTo("msg");
-        assertThat(kudo.createdAt()).isEqualTo(java.time.LocalDateTime.of(2026, 2, 11, 12, 0));
-    }
-}

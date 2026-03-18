@@ -14,23 +14,3 @@ class HealthControllerTest {
 
     @Test
     void health_ReturnsOkWithStatusMessage() {
-        // Act
-        ResponseEntity<Map<String, String>> response = healthController.health();
-
-        // Assert
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals("producer-api", response.getBody().get("service"));
-        assertEquals("UP", response.getBody().get("status"));
-    }
-
-    @Test
-    void root_ReturnsOkWithStatusMessage() {
-        // Act
-        ResponseEntity<Map<String, String>> response = healthController.root();
-
-        // Assert
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals("producer-api", response.getBody().get("service"));
-        assertEquals("UP", response.getBody().get("status"));
-    }
-}

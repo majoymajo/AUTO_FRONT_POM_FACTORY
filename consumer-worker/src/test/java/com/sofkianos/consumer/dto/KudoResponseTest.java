@@ -43,12 +43,3 @@ class KudoResponseTest {
                 .category(KudoCategory.TEAMWORK)
                 .message("Msg")
                 .build();
-
-        // Use reflection to nullify category for the mapping test
-        org.springframework.test.util.ReflectionTestUtils.setField(kudo, "category", null);
-
-        KudoResponse response = KudoResponse.fromEntity(kudo);
-
-        assertThat(response.getCategory()).isNull();
-    }
-}

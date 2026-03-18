@@ -7,13 +7,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
-/**
- * Shared DTO representing a Kudo event that travels between
- * the Producer API and the Consumer Worker through the message broker.
- * <p>
- * This is the <strong>contract</strong> that both modules agree upon.
- * </p>
- */
+
 @Data
 @Builder
 @NoArgsConstructor

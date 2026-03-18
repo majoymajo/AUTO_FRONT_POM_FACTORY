@@ -6,11 +6,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
 
-/**
- * Health and root-path controller.
- * Handles {@code GET /} to prevent {@code NoHandlerFoundException}
- * noise from health checks and load balancers.
- */
+
 @RestController
 public class HealthController {
 

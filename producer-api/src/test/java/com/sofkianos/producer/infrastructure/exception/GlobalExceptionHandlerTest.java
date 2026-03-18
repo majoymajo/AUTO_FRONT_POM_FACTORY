@@ -22,10 +22,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
-/**
- * US-004 / RP-01 — GlobalExceptionHandler unit tests.
- * Validates correct HTTP status mapping for all exception types.
- */
+
 @ExtendWith(MockitoExtension.class)
 class GlobalExceptionHandlerTest {
 

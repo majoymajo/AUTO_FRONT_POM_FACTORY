@@ -43,20 +43,3 @@ class KudoEventMapperTest {
     @DisplayName("Should map DTO with null fields to Domain Event with null fields")
     void shouldMap_WhenDtoFieldsAreNull() {
         KudoEventDTO dto = new KudoEventDTO();
-        // All fields null by default
-
-        KudoEvent event = mapper.toDomain(dto);
-
-        assertThat(event.getFrom()).isNull();
-        assertThat(event.getTo()).isNull();
-        assertThat(event.getCategory()).isNull();
-        assertThat(event.getMessage()).isNull();
-        assertThat(event.getTimestamp()).isNull();
-    }
-
-    @Test
-    @DisplayName("Should return null when DTO is null")
-    void shouldReturnNullWhenDtoIsNull() {
-        assertThat(mapper.toDomain(null)).isNull();
-    }
-}

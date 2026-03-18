@@ -6,9 +6,7 @@ import org.springframework.http.HttpStatus;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * Unit test for ApiError factory method.
- */
+
 class ApiErrorTest {
 
     @Test

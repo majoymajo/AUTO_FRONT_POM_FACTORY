@@ -11,14 +11,7 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-/**
- * Infrastructure Adapter that implements the {@link KudoEventPublisher} port.
- * <p>
- * Converts a {@link KudoEvent} to JSON and publishes it to RabbitMQ.
- * All infrastructure concerns (serialization, AMQP transport) are
- * encapsulated here — the domain/service layer never sees them.
- * </p>
- */
+
 @Slf4j
 @Component
 @RequiredArgsConstructor

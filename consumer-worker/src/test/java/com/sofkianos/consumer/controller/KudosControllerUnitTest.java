@@ -17,9 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
-/**
- * Pure unit test for Consumer KudosController.
- */
+
 @ExtendWith(MockitoExtension.class)
 class KudosControllerUnitTest {
 

@@ -24,10 +24,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
-/**
- * RP-02 — RabbitMqKudoPublisher pure unit tests (no Testcontainers).
- * Validates Kudo → KudoEvent mapping and error handling.
- */
+
 @ExtendWith(MockitoExtension.class)
 class RabbitMqKudoPublisherUnitTest {
 

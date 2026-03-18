@@ -9,16 +9,7 @@ import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
 
-/**
- * Event-Driven Consumer — listens to {@code kudos.queue} and delegates
- * processing to the {@link KudoService}.
- * <p>
- * <strong>DLQ-aware:</strong> exceptions are no longer swallowed.
- * If processing fails, the exception propagates to Spring AMQP, which
- * NACKs the message and RabbitMQ routes it to the Dead Letter Queue
- * ({@code kudos.dlq}) via the configured DLX.
- * </p>
- */
+
 @Slf4j
 @Component
 @RequiredArgsConstructor

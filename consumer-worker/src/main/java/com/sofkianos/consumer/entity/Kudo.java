@@ -73,47 +73,25 @@ public class Kudo {
             return this;
         }
 
-        /**
-         * Sets the username/id of the receiver.
-         *
-         * @param toUser the receiver
-         * @return this builder
-         */
+        
         public Builder toUser(String toUser) {
             this.toUser = toUser;
             return this;
         }
 
-        /**
-         * Accepts a {@link KudoCategory} enum directly.
-         *
-         * @param category the kudo category
-         * @return this builder
-         */
+        
         public Builder category(KudoCategory category) {
             this.category = category;
             return this;
         }
 
-        /**
-         * Convenience overload — accepts a raw String and converts it
-         * via {@link KudoCategory#fromString(String)}.
-         *
-         * @param category the raw category value (case/format accepted by {@link KudoCategory#fromString(String)})
-         * @return this builder
-         * @throws IllegalArgumentException if the string is not a valid category
-         */
+        
         public Builder category(String category) {
             this.category = KudoCategory.fromString(category);
             return this;
         }
 
-        /**
-         * Sets the kudo message.
-         *
-         * @param message free-text message
-         * @return this builder
-         */
+        
         public Builder message(String message) {
             this.message = message;
             return this;
@@ -124,14 +102,7 @@ public class Kudo {
             return this;
         }
 
-        /**
-         * Validates the accumulated state and creates an immutable {@link Kudo} instance.
-         *
-         * @return a valid {@link Kudo}
-         * @throws InvalidKudoException if required fields are missing/blank, if the category is null,
-         *                              or if a self-kudo is attempted
-         * @throws IllegalArgumentException if a raw string category cannot be converted
-         */
+        
         public Kudo build() {
             requireNonBlank(fromUser, "fromUser");
             requireNonBlank(toUser, "toUser");
@@ -147,13 +118,3 @@ public class Kudo {
 
             return new Kudo(id, fromUser, toUser, category, message, createdAt);
         }
-
-        // ── Helper ──────────────────────────────────────────────────────
-        private void requireNonBlank(String value, String fieldName) {
-            if (value == null || value.isBlank()) {
-                throw new InvalidKudoException(
-                        String.format("'%s' must not be null or empty", fieldName));
-            }
-        }
-    }
-}

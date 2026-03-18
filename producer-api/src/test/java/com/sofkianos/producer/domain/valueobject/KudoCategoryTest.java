@@ -8,9 +8,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/**
- * US-004 / RP-08 — KudoCategory enum and fromString() factory method.
- */
+
 class KudoCategoryTest {
 
     @ParameterizedTest(name = "fromString(\"{0}\") should return matching category")

@@ -17,18 +17,7 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
-/**
- * Domain Service — orchestrates the Kudo publishing workflow.
- * <p>
- * This class is <strong>free of infrastructure concerns</strong>:
- * <ul>
- * <li>No {@code RabbitTemplate} — messaging is delegated to
- * the {@link KudoEventPublisher} port.</li>
- * <li>No {@code ObjectMapper} — serialization lives in the adapter.</li>
- * </ul>
- * The service only knows about DTOs, domain events, and port interfaces.
- * </p>
- */
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
