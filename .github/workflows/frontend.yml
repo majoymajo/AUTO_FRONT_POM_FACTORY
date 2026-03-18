@@ -53,26 +53,50 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Detect frontend lockfile
-        id: lockfile
+      - name: Resolve Frontend Source
+        id: frontend_source
         shell: bash
         run: |
-          if [ -f "frontend/package-lock.json" ]; then
-            echo "found=true" >> "$GITHUB_OUTPUT"
+          if [ -d "frontend" ] && [ -f "frontend/package.json" ]; then
+            echo "frontend_dir=frontend" >> "$GITHUB_OUTPUT"
+            if [ -f "frontend/package-lock.json" ]; then
+              echo "has_lockfile=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "has_lockfile=false" >> "$GITHUB_OUTPUT"
+            fi
           else
-            echo "found=false" >> "$GITHUB_OUTPUT"
+            echo "Local ./frontend not found. Cloning AUT repository..."
+            git clone --depth 1 https://github.com/ElyRiven/sofkianos-mvp.git aut-repo
+            if [ ! -d "aut-repo/frontend" ] || [ ! -f "aut-repo/frontend/package.json" ]; then
+              echo "::error::Frontend path not found in either current repository or cloned AUT repository."
+              echo "Workspace root contents:"
+              ls -la
+              exit 1
+            fi
+            echo "frontend_dir=aut-repo/frontend" >> "$GITHUB_OUTPUT"
+            if [ -f "aut-repo/frontend/package-lock.json" ]; then
+              echo "has_lockfile=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "has_lockfile=false" >> "$GITHUB_OUTPUT"
+            fi
           fi
 
+      - name: Show Resolved Frontend Path
+        shell: bash
+        run: |
+          echo "Resolved frontend_dir=${{ steps.frontend_source.outputs.frontend_dir }}"
+          ls -la "${{ steps.frontend_source.outputs.frontend_dir }}"
+
       - name: Set up Node.js ${{ env.NODE_VERSION }}
-        if: steps.lockfile.outputs.found == 'true'
+        if: steps.frontend_source.outputs.has_lockfile == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: "npm"
-          cache-dependency-path: frontend/package-lock.json
+          cache-dependency-path: ${{ steps.frontend_source.outputs.frontend_dir }}/package-lock.json
 
       - name: Set up Node.js ${{ env.NODE_VERSION }} (no cache fallback)
-        if: steps.lockfile.outputs.found != 'true'
+        if: steps.frontend_source.outputs.has_lockfile != 'true'
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
@@ -96,11 +120,11 @@ jobs:
         run: sudo apt-get install -y fonts-liberation libappindicator3-1 xdg-utils
 
       - name: Install Frontend Dependencies
-        working-directory: ./frontend
+        working-directory: ${{ steps.frontend_source.outputs.frontend_dir }}
         run: npm ci
 
       - name: Build Frontend Application
-        working-directory: ./frontend
+        working-directory: ${{ steps.frontend_source.outputs.frontend_dir }}
         run: |
           npm run build
           if [ ! -d "dist" ]; then
@@ -110,7 +134,7 @@ jobs:
           VITE_LOG_LEVEL: info
 
       - name: Start Frontend Dev Server
-        working-directory: ./frontend
+        working-directory: ${{ steps.frontend_source.outputs.frontend_dir }}
         run: |
           nohup npx vite preview --port 5173 --host 0.0.0.0 > /tmp/preview.log 2>&1 &
           echo $! > /tmp/preview.pid
