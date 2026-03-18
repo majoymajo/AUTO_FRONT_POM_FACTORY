@@ -278,9 +278,7 @@ Antes de ejecutar tests, verificar que compile sin warnings de deprecación:
 ```bash
 # Windows PowerShell
 cd pom-pagefactory
-.\gradlew.bat clean test aggregate `
-  -Dbase.url=http://localhost:5173 `
-  -Dwebdriver.wait=15
+.\gradlew.bat --% clean test aggregate -Dbase.url=http://localhost:5173 -Dwebdriver.wait=15
 
 # Windows CMD
 cd pom-pagefactory
@@ -291,10 +289,7 @@ cd pom-pagefactory
 
 ```bash
 # Windows PowerShell
-.\gradlew.bat clean test aggregate `
-  -Dbase.url=http://localhost:5173 `
-  -Dbrowser=chrome `
-  -Dwebdriver.wait=15
+.\gradlew.bat --% clean test aggregate -Dbase.url=http://localhost:5173 -Dbrowser=chrome -Dwebdriver.wait=15
 
 # Windows CMD
 .\gradlew.bat clean test aggregate -Dbase.url=http://localhost:5173 -Dbrowser=chrome -Dwebdriver.wait=15
@@ -353,8 +348,20 @@ npx vite preview --port 5173
 
 # Terminal 2 - E2E tests
 cd pom-pagefactory
-.\gradlew.bat clean test aggregate -Dbase.url=http://localhost:5173 -Dwebdriver.wait=15
+.\gradlew.bat --% clean test aggregate -Dbase.url=http://localhost:5173 -Dwebdriver.wait=15
 ```
+
+### 8. Solución rápida para PowerShell (error con -Dbase.url)
+
+Si Gradle falla con mensajes como `Cannot locate tasks that match '.url=http://...'`, el problema es el parseo de argumentos de PowerShell.
+
+Usa siempre `--%` antes de los parámetros de Gradle con `-D`:
+
+```bash
+.\gradlew.bat --% clean test aggregate -Dbase.url=http://localhost:5173 -Dwebdriver.wait=15
+```
+
+En CMD no se requiere `--%`.
 
 ---
 
@@ -374,6 +381,9 @@ Tras la ejecución, los reportes se generan en:
 ```bash
 # Serenity (recomendado — más detallado)
 start target/site/serenity/index.html
+
+# PowerShell (alternativa equivalente)
+Start-Process target/site/serenity/index.html
 
 # JUnit
 start build/reports/tests/test/index.html
