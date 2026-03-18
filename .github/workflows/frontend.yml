@@ -189,6 +189,21 @@ jobs:
         env:
           BROWSER: chrome
 
+      - name: Verify Cucumber Report Files
+        if: always()
+        shell: bash
+        run: |
+          if [ ! -d "target/cucumber-report" ]; then
+            echo "::error::Cucumber report directory not found at target/cucumber-report"
+            exit 1
+          fi
+          CUCUMBER_FILES_COUNT=$(find target/cucumber-report -type f -name "*.json" | wc -l | tr -d ' ')
+          echo "Detected Cucumber report files: ${CUCUMBER_FILES_COUNT}"
+          if [ "${CUCUMBER_FILES_COUNT}" -eq 0 ]; then
+            echo "::error::No Cucumber report files were generated."
+            exit 1
+          fi
+
       - name: Upload Serenity E2E Report (Primary)
         uses: actions/upload-artifact@v4
         if: always()
@@ -202,7 +217,7 @@ jobs:
         if: always()
         with:
           name: cucumber-e2e-report
-          path: build/reports/cucumber.html
+          path: target/cucumber-report/
           retention-days: 30
 
       - name: Upload JUnit E2E Results
