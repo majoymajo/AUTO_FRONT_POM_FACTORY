@@ -27,6 +27,49 @@ Thumbs.db
 tmp/
 temp/
 
+# E2E runtime artifacts
+frontend/.vite/
+frontend/.cache/
+frontend/playwright-report/
+frontend/test-results/
+frontend/.nyc_output/
+
+# Frontend unit/integration artifacts (not needed for POM E2E)
+frontend/coverage/
+frontend/eslint-report.json
+frontend/npm-audit-report.json
+
+# Java/Gradle E2E generated outputs
+pom-pagefactory/.gradle/
+pom-pagefactory/build/
+pom-pagefactory/bin/
+pom-pagefactory/target/
+pom-pagefactory/.classpath
+pom-pagefactory/.project
+pom-pagefactory/.settings/
+
+# Selenium / Serenity local outputs
+*.pid
+*.seed
+*.out
+*.err
+chromedriver*.log
+geckodriver*.log
+
+# Folders to hide (not needed for E2E tests)
+.github/
+.gradle/
+assets/
+aws/
+bin/
+build/
+consumer-worker/
+Docker/
+documentacion/
+frontend/
+history/
+producer-api/
+
 
 # Created by https://www.toptal.com/developers/gitignore/api/terraform
 # Edit at https://www.toptal.com/developers/gitignore?templates=terraform
