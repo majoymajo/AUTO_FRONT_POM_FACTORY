@@ -121,7 +121,15 @@ jobs:
 
       - name: Install Frontend Dependencies
         working-directory: ${{ steps.frontend_source.outputs.frontend_dir }}
-        run: npm ci
+        shell: bash
+        run: |
+          if [ "${{ steps.frontend_source.outputs.has_lockfile }}" = "true" ]; then
+            echo "Lockfile found. Running npm ci..."
+            npm ci
+          else
+            echo "No package-lock.json found. Falling back to npm install..."
+            npm install --no-audit --no-fund
+          fi
 
       - name: Build Frontend Application
         working-directory: ${{ steps.frontend_source.outputs.frontend_dir }}
